@@ -36,7 +36,6 @@ export class Login {
         icon: 'warning',
         title: 'Missing Fields',
         text: 'Please enter your email and password.',
-        confirmButtonText: 'OK',
       });
       return;
     }
@@ -53,8 +52,7 @@ export class Login {
         await Swal.fire({
           icon: 'error',
           title: 'Login Failed',
-          text: 'User record was not found in Firestore.',
-          confirmButtonText: 'OK',
+          text: 'User record not found.',
         });
 
         await this.authService.logout();
@@ -65,32 +63,30 @@ export class Login {
         await Swal.fire({
           icon: 'error',
           title: 'Account Disabled',
-          text: 'Your account is inactive. Please contact the administrator.',
-          confirmButtonText: 'OK',
+          text: 'Your account is inactive.',
         });
 
         await this.authService.logout();
         return;
       }
 
+      // TEMPORARY: allow pending users for UI testing only
       if (user.status === 'pending') {
         await Swal.fire({
           icon: 'info',
-          title: 'Account Pending',
-          text: 'Your account is still waiting for officer approval.',
-          confirmButtonText: 'OK',
+          title: 'Development Mode',
+          text: 'Pending account allowed for UI testing.',
+          timer: 1200,
+          showConfirmButton: false,
         });
-
-        await this.authService.logout();
-        return;
       }
 
+      // KEEP THIS BLOCK
       if (user.status === 'rejected') {
         await Swal.fire({
           icon: 'error',
           title: 'Account Rejected',
-          text: 'Your account request has been rejected. Please contact the alumni office.',
-          confirmButtonText: 'OK',
+          text: 'Your account has been rejected.',
         });
 
         await this.authService.logout();
@@ -101,17 +97,25 @@ export class Login {
         icon: 'success',
         title: 'Login Successful',
         text: `Welcome back, ${user.fullName || user.email}!`,
-        timer: 1500,
+        timer: 1200,
         showConfirmButton: false,
       });
 
-      await this.redirectByRole(user);
+      /**
+       * TEMPORARY HARD CODED REDIRECT
+       * Current phase is Officer UI building.
+       * Later replace this with role-based routing:
+       * - admin -> /admin/dashboard
+       * - officer -> /officer/dashboard
+       * - alumni -> /alumni/dashboard
+       */
+      await this.router.navigate(['/officer/dashboard']);
+
     } catch (error: any) {
       await Swal.fire({
         icon: 'error',
         title: 'Login Failed',
-        text: this.getErrorMessage(error?.code),
-        confirmButtonText: 'OK',
+        text: 'Invalid email or password.',
       });
     } finally {
       this.loading = false;
@@ -120,26 +124,5 @@ export class Login {
 
   togglePassword(): void {
     this.showPassword = !this.showPassword;
-  }
-
-  private async redirectByRole(user: User): Promise<void> {
-    await this.router.navigate(['/layout-test']);
-  }
-
-  private getErrorMessage(code: string): string {
-    switch (code) {
-      case 'auth/invalid-email':
-        return 'Invalid email format.';
-      case 'auth/invalid-credential':
-      case 'auth/user-not-found':
-      case 'auth/wrong-password':
-        return 'Invalid email or password.';
-      case 'auth/missing-password':
-        return 'Password is required.';
-      case 'auth/too-many-requests':
-        return 'Too many failed attempts. Please try again later.';
-      default:
-        return 'Login failed. Please try again.';
-    }
   }
 }

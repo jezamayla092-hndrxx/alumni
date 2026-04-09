@@ -1,147 +1,277 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import {
-  NavigationEnd,
-  Router,
+  Component,
+  OnInit,
+  ChangeDetectorRef,
+  Inject,
+  PLATFORM_ID,
+  HostListener,
+} from '@angular/core';
+import { CommonModule, NgClass, isPlatformBrowser } from '@angular/common';
+import {
   RouterLink,
   RouterLinkActive,
   RouterOutlet,
+  Router,
 } from '@angular/router';
-import { filter } from 'rxjs/operators';
-import Swal from 'sweetalert2';
 
 import { AuthService } from '../../../services/auth.service';
 import { UsersService } from '../../../services/users.service';
-import { UserRole } from '../../../models/user.model';
+import { User } from '../../../models/user.model';
 
-type NavItem = {
+interface NavItem {
   label: string;
-  route: string;
   icon: string;
-};
+  route: string;
+  small?: boolean;
+  disabled?: boolean;
+}
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [
+    CommonModule,
+    NgClass,
+    RouterLink,
+    RouterLinkActive,
+    RouterOutlet,
+  ],
   templateUrl: './main-layout.html',
   styleUrls: ['./main-layout.scss'],
 })
 export class MainLayout implements OnInit {
   sidebarCollapsed = false;
-  pageTitle = 'Dashboard';
-  currentRole: UserRole | null = null;
-  currentUserName = 'User';
-  currentUserSubtitle = 'ATMS User';
+  loadingUser = true;
+  userMenuOpen = false;
+  darkMode = false;
 
-  officerNav: NavItem[] = [
-    { label: 'Dashboard', route: '/officer/dashboard', icon: 'pi pi-th-large' },
-    { label: 'Verification Requests', route: '/officer/verification-requests', icon: 'pi pi-check-circle' },
-    { label: 'Alumni Records', route: '/officer/alumni-records', icon: 'pi pi-users' },
-    { label: 'Tracer Study', route: '/officer/tracer-study', icon: 'pi pi-chart-line' },
-    { label: 'Job Postings', route: '/officer/job-postings', icon: 'pi pi-briefcase' },
-    { label: 'Events', route: '/officer/events', icon: 'pi pi-calendar' },
-    { label: 'Announcements', route: '/officer/announcements', icon: 'pi pi-megaphone' },
+  /**
+   * TEMPORARY:
+   * Keep disabled until those pages/routes are ready.
+   */
+  navItems: NavItem[] = [
+    {
+      label: 'Dashboard',
+      icon: 'pi-home',
+      route: '/officer/dashboard',
+    },
+    {
+      label: 'Verification Requests',
+      icon: 'pi-check-square',
+      route: '/officer/verification-requests',
+      small: true,
+      disabled: true,
+    },
+    {
+      label: 'Alumni Records',
+      icon: 'pi-id-card',
+      route: '/officer/alumni-records',
+      disabled: true,
+    },
+    {
+      label: 'Tracer Study',
+      icon: 'pi-chart-line',
+      route: '/officer/tracer-study',
+      disabled: true,
+    },
+    {
+      label: 'Job Postings',
+      icon: 'pi-briefcase',
+      route: '/officer/job-postings',
+      disabled: true,
+    },
+    {
+      label: 'Events',
+      icon: 'pi-calendar',
+      route: '/officer/events',
+      disabled: true,
+    },
+    {
+      label: 'Announcements',
+      icon: 'pi-megaphone',
+      route: '/officer/announcements',
+      disabled: true,
+    },
   ];
 
-  alumniNav: NavItem[] = [
-    { label: 'Dashboard', route: '/alumni/dashboard', icon: 'pi pi-th-large' },
-    { label: 'My Profile', route: '/alumni/my-profile', icon: 'pi pi-user' },
-    { label: 'Employment Status', route: '/alumni/employment-status', icon: 'pi pi-briefcase' },
-    { label: 'Verification Status', route: '/alumni/verification-status', icon: 'pi pi-shield' },
-    { label: 'Events & Announcements', route: '/alumni/events-announcements', icon: 'pi pi-calendar' },
-    { label: 'Job Opportunities', route: '/alumni/job-opportunities', icon: 'pi pi-briefcase' },
-  ];
-
-  adminNav: NavItem[] = [
-    { label: 'Dashboard', route: '/admin/dashboard', icon: 'pi pi-th-large' },
-  ];
+  currentUser: User | null = null;
 
   constructor(
-    private router: Router,
     private authService: AuthService,
-    private usersService: UsersService
+    private usersService: UsersService,
+    private router: Router,
+    private cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) private platformId: object
   ) {}
 
-  ngOnInit(): void {
-    this.setPageTitle(this.router.url);
+  async ngOnInit(): Promise<void> {
+    /**
+     * CRITICAL FIX:
+     * Do not run Firebase browser-auth user loading on the server.
+     * This prevents false redirects during refresh when SSR/server files exist.
+     */
+    if (!isPlatformBrowser(this.platformId)) {
+      this.loadingUser = false;
+      return;
+    }
 
-    this.router.events
-      .pipe(filter((event) => event instanceof NavigationEnd))
-      .subscribe((event: NavigationEnd) => {
-        this.setPageTitle(event.urlAfterRedirects);
-      });
-
-    this.loadCurrentUser();
+    await this.loadCurrentUser();
   }
 
-  get navItems(): NavItem[] {
-    if (this.currentRole === 'officer') return this.officerNav;
-    if (this.currentRole === 'alumni') return this.alumniNav;
-    if (this.currentRole === 'admin') return this.adminNav;
+  get currentUserInitial(): string {
+    const source =
+      this.currentUser?.fullName ||
+      this.currentUser?.firstName ||
+      this.currentUser?.email ||
+      'U';
 
-    const url = this.router.url;
-    if (url.startsWith('/officer')) return this.officerNav;
-    if (url.startsWith('/alumni')) return this.alumniNav;
-    if (url.startsWith('/admin')) return this.adminNav;
+    return source.charAt(0).toUpperCase();
+  }
 
-    return [];
+  get currentUserName(): string {
+    return (
+      this.currentUser?.fullName ||
+      [this.currentUser?.firstName, this.currentUser?.lastName]
+        .filter(Boolean)
+        .join(' ')
+        .trim() ||
+      this.currentUser?.email ||
+      'User'
+    );
+  }
+
+  get currentUserRole(): string {
+    switch (this.currentUser?.role) {
+      case 'admin':
+        return 'Administrator';
+      case 'officer':
+        return 'Alumni Officer';
+      case 'alumni':
+        return 'Alumni';
+      default:
+        return 'User';
+    }
   }
 
   toggleSidebar(): void {
     this.sidebarCollapsed = !this.sidebarCollapsed;
+    this.userMenuOpen = false;
+  }
+
+  closeSidebarOnMobile(): void {
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+      this.sidebarCollapsed = true;
+    }
+
+    this.userMenuOpen = false;
+  }
+
+  toggleUserMenu(): void {
+    this.userMenuOpen = !this.userMenuOpen;
+  }
+
+  closeUserMenu(): void {
+    this.userMenuOpen = false;
+  }
+
+  toggleDarkMode(): void {
+    /**
+     * TEMPORARY:
+     * Layout-only dark mode.
+     * Not persisted yet to localStorage, Firestore, or user settings.
+     */
+    this.darkMode = !this.darkMode;
+    this.userMenuOpen = false;
+  }
+
+  /**
+   * TEMPORARY:
+   * Placeholder until profile route/page exists.
+   */
+  goToProfile(): void {
+    this.userMenuOpen = false;
+  }
+
+  /**
+   * TEMPORARY:
+   * Placeholder until settings route/page exists.
+   */
+  goToSettings(): void {
+    this.userMenuOpen = false;
   }
 
   async logout(): Promise<void> {
-    const result = await Swal.fire({
-      icon: 'question',
-      title: 'Logout?',
-      text: 'Are you sure you want to logout?',
-      showCancelButton: true,
-      confirmButtonText: 'Yes, Logout',
-      cancelButtonText: 'Cancel',
-      confirmButtonColor: '#4f46e5',
-      cancelButtonColor: '#6b7280',
-    });
+    this.userMenuOpen = false;
 
-    if (!result.isConfirmed) return;
-
-    await this.authService.logout();
-    await this.router.navigate(['/login']);
-  }
-
-  private async loadCurrentUser(): Promise<void> {
     try {
-      const uid = this.authService.getCurrentUid();
-      if (!uid) return;
-
-      const user = await this.usersService.getUserById(uid);
-      if (!user) return;
-
-      this.currentRole = user.role ?? null;
-      this.currentUserName =
-        user.fullName?.trim() ||
-        `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() ||
-        user.email;
-
-      if (this.currentRole === 'officer') {
-        this.currentUserSubtitle = 'Alumni Officer';
-      } else if (this.currentRole === 'admin') {
-        this.currentUserSubtitle = 'System Administrator';
-      } else {
-        this.currentUserSubtitle = user.program || 'Alumni';
-      }
+      await this.authService.logout();
+      await this.router.navigate(['/login']);
     } catch (error) {
-      console.error('Failed to load current user:', error);
+      console.error('Logout failed:', error);
     }
   }
 
-  private setPageTitle(url: string): void {
-    const cleanUrl = url.split('?')[0].split('#')[0];
-    const lastSegment = cleanUrl.split('/').filter(Boolean).pop() ?? 'dashboard';
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement | null;
 
-    this.pageTitle = lastSegment
-      .replace(/-/g, ' ')
-      .replace(/\b\w/g, (char) => char.toUpperCase());
+    if (!target) {
+      return;
+    }
+
+    const clickedInsideUserMenu = !!target.closest('.topbar-user');
+
+    if (!clickedInsideUserMenu && this.userMenuOpen) {
+      this.userMenuOpen = false;
+    }
+  }
+
+  private async loadCurrentUser(): Promise<void> {
+    this.loadingUser = true;
+
+    try {
+      const authUser = await this.authService.getAuthState();
+
+      /**
+       * IMPORTANT FIX:
+       * Do not immediately force logout here.
+       * The guard should handle access control.
+       * Only redirect if browser-side auth is clearly missing.
+       */
+      if (!authUser) {
+        this.currentUser = null;
+        await this.router.navigate(['/login']);
+        return;
+      }
+
+      const userDoc = await this.usersService.getUserById(authUser.uid);
+
+      /**
+       * STRUCTURAL WARNING:
+       * Your app depends on both Firebase Auth and Firestore profile.
+       * If the Firestore user doc is missing, the session exists but
+       * the app has no role/profile context.
+       */
+      if (!userDoc) {
+        await this.authService.logout();
+        await this.router.navigate(['/login']);
+        return;
+      }
+
+      this.currentUser = userDoc;
+    } catch (error) {
+      console.error('Failed to load current user:', error);
+      this.currentUser = null;
+      await this.router.navigate(['/login']);
+    } finally {
+      this.loadingUser = false;
+
+      /**
+       * IMPORTANT FIX:
+       * Force template refresh after Firebase auth/user load.
+       * Prevents "name appears only after second click".
+       */
+      this.cdr.detectChanges();
+    }
   }
 }
