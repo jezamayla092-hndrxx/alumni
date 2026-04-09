@@ -1,0 +1,49 @@
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-header">
+      <h1>ATMS Login</h1>
+      <p>Sign in to continue</p>
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input
+        id="email"
+        type="email"
+        [(ngModel)]="email"
+        placeholder="Enter your email"
+        [disabled]="loading"
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <div class="password-wrapper">
+        <input
+          id="password"
+          [type]="showPassword ? 'text' : 'password'"
+          [(ngModel)]="password"
+          placeholder="Enter your password"
+          [disabled]="loading"
+        />
+        <button
+          type="button"
+          class="toggle-password"
+          (click)="togglePassword()"
+          [disabled]="loading"
+        >
+          {{ showPassword ? 'Hide' : 'Show' }}
+        </button>
+      </div>
+    </div>
+
+    <button class="login-btn" (click)="onLogin()" [disabled]="loading">
+      {{ loading ? 'Logging in...' : 'Login' }}
+    </button>
+
+    <p class="signup-link">
+      Don’t have an account?
+      <a routerLink="/signup">Sign up</a>
+    </p>
+  </div>
+</div>

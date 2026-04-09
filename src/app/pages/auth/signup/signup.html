@@ -1,0 +1,132 @@
+<div class="signup-page">
+  <div class="signup-card">
+    <div class="signup-header">
+      <h1>Create Alumni Account</h1>
+      <p>Fill in your details to register</p>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="firstName">First Name</label>
+        <input
+          id="firstName"
+          type="text"
+          [(ngModel)]="firstName"
+          placeholder="Enter first name"
+          [disabled]="loading"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="lastName">Last Name</label>
+        <input
+          id="lastName"
+          type="text"
+          [(ngModel)]="lastName"
+          placeholder="Enter last name"
+          [disabled]="loading"
+        />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input
+        id="email"
+        type="email"
+        [(ngModel)]="email"
+        placeholder="Enter email"
+        [disabled]="loading"
+      />
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="studentId">Student / University ID</label>
+        <input
+          id="studentId"
+          type="text"
+          [(ngModel)]="studentId"
+          placeholder="Enter ID number"
+          [disabled]="loading"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="yearGraduated">Year Graduated</label>
+        <input
+          id="yearGraduated"
+          type="number"
+          [(ngModel)]="yearGraduated"
+          placeholder="e.g. 2024"
+          [disabled]="loading"
+        />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="program">Program</label>
+      <select
+        id="program"
+        [(ngModel)]="program"
+        [disabled]="loading"
+      >
+        <option value="" disabled selected>Select program</option>
+        <option *ngFor="let item of programs" [value]="item">
+          {{ item }}
+        </option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <div class="password-wrapper">
+        <input
+          id="password"
+          [type]="showPassword ? 'text' : 'password'"
+          [(ngModel)]="password"
+          placeholder="Enter password"
+          [disabled]="loading"
+        />
+        <button
+          type="button"
+          class="toggle-password"
+          (click)="togglePassword()"
+          [disabled]="loading"
+        >
+          {{ showPassword ? 'Hide' : 'Show' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="confirmPassword">Confirm Password</label>
+      <div class="password-wrapper">
+        <input
+          id="confirmPassword"
+          [type]="showConfirmPassword ? 'text' : 'password'"
+          [(ngModel)]="confirmPassword"
+          placeholder="Confirm password"
+          [disabled]="loading"
+        />
+        <button
+          type="button"
+          class="toggle-password"
+          (click)="toggleConfirmPassword()"
+          [disabled]="loading"
+        >
+          {{ showConfirmPassword ? 'Hide' : 'Show' }}
+        </button>
+      </div>
+    </div>
+
+    <button class="signup-btn" (click)="onSignup()" [disabled]="loading">
+      {{ loading ? 'Creating Account...' : 'Create Account' }}
+    </button>
+
+    <p class="login-link">
+      Already have an account?
+      <a routerLink="/login">Login</a>
+    </p>
+  </div>
+</div>

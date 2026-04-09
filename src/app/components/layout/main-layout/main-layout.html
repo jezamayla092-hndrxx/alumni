@@ -1,0 +1,91 @@
+<div class="layout-shell" [class.sidebar-collapsed]="sidebarCollapsed">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="brand">
+        <div class="brand-icon">
+          <i class="pi pi-graduation-cap"></i>
+        </div>
+
+        <div class="brand-text" *ngIf="!sidebarCollapsed">
+          <h2>ATMS</h2>
+          <p>Alumni Tracking and Management System</p>
+        </div>
+      </div>
+
+      <button class="collapse-btn" type="button" (click)="toggleSidebar()">
+        <i class="pi" [ngClass]="sidebarCollapsed ? 'pi-angle-right' : 'pi-angle-left'"></i>
+      </button>
+    </div>
+
+    <div class="nav-label" *ngIf="!sidebarCollapsed">NAVIGATION</div>
+
+    <nav class="sidebar-nav">
+      <a
+        *ngFor="let item of navItems"
+        [routerLink]="item.route"
+        routerLinkActive="active-link"
+        class="nav-item"
+      >
+        <div class="nav-icon">
+          <i [class]="item.icon"></i>
+        </div>
+
+        <span class="nav-text" *ngIf="!sidebarCollapsed">{{ item.label }}</span>
+
+        <span class="active-dot" *ngIf="!sidebarCollapsed"></span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">
+          {{ currentUserName.charAt(0) || 'U' }}
+        </div>
+
+        <div class="user-meta" *ngIf="!sidebarCollapsed">
+          <strong>{{ currentUserName }}</strong>
+          <span>{{ currentUserSubtitle }}</span>
+        </div>
+      </div>
+
+      <button class="logout-btn" type="button" (click)="logout()">
+        <i class="pi pi-sign-out"></i>
+        <span *ngIf="!sidebarCollapsed">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="main-panel">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="mobile-toggle" type="button" (click)="toggleSidebar()">
+          <i class="pi pi-bars"></i>
+        </button>
+
+        <h1>{{ pageTitle }}</h1>
+      </div>
+
+      <div class="topbar-right">
+        <button class="top-icon-btn" type="button" aria-label="Search">
+          <i class="pi pi-search"></i>
+        </button>
+
+        <button class="top-icon-btn" type="button" aria-label="Theme">
+          <i class="pi pi-moon"></i>
+        </button>
+
+        <button class="top-icon-btn" type="button" aria-label="Notifications">
+          <i class="pi pi-bell"></i>
+        </button>
+
+        <div class="topbar-avatar">
+          {{ currentUserName.charAt(0) || 'U' }}
+        </div>
+      </div>
+    </header>
+
+    <main class="content-area">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
