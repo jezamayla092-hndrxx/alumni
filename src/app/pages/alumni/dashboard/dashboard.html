@@ -1,0 +1,204 @@
+<section class="dashboard-page">
+  <div class="hero-section">
+    <div class="hero-copy">
+      <span class="welcome-chip">
+        <i class="pi pi-sparkles"></i>
+        Welcome back
+      </span>
+
+      <h1>{{ alumniName }}</h1>
+
+      <p>
+        {{ program }} · {{ batch }} · Here's your alumni overview for today.
+      </p>
+    </div>
+
+    <div class="hero-actions">
+      <button type="button" class="secondary-btn">Edit Profile</button>
+      <button type="button" class="primary-btn">Update Status</button>
+    </div>
+  </div>
+
+  <section class="top-cards">
+    <article
+      class="top-card"
+      *ngFor="let card of topCards; trackBy: trackByIndex"
+      [ngClass]="card.type"
+    >
+      <div class="card-top-row">
+        <div class="card-title-wrap">
+          <div class="card-icon">
+            <i [class]="card.icon"></i>
+          </div>
+          <h3>{{ card.title }}</h3>
+        </div>
+
+        <span class="status-badge" [ngClass]="card.badgeClass">
+          {{ card.badge }}
+        </span>
+      </div>
+
+      <div class="card-body" [ngClass]="card.type">
+        <ng-container [ngSwitch]="card.type">
+          <ng-container *ngSwitchCase="'profile'">
+            <div class="profile-progress-row">
+              <h2>{{ card.mainValue }}</h2>
+              <span>{{ card.subtitle }}</span>
+            </div>
+
+            <div class="progress-bar">
+              <div class="progress-fill"></div>
+            </div>
+
+            <p class="helper-text">{{ card.helperText }}</p>
+          </ng-container>
+
+          <ng-container *ngSwitchDefault>
+            <h2>{{ card.mainValue }}</h2>
+            <p class="sub-line">{{ card.subtitle }}</p>
+            <p class="helper-text" *ngIf="card.helperText">
+              {{ card.helperText }}
+            </p>
+          </ng-container>
+        </ng-container>
+      </div>
+
+      <a href="javascript:void(0)" class="card-link">
+        {{ card.actionText }}
+        <i class="pi pi-arrow-right"></i>
+      </a>
+    </article>
+  </section>
+
+  <section class="middle-grid">
+    <article class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <i class="pi pi-calendar"></i>
+          <h3>Upcoming Events</h3>
+        </div>
+
+        <a href="javascript:void(0)" class="view-link">
+          View all
+          <i class="pi pi-angle-right"></i>
+        </a>
+      </div>
+
+      <div class="event-list">
+        <div
+          class="event-item"
+          *ngFor="let event of upcomingEvents; trackBy: trackByIndex"
+        >
+          <div class="event-date">
+            <span class="month">{{ event.month }}</span>
+            <span class="day">{{ event.day }}</span>
+          </div>
+
+          <div class="event-info">
+            <h4>{{ event.title }}</h4>
+            <p>
+              <i class="pi pi-map-marker"></i>
+              {{ event.location }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <i class="pi pi-bell"></i>
+          <h3>Announcements</h3>
+        </div>
+
+        <a href="javascript:void(0)" class="view-link">
+          View all
+          <i class="pi pi-angle-right"></i>
+        </a>
+      </div>
+
+      <div class="announcement-list">
+        <div
+          class="announcement-item"
+          *ngFor="let item of announcements; trackBy: trackByIndex"
+          [ngClass]="{ highlighted: item.highlighted }"
+        >
+          <div class="announcement-copy">
+            <h4>{{ item.title }}</h4>
+            <p>{{ item.date }}</p>
+          </div>
+
+          <span class="announcement-tag" [ngClass]="item.tagClass">
+            {{ item.tag }}
+          </span>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="bottom-grid">
+    <article class="panel recommended-panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <i class="pi pi-chart-line"></i>
+          <h3>Recommended for You</h3>
+        </div>
+
+        <a href="javascript:void(0)" class="view-link">
+          Browse jobs
+          <i class="pi pi-angle-right"></i>
+        </a>
+      </div>
+
+      <div class="job-list">
+        <div
+          class="job-item"
+          *ngFor="let job of recommendedJobs; trackBy: trackByIndex"
+        >
+          <div class="job-left">
+            <div class="job-icon">
+              <i class="pi pi-building"></i>
+            </div>
+
+            <div class="job-copy">
+              <h4>{{ job.title }}</h4>
+              <p>{{ job.company }} · {{ job.location }}</p>
+            </div>
+          </div>
+
+          <div class="job-match">
+            <strong>{{ job.match }}%</strong>
+            <span>match</span>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="panel activity-panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <i class="pi pi-clock"></i>
+          <h3>Recent Activity</h3>
+        </div>
+      </div>
+
+      <div class="activity-list">
+        <div
+          class="activity-item"
+          *ngFor="let activity of recentActivities; trackBy: trackByIndex"
+        >
+          <div class="activity-icon" [ngClass]="activity.iconClass">
+            <i [class]="activity.icon"></i>
+          </div>
+
+          <div class="activity-copy">
+            <h4>{{ activity.title }}</h4>
+            <p>{{ activity.description }}</p>
+            <span>{{ activity.time }}</span>
+          </div>
+        </div>
+      </div>
+    </article>
+  </section>
+</section>

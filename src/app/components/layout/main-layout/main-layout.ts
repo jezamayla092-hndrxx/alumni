@@ -5,6 +5,7 @@ import {
   Inject,
   PLATFORM_ID,
   HostListener,
+  OnDestroy,
 } from '@angular/core';
 import { CommonModule, NgClass, isPlatformBrowser } from '@angular/common';
 import {
@@ -12,7 +13,9 @@ import {
   RouterLinkActive,
   RouterOutlet,
   Router,
+  NavigationEnd,
 } from '@angular/router';
+import { filter, Subscription } from 'rxjs';
 
 import { AuthService } from '../../../services/auth.service';
 import { UsersService } from '../../../services/users.service';
@@ -23,7 +26,6 @@ interface NavItem {
   icon: string;
   route: string;
   small?: boolean;
-  disabled?: boolean;
 }
 
 @Component({
@@ -39,17 +41,17 @@ interface NavItem {
   templateUrl: './main-layout.html',
   styleUrls: ['./main-layout.scss'],
 })
-export class MainLayout implements OnInit {
+export class MainLayout implements OnInit, OnDestroy {
   sidebarCollapsed = false;
   loadingUser = true;
   userMenuOpen = false;
   darkMode = false;
+  pageTitle = 'Dashboard';
+  isMobileView = false;
 
-  /**
-   * TEMPORARY:
-   * Keep disabled until those pages/routes are ready.
-   */
-  navItems: NavItem[] = [
+  private routerEventsSub?: Subscription;
+
+  officerNavItems: NavItem[] = [
     {
       label: 'Dashboard',
       icon: 'pi-home',
@@ -60,37 +62,59 @@ export class MainLayout implements OnInit {
       icon: 'pi-check-square',
       route: '/officer/verification-requests',
       small: true,
-      disabled: true,
     },
     {
       label: 'Alumni Records',
       icon: 'pi-id-card',
       route: '/officer/alumni-records',
-      disabled: true,
-    },
-    {
-      label: 'Tracer Study',
-      icon: 'pi-chart-line',
-      route: '/officer/tracer-study',
-      disabled: true,
     },
     {
       label: 'Job Postings',
       icon: 'pi-briefcase',
       route: '/officer/job-postings',
-      disabled: true,
     },
     {
       label: 'Events',
       icon: 'pi-calendar',
       route: '/officer/events',
-      disabled: true,
     },
     {
       label: 'Announcements',
       icon: 'pi-megaphone',
       route: '/officer/announcements',
-      disabled: true,
+    },
+  ];
+
+  alumniNavItems: NavItem[] = [
+    {
+      label: 'Dashboard',
+      icon: 'pi-home',
+      route: '/alumni/dashboard',
+    },
+    {
+      label: 'Verification Status',
+      icon: 'pi-check-circle',
+      route: '/alumni/verification-status',
+    },
+    {
+      label: 'Alumni Directory',
+      icon: 'pi-users',
+      route: '/alumni/alumni-directory',
+    },
+    {
+      label: 'Employment Status',
+      icon: 'pi-briefcase',
+      route: '/alumni/employment-status',
+    },
+    {
+      label: 'Job Opportunities',
+      icon: 'pi-building',
+      route: '/alumni/job-opportunities',
+    },
+    {
+      label: 'Events & Announcements',
+      icon: 'pi-calendar',
+      route: '/alumni/events-announcements',
     },
   ];
 
@@ -104,18 +128,28 @@ export class MainLayout implements OnInit {
     @Inject(PLATFORM_ID) private platformId: object
   ) {}
 
-  async ngOnInit(): Promise<void> {
-    /**
-     * CRITICAL FIX:
-     * Do not run Firebase browser-auth user loading on the server.
-     * This prevents false redirects during refresh when SSR/server files exist.
-     */
+  ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) {
       this.loadingUser = false;
       return;
     }
 
-    await this.loadCurrentUser();
+    this.restoreDarkMode();
+    this.handleInitialSidebarState();
+    this.listenToRouteChanges();
+    this.initializeLayout();
+  }
+
+  ngOnDestroy(): void {
+    this.routerEventsSub?.unsubscribe();
+  }
+
+  get navItems(): NavItem[] {
+    if (this.currentUser?.role === 'alumni') {
+      return this.alumniNavItems;
+    }
+
+    return this.officerNavItems;
   }
 
   get currentUserInitial(): string {
@@ -154,12 +188,17 @@ export class MainLayout implements OnInit {
   }
 
   toggleSidebar(): void {
-    this.sidebarCollapsed = !this.sidebarCollapsed;
+    if (this.isMobileView) {
+      this.sidebarCollapsed = !this.sidebarCollapsed;
+    } else {
+      this.sidebarCollapsed = !this.sidebarCollapsed;
+    }
+
     this.userMenuOpen = false;
   }
 
   closeSidebarOnMobile(): void {
-    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+    if (this.isMobileView) {
       this.sidebarCollapsed = true;
     }
 
@@ -175,29 +214,50 @@ export class MainLayout implements OnInit {
   }
 
   toggleDarkMode(): void {
-    /**
-     * TEMPORARY:
-     * Layout-only dark mode.
-     * Not persisted yet to localStorage, Firestore, or user settings.
-     */
     this.darkMode = !this.darkMode;
     this.userMenuOpen = false;
+
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem('atms-dark-mode', JSON.stringify(this.darkMode));
+    }
   }
 
-  /**
-   * TEMPORARY:
-   * Placeholder until profile route/page exists.
-   */
   goToProfile(): void {
     this.userMenuOpen = false;
+
+    if (this.currentUser?.role === 'alumni') {
+      this.router.navigate(['/alumni/my-profile']);
+      return;
+    }
+
+    if (
+      this.currentUser?.role === 'officer' ||
+      this.currentUser?.role === 'admin'
+    ) {
+      this.router.navigate(['/officer/my-profile']);
+      return;
+    }
+
+    this.router.navigate(['/login']);
   }
 
-  /**
-   * TEMPORARY:
-   * Placeholder until settings route/page exists.
-   */
   goToSettings(): void {
     this.userMenuOpen = false;
+
+    if (this.currentUser?.role === 'alumni') {
+      this.router.navigate(['/alumni/settings']);
+      return;
+    }
+
+    if (
+      this.currentUser?.role === 'officer' ||
+      this.currentUser?.role === 'admin'
+    ) {
+      this.router.navigate(['/officer/settings']);
+      return;
+    }
+
+    this.router.navigate(['/login']);
   }
 
   async logout(): Promise<void> {
@@ -226,18 +286,93 @@ export class MainLayout implements OnInit {
     }
   }
 
-  private async loadCurrentUser(): Promise<void> {
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.handleInitialSidebarState();
+  }
+
+  private async initializeLayout(): Promise<void> {
     this.loadingUser = true;
 
     try {
+      await this.loadCurrentUser();
+      this.setPageTitle(this.router.url);
+    } finally {
+      this.loadingUser = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  private listenToRouteChanges(): void {
+    this.routerEventsSub = this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe((event) => {
+        const navEnd = event as NavigationEnd;
+        this.setPageTitle(navEnd.urlAfterRedirects);
+        this.userMenuOpen = false;
+      });
+  }
+
+  private setPageTitle(url: string): void {
+    if (url.includes('/officer/dashboard')) {
+      this.pageTitle = 'Dashboard';
+    } else if (url.includes('/officer/verification-requests')) {
+      this.pageTitle = 'Verification Requests';
+    } else if (url.includes('/officer/alumni-records')) {
+      this.pageTitle = 'Alumni Records';
+    } else if (url.includes('/officer/job-postings')) {
+      this.pageTitle = 'Job Postings';
+    } else if (url.includes('/officer/events')) {
+      this.pageTitle = 'Events';
+    } else if (url.includes('/officer/announcements')) {
+      this.pageTitle = 'Announcements';
+    } else if (url.includes('/officer/my-profile')) {
+      this.pageTitle = 'My Profile';
+    } else if (url.includes('/officer/settings')) {
+      this.pageTitle = 'Settings';
+    } else if (url.includes('/alumni/dashboard')) {
+      this.pageTitle = 'Dashboard';
+    } else if (url.includes('/alumni/verification-status')) {
+      this.pageTitle = 'Verification Status';
+    } else if (url.includes('/alumni/alumni-directory')) {
+      this.pageTitle = 'Alumni Directory';
+    } else if (url.includes('/alumni/employment-status')) {
+      this.pageTitle = 'Employment Status';
+    } else if (url.includes('/alumni/job-opportunities')) {
+      this.pageTitle = 'Job Opportunities';
+    } else if (url.includes('/alumni/events-announcements')) {
+      this.pageTitle = 'Events & Announcements';
+    } else if (url.includes('/alumni/my-profile')) {
+      this.pageTitle = 'My Profile';
+    } else if (url.includes('/alumni/settings')) {
+      this.pageTitle = 'Settings';
+    } else {
+      this.pageTitle = 'Dashboard';
+    }
+  }
+
+  private restoreDarkMode(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    const savedDarkMode = localStorage.getItem('atms-dark-mode');
+    this.darkMode = savedDarkMode ? JSON.parse(savedDarkMode) : false;
+  }
+
+  private handleInitialSidebarState(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    this.isMobileView = window.innerWidth <= 768;
+    this.sidebarCollapsed = this.isMobileView;
+  }
+
+  private async loadCurrentUser(): Promise<void> {
+    try {
       const authUser = await this.authService.getAuthState();
 
-      /**
-       * IMPORTANT FIX:
-       * Do not immediately force logout here.
-       * The guard should handle access control.
-       * Only redirect if browser-side auth is clearly missing.
-       */
       if (!authUser) {
         this.currentUser = null;
         await this.router.navigate(['/login']);
@@ -246,32 +381,37 @@ export class MainLayout implements OnInit {
 
       const userDoc = await this.usersService.getUserById(authUser.uid);
 
-      /**
-       * STRUCTURAL WARNING:
-       * Your app depends on both Firebase Auth and Firestore profile.
-       * If the Firestore user doc is missing, the session exists but
-       * the app has no role/profile context.
-       */
-      if (!userDoc) {
-        await this.authService.logout();
-        await this.router.navigate(['/login']);
+      if (userDoc) {
+        this.currentUser = userDoc;
         return;
       }
 
-      this.currentUser = userDoc;
+      this.currentUser = {
+        uid: authUser.uid,
+        email: authUser.email ?? '',
+        role: this.inferRoleFromUrl(),
+        firstName: '',
+        lastName: '',
+        fullName: authUser.displayName ?? '',
+      } as User;
     } catch (error) {
       console.error('Failed to load current user:', error);
       this.currentUser = null;
       await this.router.navigate(['/login']);
-    } finally {
-      this.loadingUser = false;
-
-      /**
-       * IMPORTANT FIX:
-       * Force template refresh after Firebase auth/user load.
-       * Prevents "name appears only after second click".
-       */
-      this.cdr.detectChanges();
     }
+  }
+
+  private inferRoleFromUrl(): 'admin' | 'officer' | 'alumni' {
+    const url = this.router.url || '';
+
+    if (url.startsWith('/alumni')) {
+      return 'alumni';
+    }
+
+    if (url.startsWith('/officer')) {
+      return 'officer';
+    }
+
+    return 'officer';
   }
 }

@@ -1,0 +1,28 @@
+:host {
+  display: block;
+}
+
+.placeholder-page {
+  padding: 24px;
+}
+
+.placeholder-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.placeholder-card h1 {
+  margin: 0 0 8px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.placeholder-card p {
+  margin: 0;
+  font-size: 14px;
+  color: #64748b;
+}

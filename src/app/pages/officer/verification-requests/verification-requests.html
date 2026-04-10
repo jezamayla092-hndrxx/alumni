@@ -1,0 +1,301 @@
+<section class="verification-page">
+  <div class="page-heading">
+    <div class="heading-copy">
+      <h1>Verification Requests</h1>
+      <p>Review and process alumni registration applications.</p>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <span class="search-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path
+            d="M10.5 4a6.5 6.5 0 1 1 0 13a6.5 6.5 0 0 1 0-13Zm0 1.5a5 5 0 1 0 0 10a5 5 0 0 0 0-10Zm8.56 11.44l1.94 1.94a.75.75 0 1 1-1.06 1.06L18 18a.75.75 0 1 1 1.06-1.06Z"
+          />
+        </svg>
+      </span>
+
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        placeholder="Search by name, email, program, or student ID..."
+        [disabled]="modalBusy || !!processingRequestId"
+      />
+    </div>
+
+    <div class="filter-buttons">
+      <button
+        type="button"
+        class="filter-btn all-btn"
+        [class.active]="activeFilter === 'all'"
+        [disabled]="modalBusy || !!processingRequestId"
+        (click)="setFilter('all')"
+      >
+        All
+      </button>
+
+      <button
+        type="button"
+        class="filter-btn pending-btn"
+        [class.active]="activeFilter === 'pending'"
+        [disabled]="modalBusy || !!processingRequestId"
+        (click)="setFilter('pending')"
+      >
+        Pending
+      </button>
+
+      <button
+        type="button"
+        class="filter-btn approved-btn"
+        [class.active]="activeFilter === 'approved'"
+        [disabled]="modalBusy || !!processingRequestId"
+        (click)="setFilter('approved')"
+      >
+        Approved
+      </button>
+
+      <button
+        type="button"
+        class="filter-btn rejected-btn"
+        [class.active]="activeFilter === 'rejected'"
+        [disabled]="modalBusy || !!processingRequestId"
+        (click)="setFilter('rejected')"
+      >
+        Rejected
+      </button>
+    </div>
+  </div>
+
+  <section class="panel verification-panel">
+    <div class="table-wrapper">
+      <table class="verification-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Program</th>
+            <th>Year Graduated</th>
+            <th>Date Submitted</th>
+            <th>Status</th>
+            <th class="actions-col">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngIf="loading">
+            <td colspan="6" class="empty-state-cell">
+              <div class="empty-state">
+                <i class="pi pi-spin pi-spinner"></i>
+                <h3>Loading verification requests...</h3>
+                <p>Please wait while records are being fetched.</p>
+              </div>
+            </td>
+          </tr>
+
+          <tr
+            *ngFor="let request of filteredRequests; trackBy: trackByRequestId"
+          >
+            <td class="td-name">{{ request.fullName }}</td>
+            <td>{{ request.program || '—' }}</td>
+            <td>{{ request.yearGraduated || '—' }}</td>
+            <td>{{ formatDate(request.submittedAt) }}</td>
+            <td>
+              <span
+                class="status-badge"
+                [ngClass]="getStatusClass(request.status)"
+              >
+                {{ getStatusLabel(request.status) }}
+              </span>
+            </td>
+            <td class="actions-cell">
+              <div class="action-group">
+                <button
+                  type="button"
+                  class="icon-btn view"
+                  title="View details"
+                  [disabled]="modalBusy || !!processingRequestId"
+                  (click)="openDetails(request, $event)"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M12 5c5.23 0 9.27 4.37 10.54 6c-1.27 1.63-5.31 6-10.54 6S2.73 12.63 1.46 11C2.73 9.37 6.77 5 12 5Zm0 1.5c-4.15 0-7.54 3.16-8.74 4.5c1.2 1.34 4.59 4.5 8.74 4.5s7.54-3.16 8.74-4.5c-1.2-1.34-4.59-4.5-8.74-4.5Zm0 1.75A2.75 2.75 0 1 1 12 13.75A2.75 2.75 0 0 1 12 8.25Zm0 1.5a1.25 1.25 0 1 0 0 2.5a1.25 1.25 0 0 0 0-2.5Z"
+                    />
+                  </svg>
+                </button>
+
+                <button
+                  type="button"
+                  class="icon-btn approve"
+                  title="Approve"
+                  *ngIf="request.status === 'pending' || request.status === 'under_review'"
+                  [disabled]="modalBusy || processingRequestId === request.id"
+                  (click)="approveRequest(request, $event)"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M9.55 16.6L5.7 12.75a.75.75 0 1 1 1.06-1.06l2.79 2.79l7.69-7.69a.75.75 0 1 1 1.06 1.06L10.61 16.6a.75.75 0 0 1-1.06 0Z"
+                    />
+                  </svg>
+                </button>
+
+                <button
+                  type="button"
+                  class="icon-btn reject"
+                  title="Reject"
+                  *ngIf="request.status === 'pending' || request.status === 'under_review'"
+                  [disabled]="modalBusy || processingRequestId === request.id"
+                  (click)="rejectRequest(request, $event)"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M7.72 7.72a.75.75 0 0 1 1.06 0L12 10.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L13.06 12l3.22 3.22a.75.75 0 1 1-1.06 1.06L12 13.06l-3.22 3.22a.75.75 0 1 1-1.06-1.06L10.94 12L7.72 8.78a.75.75 0 0 1 0-1.06Z"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="!loading && filteredRequests.length === 0">
+            <td colspan="6" class="empty-state-cell">
+              <div class="empty-state">
+                <i class="pi pi-inbox"></i>
+                <h3>No verification requests found</h3>
+                <p>Matching verification records will appear here.</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>
+
+<div
+  class="modal-backdrop"
+  *ngIf="showDetailsModal && selectedRequest"
+  (click)="closeDetails($event)"
+>
+  <div class="details-modal" (click)="$event.stopPropagation()">
+    <button type="button" class="modal-close" (click)="closeDetails($event)">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M7.72 7.72a.75.75 0 0 1 1.06 0L12 10.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L13.06 12l3.22 3.22a.75.75 0 1 1-1.06 1.06L12 13.06l-3.22 3.22a.75.75 0 1 1-1.06-1.06L10.94 12L7.72 8.78a.75.75 0 0 1 0-1.06Z"
+        />
+      </svg>
+    </button>
+
+    <div class="modal-header">
+      <h2>Verification Details</h2>
+    </div>
+
+    <div class="person-summary">
+      <div class="avatar">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M12 12a3.75 3.75 0 1 0-3.75-3.75A3.75 3.75 0 0 0 12 12Zm0 1.5c-3.16 0-6.75 1.55-6.75 4.5a.75.75 0 0 0 1.5 0c0-1.63 2.5-3 5.25-3s5.25 1.37 5.25 3a.75.75 0 0 0 1.5 0c0-2.95-3.59-4.5-6.75-4.5Z"
+          />
+        </svg>
+      </div>
+
+      <div class="person-meta">
+        <h3>{{ selectedRequest.fullName }}</h3>
+        <p>{{ selectedRequest.email }}</p>
+      </div>
+
+      <span
+        class="status-badge"
+        [ngClass]="getStatusClass(selectedRequest.status)"
+      >
+        {{ getStatusLabel(selectedRequest.status) }}
+      </span>
+    </div>
+
+    <div class="detail-grid">
+      <div class="detail-item">
+        <div class="detail-label">Program</div>
+        <div class="detail-value">{{ selectedRequest.program || '—' }}</div>
+      </div>
+
+      <div class="detail-item">
+        <div class="detail-label">Year Graduated</div>
+        <div class="detail-value">
+          {{ selectedRequest.yearGraduated || '—' }}
+        </div>
+      </div>
+
+      <div class="detail-item">
+        <div class="detail-label">Student ID</div>
+        <div class="detail-value">{{ selectedRequest.studentId || '—' }}</div>
+      </div>
+
+      <div class="detail-item">
+        <div class="detail-label">Date Submitted</div>
+        <div class="detail-value">
+          {{ formatDate(selectedRequest.submittedAt) }}
+        </div>
+      </div>
+    </div>
+
+    <div class="docs-section">
+      <h4>Submitted Documents</h4>
+
+      <div
+        class="doc-item"
+        *ngFor="let doc of selectedRequest.submittedDocuments || []"
+      >
+        <span class="doc-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M7 3.75A1.75 1.75 0 0 0 5.25 5.5v13A1.75 1.75 0 0 0 7 20.25h10A1.75 1.75 0 0 0 18.75 18.5v-9.1a1.75 1.75 0 0 0-.51-1.24l-3.39-3.39A1.75 1.75 0 0 0 13.61 4.25H7Zm0 1.5h6.25v2.5c0 .97.78 1.75 1.75 1.75h2.25v9a.25.25 0 0 1-.25.25H7a.25.25 0 0 1-.25-.25v-13A.25.25 0 0 1 7 5.25Zm7.75 1.06l1.94 1.94H15a.25.25 0 0 1-.25-.25V6.31ZM9 12a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5A.75.75 0 0 1 9 12Zm0 3a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5A.75.75 0 0 1 9 15Z"
+            />
+          </svg>
+        </span>
+        <span>{{ doc }}</span>
+      </div>
+
+      <div
+        class="detail-value"
+        *ngIf="!(selectedRequest.submittedDocuments?.length)"
+      >
+        No submitted documents listed.
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button
+        type="button"
+        class="action-btn approve-btn"
+        *ngIf="selectedRequest.status === 'pending' || selectedRequest.status === 'under_review'"
+        [disabled]="modalBusy || processingRequestId === selectedRequest.id"
+        (click)="approveRequest(selectedRequest, $event)"
+      >
+        <span class="btn-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M9.55 16.6L5.7 12.75a.75.75 0 1 1 1.06-1.06l2.79 2.79l7.69-7.69a.75.75 0 1 1 1.06 1.06L10.61 16.6a.75.75 0 0 1-1.06 0Z"
+            />
+          </svg>
+        </span>
+        Approve
+      </button>
+
+      <button
+        type="button"
+        class="action-btn reject-btn"
+        *ngIf="selectedRequest.status === 'pending' || selectedRequest.status === 'under_review'"
+        [disabled]="modalBusy || processingRequestId === selectedRequest.id"
+        (click)="rejectRequest(selectedRequest, $event)"
+      >
+        <span class="btn-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M7.72 7.72a.75.75 0 0 1 1.06 0L12 10.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L13.06 12l3.22 3.22a.75.75 0 1 1-1.06 1.06L12 13.06l-3.22 3.22a.75.75 0 1 1-1.06-1.06L10.94 12L7.72 8.78a.75.75 0 0 1 0-1.06Z"
+            />
+          </svg>
+        </span>
+        Reject
+      </button>
+    </div>
+  </div>
+</div>

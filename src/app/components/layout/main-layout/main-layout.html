@@ -1,31 +1,31 @@
-<div
-  class="layout-shell"
-  [class.sidebar-collapsed]="sidebarCollapsed"
-  [class.dark-mode]="darkMode"
->
+<ng-container *ngIf="!loadingUser; else layoutLoading">
   <div
-    class="sidebar-backdrop"
-    *ngIf="!sidebarCollapsed"
-    (click)="toggleSidebar()"
-  ></div>
+    class="layout-shell"
+    [class.sidebar-collapsed]="sidebarCollapsed"
+    [class.dark-mode]="darkMode"
+  >
+    <div
+      class="sidebar-backdrop"
+      *ngIf="!sidebarCollapsed"
+      (click)="toggleSidebar()"
+    ></div>
 
-  <aside class="sidebar">
-    <div class="sidebar-header">
-      <div class="brand-wrap">
-        <div class="brand-icon">
-          <i class="pi pi-graduation-cap"></i>
-        </div>
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="brand-wrap">
+          <div class="brand-icon">
+            <i class="pi pi-graduation-cap"></i>
+          </div>
 
-        <div class="brand-text" *ngIf="!sidebarCollapsed">
-          <h2>ATMS</h2>
+          <div class="brand-text" *ngIf="!sidebarCollapsed">
+            <h2>ATMS</h2>
+          </div>
         </div>
       </div>
-    </div>
 
-    <nav class="sidebar-nav" aria-label="Officer navigation">
-      <ng-container *ngFor="let item of navItems">
+      <nav class="sidebar-nav" aria-label="Officer navigation">
         <a
-          *ngIf="!item.disabled; else disabledNavItem"
+          *ngFor="let item of navItems"
           class="nav-item"
           [routerLink]="item.route"
           routerLinkActive="active-link"
@@ -46,118 +46,106 @@
 
           <span class="nav-dot" *ngIf="!sidebarCollapsed"></span>
         </a>
+      </nav>
 
-        <ng-template #disabledNavItem>
-          <button
-            type="button"
-            class="nav-item nav-item-disabled"
-            [attr.aria-disabled]="true"
-            tabindex="-1"
-          >
-            <div class="nav-icon">
-              <i class="pi" [ngClass]="item.icon"></i>
-            </div>
-
-            <span
-              class="nav-text"
-              *ngIf="!sidebarCollapsed"
-              [class.small-text]="item.small"
-            >
-              {{ item.label }}
-            </span>
-          </button>
-        </ng-template>
-      </ng-container>
-    </nav>
-
-    <div class="sidebar-footer">
-      <button
-        class="sidebar-footer-toggle"
-        type="button"
-        (click)="toggleSidebar()"
-        [attr.aria-label]="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
-      >
-        <i
-          class="pi"
-          [ngClass]="sidebarCollapsed ? 'pi-angle-right' : 'pi-angle-left'"
-        ></i>
-      </button>
-    </div>
-  </aside>
-
-  <div class="main-panel">
-    <header class="topbar">
-      <div class="topbar-left">
+      <div class="sidebar-footer">
         <button
-          class="mobile-toggle"
+          class="sidebar-footer-toggle"
           type="button"
           (click)="toggleSidebar()"
-          aria-label="Toggle sidebar"
+          [attr.aria-label]="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
         >
-          <i class="pi pi-bars"></i>
+          <i
+            class="pi"
+            [ngClass]="sidebarCollapsed ? 'pi-angle-right' : 'pi-angle-left'"
+          ></i>
         </button>
-
-        <div class="topbar-title">Dashboard</div>
       </div>
+    </aside>
 
-      <div class="topbar-right">
-        <button
-          class="topbar-icon-btn darkmode-btn"
-          type="button"
-          (click)="toggleDarkMode()"
-          [attr.aria-label]="darkMode ? 'Switch to light mode' : 'Switch to dark mode'"
-        >
-          <i class="pi" [ngClass]="darkMode ? 'pi-sun' : 'pi-moon'"></i>
-        </button>
-
-        <button
-          class="topbar-icon-btn notification-btn"
-          type="button"
-          aria-label="Notifications"
-        >
-          <i class="pi pi-bell"></i>
-        </button>
-
-        <div class="topbar-user" *ngIf="!loadingUser">
-          <div
-            class="topbar-avatar"
-            (click)="toggleUserMenu()"
-            role="button"
-            tabindex="0"
-            aria-label="Open user menu"
+    <div class="main-panel">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button
+            class="mobile-toggle"
+            type="button"
+            (click)="toggleSidebar()"
+            aria-label="Toggle sidebar"
           >
-            {{ currentUserInitial }}
-          </div>
+            <i class="pi pi-bars"></i>
+          </button>
 
-          <div class="user-dropdown" *ngIf="userMenuOpen">
-            <div class="user-dropdown-header">
-              <strong>{{ currentUserName }}</strong>
-              <span>{{ currentUserRole }}</span>
+          <div class="topbar-title">{{ pageTitle }}</div>
+        </div>
+
+        <div class="topbar-right">
+          <button
+            class="topbar-icon-btn darkmode-btn"
+            type="button"
+            (click)="toggleDarkMode()"
+            [attr.aria-label]="darkMode ? 'Switch to light mode' : 'Switch to dark mode'"
+          >
+            <i class="pi" [ngClass]="darkMode ? 'pi-sun' : 'pi-moon'"></i>
+          </button>
+
+          <button
+            class="topbar-icon-btn notification-btn"
+            type="button"
+            aria-label="Notifications"
+          >
+            <i class="pi pi-bell"></i>
+          </button>
+
+          <div class="topbar-user">
+            <div
+              class="topbar-avatar"
+              (click)="toggleUserMenu()"
+              role="button"
+              tabindex="0"
+              aria-label="Open user menu"
+            >
+              {{ currentUserInitial }}
             </div>
 
-            <button type="button" class="dropdown-item" (click)="goToProfile()">
-              <i class="pi pi-user"></i>
-              <span>My Profile</span>
-            </button>
+            <div class="user-dropdown" *ngIf="userMenuOpen">
+              <div class="user-dropdown-header">
+                <strong>{{ currentUserName }}</strong>
+                <span>{{ currentUserRole }}</span>
+              </div>
 
-            <button type="button" class="dropdown-item" (click)="goToSettings()">
-              <i class="pi pi-cog"></i>
-              <span>Settings</span>
-            </button>
+              <button type="button" class="dropdown-item" (click)="goToProfile()">
+                <i class="pi pi-user"></i>
+                <span>My Profile</span>
+              </button>
 
-            <div class="dropdown-divider"></div>
+              <button type="button" class="dropdown-item" (click)="goToSettings()">
+                <i class="pi pi-cog"></i>
+                <span>Settings</span>
+              </button>
 
-            <button type="button" class="dropdown-item logout" (click)="logout()">
-              <i class="pi pi-sign-out"></i>
-              <span>Sign out</span>
-            </button>
+              <div class="dropdown-divider"></div>
+
+              <button type="button" class="dropdown-item logout" (click)="logout()">
+                <i class="pi pi-sign-out"></i>
+                <span>Sign out</span>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
 
-    <main class="content-area">
-      <router-outlet></router-outlet>
-    </main>
+      <main class="content-area">
+        <router-outlet></router-outlet>
+      </main>
+    </div>
   </div>
-</div>
+</ng-container>
+
+<ng-template #layoutLoading>
+  <div class="layout-loading">
+    <div class="layout-loading-card">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>Loading user session...</span>
+    </div>
+  </div>
+</ng-template>

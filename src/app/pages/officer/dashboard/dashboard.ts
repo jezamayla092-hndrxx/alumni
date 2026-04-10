@@ -1,13 +1,19 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  NgZone,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
+import { NavigationEnd, Router } from '@angular/router';
+import { Subject, filter, takeUntil } from 'rxjs';
 
-type VerificationStatus = 'pending' | 'under-review' | 'verified';
-type EmploymentStatus =
-  | 'Employed'
-  | 'Self-Employed'
-  | 'Unemployed'
-  | 'Further Studies';
-type JobType = 'Full-time' | 'Part-time' | 'Contract';
+import { VerificationService } from '../../../services/verification.service';
+import { VerificationRequest } from '../../../models/verification.model';
+
+type VerificationStatus = 'pending' | 'under_review' | 'approved' | 'rejected';
+type ActivityType = 'job' | 'event' | 'announcement';
 
 interface SummaryCard {
   title: string;
@@ -15,41 +21,21 @@ interface SummaryCard {
   subtitle: string;
   icon: string;
   iconClass: string;
-  trend?: string;
-  trendDirection?: 'up' | 'down' | 'neutral';
 }
 
 interface VerificationPreview {
   id: string;
   name: string;
   program: string;
-  year: number;
+  year: number | string;
   status: VerificationStatus;
 }
 
-interface AlumniRecordPreview {
+interface ActivityPreview {
   id: string;
-  fullName: string;
-  program: string;
-  yearGraduated: number;
-  employmentStatus: EmploymentStatus;
-}
-
-interface JobPostingPreview {
-  id: string;
+  type: ActivityType;
   title: string;
-  company: string;
-  location: string;
-  postedDate: string;
-  type: JobType;
-}
-
-interface EventAnnouncementPreview {
-  id: string;
-  type: 'event' | 'announcement';
-  title: string;
-  dateLabel: string;
-  timeLabel?: string;
+  date: string;
 }
 
 @Component({
@@ -59,229 +45,196 @@ interface EventAnnouncementPreview {
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
 })
-export class Dashboard {
-  /**
-   * TEMPORARY MOCK DATA
-   * Replace later with service-driven data.
-   */
+export class Dashboard implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+
   summaryCards: SummaryCard[] = [
     {
       title: 'Pending Verifications',
-      value: '24',
-      subtitle: '+3 today',
-      icon: 'pi pi-check-circle',
+      value: '0',
+      subtitle: 'Loading verification data...',
+      icon: 'pi pi-shield',
       iconClass: 'icon-violet',
-      trend: '+12%',
-      trendDirection: 'up',
     },
     {
-      title: 'Total Alumni Records',
-      value: '3,847',
-      subtitle: '+12 this week',
+      title: 'Total Alumni',
+      value: '1,842',
+      subtitle: '+12 this month',
       icon: 'pi pi-users',
-      iconClass: 'icon-green',
-      trend: '+8%',
-      trendDirection: 'up',
-    },
-    {
-      title: 'Tracer Responses',
-      value: '1,206',
-      subtitle: '82% response rate',
-      icon: 'pi pi-chart-bar',
       iconClass: 'icon-purple',
-      trend: '+5%',
-      trendDirection: 'up',
     },
     {
       title: 'Active Job Posts',
       value: '18',
-      subtitle: '5 expiring soon',
+      subtitle: '6 new this week',
       icon: 'pi pi-briefcase',
       iconClass: 'icon-amber',
-      trend: '-2%',
-      trendDirection: 'down',
     },
     {
       title: 'Upcoming Events',
-      value: '7',
+      value: '3',
       subtitle: 'Next: Apr 15',
       icon: 'pi pi-calendar',
       iconClass: 'icon-blue',
-      trend: 'This month',
-      trendDirection: 'neutral',
     },
     {
-      title: 'Announcements Posted',
-      value: '42',
-      subtitle: '3 this month',
+      title: 'Announcements',
+      value: '47',
+      subtitle: '2 published today',
       icon: 'pi pi-megaphone',
       iconClass: 'icon-pink',
-      trend: '+10%',
-      trendDirection: 'up',
     },
   ];
 
-  verificationRequests: VerificationPreview[] = [
-    {
-      id: 'VR-001',
-      name: 'Maria Santos',
-      program: 'BS Information Technology',
-      year: 2023,
-      status: 'pending',
-    },
-    {
-      id: 'VR-002',
-      name: 'Juan Dela Cruz',
-      program: 'BS Computer Science',
-      year: 2022,
-      status: 'pending',
-    },
-    {
-      id: 'VR-003',
-      name: 'Ana Reyes',
-      program: 'BS Education',
-      year: 2024,
-      status: 'under-review',
-    },
-    {
-      id: 'VR-004',
-      name: 'Carlos Garcia',
-      program: 'BS Nursing',
-      year: 2023,
-      status: 'pending',
-    },
-    {
-      id: 'VR-005',
-      name: 'Lea Mendoza',
-      program: 'BS Accountancy',
-      year: 2021,
-      status: 'pending',
-    },
-  ];
+  verificationRequests: VerificationPreview[] = [];
 
-  recentAlumniRecords: AlumniRecordPreview[] = [
+  recentActivities: ActivityPreview[] = [
     {
-      id: 'AR-001',
-      fullName: 'Sophia Villanueva',
-      program: 'BS Computer Science',
-      yearGraduated: 2024,
-      employmentStatus: 'Employed',
+      id: 'ACT-001',
+      type: 'job',
+      title: 'Software Developer at Accenture',
+      date: 'Apr 8, 2026',
     },
     {
-      id: 'AR-002',
-      fullName: 'Marco Tan',
-      program: 'BS Information Technology',
-      yearGraduated: 2023,
-      employmentStatus: 'Self-Employed',
-    },
-    {
-      id: 'AR-003',
-      fullName: 'Patricia Lim',
-      program: 'BS Education',
-      yearGraduated: 2024,
-      employmentStatus: 'Unemployed',
-    },
-    {
-      id: 'AR-004',
-      fullName: 'Rafael Cruz',
-      program: 'BS Nursing',
-      yearGraduated: 2022,
-      employmentStatus: 'Employed',
-    },
-    {
-      id: 'AR-005',
-      fullName: 'Jenny Aquino',
-      program: 'BS Accountancy',
-      yearGraduated: 2023,
-      employmentStatus: 'Further Studies',
-    },
-  ];
-
-  recentJobPostings: JobPostingPreview[] = [
-    {
-      id: 'JP-001',
-      title: 'Software Developer',
-      company: 'TechCorp PH',
-      location: 'Manila',
-      postedDate: 'Apr 5, 2026',
-      type: 'Full-time',
-    },
-    {
-      id: 'JP-002',
-      title: 'Registered Nurse',
-      company: "St. Luke's Medical",
-      location: 'Quezon City',
-      postedDate: 'Apr 3, 2026',
-      type: 'Full-time',
-    },
-    {
-      id: 'JP-003',
-      title: 'Marketing Associate',
-      company: 'Globe Telecom',
-      location: 'Taguig',
-      postedDate: 'Apr 1, 2026',
-      type: 'Contract',
-    },
-  ];
-
-  eventsAnnouncements: EventAnnouncementPreview[] = [
-    {
-      id: 'EA-001',
+      id: 'ACT-002',
       type: 'event',
-      title: 'Alumni Homecoming 2026',
-      dateLabel: 'Apr 15, 2026',
-      timeLabel: '9:00 AM',
+      title: 'Grand Alumni Homecoming 2026',
+      date: 'Apr 7, 2026',
     },
     {
-      id: 'EA-002',
-      type: 'event',
-      title: 'Career Fair: IT & Engineering',
-      dateLabel: 'Apr 22, 2026',
-      timeLabel: '10:00 AM',
-    },
-    {
-      id: 'EA-003',
-      type: 'announcement',
-      title: 'New scholarship fund now available for alumni dependents',
-      dateLabel: 'Apr 7, 2026',
-    },
-    {
-      id: 'EA-004',
+      id: 'ACT-003',
       type: 'announcement',
       title: 'Updated alumni ID processing guidelines',
-      dateLabel: 'Apr 3, 2026',
+      date: 'Apr 6, 2026',
     },
   ];
 
-  tracerSegments = [
-    { label: 'Employed', value: 68, colorClass: 'seg-employed' },
-    { label: 'Self-Employed', value: 12, colorClass: 'seg-self-employed' },
-    { label: 'Unemployed', value: 11, colorClass: 'seg-unemployed' },
-    { label: 'Further Studies', value: 9, colorClass: 'seg-further-studies' },
-  ];
+  loadingVerifications = false;
 
-  monthlyResponseMonths = ['Jan', 'Feb', 'Mar', 'Apr'];
+  constructor(
+    private verificationService: VerificationService,
+    private router: Router,
+    private cdr: ChangeDetectorRef,
+    private zone: NgZone
+  ) {}
 
-  getInitials(fullName: string): string {
-    return fullName
-      .split(' ')
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part.charAt(0).toUpperCase())
-      .join('');
+  ngOnInit(): void {
+    this.loadVerificationDashboardData();
+
+    this.router.events
+      .pipe(
+        filter((event) => event instanceof NavigationEnd),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((event) => {
+        const nav = event as NavigationEnd;
+        if (nav.urlAfterRedirects.includes('/officer/dashboard')) {
+          this.loadVerificationDashboardData();
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  loadVerificationDashboardData(): void {
+    this.loadingVerifications = true;
+
+    this.verificationService
+      .getAllVerificationRequests()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (requests: VerificationRequest[]) => {
+          this.zone.run(() => {
+            const safeRequests = Array.isArray(requests) ? [...requests] : [];
+
+            const pendingRequests = safeRequests.filter(
+              (request) => request.status === 'pending'
+            );
+
+            this.summaryCards = this.summaryCards.map((card) =>
+              card.title === 'Pending Verifications'
+                ? {
+                    ...card,
+                    value: String(pendingRequests.length),
+                    subtitle:
+                      pendingRequests.length === 1
+                        ? '1 request awaiting review'
+                        : `${pendingRequests.length} requests awaiting review`,
+                  }
+                : card
+            );
+
+            this.verificationRequests = safeRequests
+              .slice()
+              .sort((a, b) => this.getRequestTime(b) - this.getRequestTime(a))
+              .slice(0, 4)
+              .map((request, index) => ({
+                id: request.id || `VR-${index + 1}`,
+                name: request.fullName || 'Unknown Applicant',
+                program: request.program || 'Not specified',
+                year: request.yearGraduated || '—',
+                status: request.status,
+              }));
+
+            this.loadingVerifications = false;
+
+            this.cdr.detectChanges();
+          });
+        },
+        error: (error) => {
+          this.zone.run(() => {
+            console.error('Error loading verification dashboard data:', error);
+
+            this.summaryCards = this.summaryCards.map((card) =>
+              card.title === 'Pending Verifications'
+                ? {
+                    ...card,
+                    value: '0',
+                    subtitle: 'Failed to load verification data',
+                  }
+                : card
+            );
+
+            this.verificationRequests = [];
+            this.loadingVerifications = false;
+
+            this.cdr.detectChanges();
+          });
+        },
+      });
+  }
+
+  private getRequestTime(request: VerificationRequest): number {
+    const raw = request.submittedAt;
+
+    if (!raw) return 0;
+    if (typeof raw === 'number') return raw;
+    if (raw?.seconds) return raw.seconds * 1000;
+
+    const parsed = new Date(raw).getTime();
+    return Number.isNaN(parsed) ? 0 : parsed;
   }
 
   getVerificationStatusLabel(status: VerificationStatus): string {
     switch (status) {
       case 'pending':
         return 'Pending';
-      case 'under-review':
+      case 'under_review':
         return 'Under Review';
-      case 'verified':
-        return 'Verified';
+      case 'approved':
+        return 'Approved';
+      case 'rejected':
+        return 'Rejected';
       default:
         return status;
     }
+  }
+
+  goToVerificationRequests(): void {
+    this.router.navigate(['/officer/verification-requests']);
   }
 
   trackById(_: number, item: { id: string }): string {

@@ -6,6 +6,8 @@ import {
   collection,
   getDocs,
   updateDoc,
+  query,
+  where,
 } from 'firebase/firestore';
 import { db } from '../firebase.config';
 import { User } from '../models/user.model';
@@ -37,6 +39,16 @@ export class UsersService {
 
   async getAllUsers(): Promise<User[]> {
     const snapshot = await getDocs(this.usersCollection);
+    return snapshot.docs.map((docItem) => ({
+      id: docItem.id,
+      ...(docItem.data() as User),
+    }));
+  }
+
+  async getAlumniUsers(): Promise<User[]> {
+    const alumniQuery = query(this.usersCollection, where('role', '==', 'alumni'));
+    const snapshot = await getDocs(alumniQuery);
+
     return snapshot.docs.map((docItem) => ({
       id: docItem.id,
       ...(docItem.data() as User),

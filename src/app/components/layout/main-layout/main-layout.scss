@@ -85,7 +85,6 @@
   overflow-y: auto;
 }
 
-/* expanded nav item */
 .nav-item {
   width: 100%;
   height: 48px;
@@ -409,9 +408,6 @@
   transition: background 0.25s ease;
 }
 
-/* =========================
-   COLLAPSED SIDEBAR
-   ========================= */
 .layout-shell.sidebar-collapsed .sidebar {
   width: 88px;
   min-width: 88px;
@@ -487,10 +483,6 @@
 .layout-shell.sidebar-collapsed .sidebar-footer {
   padding: 12px;
 }
-
-/* =========================
-   DARK MODE
-   ========================= */
 
 .layout-shell.dark-mode {
   background: #0f172a;

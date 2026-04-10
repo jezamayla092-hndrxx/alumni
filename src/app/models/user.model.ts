@@ -1,5 +1,11 @@
 export type UserRole = 'admin' | 'officer' | 'alumni';
 
+export type EmploymentStatus =
+  | 'Employed'
+  | 'Self-Employed'
+  | 'Unemployed'
+  | 'Further Studies';
+
 export interface User {
   id?: string;
   email: string;
@@ -16,4 +22,10 @@ export interface User {
   isActive?: boolean;
 
   createdAt?: any;
+
+  contactNumber?: string;
+  address?: string;
+  photoUrl?: string;
+
+  employmentStatus?: EmploymentStatus;
 }

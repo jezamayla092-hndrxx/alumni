@@ -1,0 +1,228 @@
+<section class="profile-page">
+  <div class="page-heading">
+    <div class="heading-copy">
+      <h1>My Profile</h1>
+      <p>View and manage your account information.</p>
+    </div>
+
+    <div class="page-actions" *ngIf="!loading">
+      <button
+        *ngIf="!isEditing"
+        type="button"
+        class="action-btn primary-btn"
+        (click)="toggleEdit()"
+      >
+        <i class="pi pi-pencil"></i>
+        Edit Profile
+      </button>
+
+      <ng-container *ngIf="isEditing">
+        <button
+          type="button"
+          class="action-btn secondary-btn"
+          (click)="cancelEdit()"
+          [disabled]="saving"
+        >
+          <i class="pi pi-times"></i>
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          class="action-btn primary-btn"
+          (click)="saveProfile()"
+          [disabled]="saving"
+        >
+          <i class="pi pi-check"></i>
+          {{ saving ? 'Saving...' : 'Save Changes' }}
+        </button>
+      </ng-container>
+    </div>
+  </div>
+
+  <div class="feedback error" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </div>
+
+  <div class="loading-card card" *ngIf="loading">
+    <p>Loading profile...</p>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <section class="profile-hero card">
+      <div class="profile-hero-left">
+        <div class="avatar">
+          <ng-container *ngIf="profile.photoUrl; else initialsAvatar">
+            <img [src]="profile.photoUrl" alt="Profile photo" />
+          </ng-container>
+
+          <ng-template #initialsAvatar>
+            <span>{{ displayInitials }}</span>
+          </ng-template>
+        </div>
+
+        <div class="hero-copy">
+          <h2>{{ displayName }}</h2>
+          <p>{{ displayRole }}</p>
+
+          <div class="hero-badges">
+            <span
+              class="status-pill"
+              [ngClass]="{
+                active: profile.isActive,
+                inactive: !profile.isActive
+              }"
+            >
+              {{ accountStatusLabel }}
+            </span>
+
+            <span
+              class="status-pill"
+              [ngClass]="{
+                verified: profile.status === 'verified',
+                pending: profile.status === 'pending',
+                rejected: profile.status === 'rejected'
+              }"
+            >
+              {{ verificationStatusLabel }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="profile-grid">
+      <article class="card info-card">
+        <div class="card-header">
+          <h3>Basic Information</h3>
+          <p>Main details linked to your officer account.</p>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-field">
+            <label>First Name</label>
+            <input
+              type="text"
+              [(ngModel)]="profile.firstName"
+              [disabled]="!isEditing"
+            />
+          </div>
+
+          <div class="form-field">
+            <label>Last Name</label>
+            <input
+              type="text"
+              [(ngModel)]="profile.lastName"
+              [disabled]="!isEditing"
+            />
+          </div>
+
+          <div class="form-field form-field-full">
+            <label>Full Name</label>
+            <input type="text" [value]="displayName" disabled />
+          </div>
+
+          <div class="form-field form-field-full">
+            <label>Email</label>
+            <input type="email" [(ngModel)]="profile.email" disabled />
+          </div>
+
+          <div class="form-field">
+            <label>Role</label>
+            <input type="text" [value]="displayRole" disabled />
+          </div>
+
+          <div class="form-field">
+            <label>UID</label>
+            <input type="text" [value]="profile.id || ''" disabled />
+          </div>
+        </div>
+      </article>
+
+      <article class="card info-card">
+        <div class="card-header">
+          <h3>Contact Information</h3>
+          <p>Editable profile details for your account record.</p>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-field">
+            <label>Contact Number</label>
+            <input
+              type="text"
+              [(ngModel)]="profile.contactNumber"
+              [disabled]="!isEditing"
+              placeholder="Enter contact number"
+            />
+          </div>
+
+          <div class="form-field">
+            <label>Profile Photo URL</label>
+            <input
+              type="text"
+              [(ngModel)]="profile.photoUrl"
+              [disabled]="!isEditing"
+              placeholder="Paste image URL"
+            />
+          </div>
+
+          <div class="form-field form-field-full">
+            <label>Address</label>
+            <textarea
+              rows="4"
+              [(ngModel)]="profile.address"
+              [disabled]="!isEditing"
+              placeholder="Enter address"
+            ></textarea>
+          </div>
+        </div>
+      </article>
+
+      <article class="card info-card">
+        <div class="card-header">
+          <h3>Account Overview</h3>
+          <p>System-managed information for your account.</p>
+        </div>
+
+        <div class="overview-grid">
+          <div class="overview-item">
+            <span class="overview-label">Account Status</span>
+            <span
+              class="status-pill"
+              [ngClass]="{
+                active: profile.isActive,
+                inactive: !profile.isActive
+              }"
+            >
+              {{ accountStatusLabel }}
+            </span>
+          </div>
+
+          <div class="overview-item">
+            <span class="overview-label">Verification Status</span>
+            <span
+              class="status-pill"
+              [ngClass]="{
+                verified: profile.status === 'verified',
+                pending: profile.status === 'pending',
+                rejected: profile.status === 'rejected'
+              }"
+            >
+              {{ verificationStatusLabel }}
+            </span>
+          </div>
+
+          <div class="overview-item">
+            <span class="overview-label">Registered Email</span>
+            <strong>{{ profile.email }}</strong>
+          </div>
+
+          <div class="overview-item">
+            <span class="overview-label">Role</span>
+            <strong>{{ displayRole }}</strong>
+          </div>
+        </div>
+      </article>
+    </section>
+  </ng-container>
+</section>

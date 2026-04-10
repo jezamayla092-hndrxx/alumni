@@ -6,6 +6,7 @@ import Swal from 'sweetalert2';
 
 import { AuthService } from '../../../services/auth.service';
 import { UsersService } from '../../../services/users.service';
+import { VerificationService } from '../../../services/verification.service';
 import { User } from '../../../models/user.model';
 
 @Component({
@@ -38,6 +39,7 @@ export class Signup {
   constructor(
     private authService: AuthService,
     private usersService: UsersService,
+    private verificationService: VerificationService,
     private router: Router
   ) {}
 
@@ -94,12 +96,13 @@ export class Signup {
     try {
       const credential = await this.authService.signup(email, password);
       const uid = credential.user.uid;
+      const fullName = `${firstName} ${lastName}`;
 
       const userData: User = {
         id: uid,
         email,
         role: 'alumni',
-        fullName: `${firstName} ${lastName}`,
+        fullName,
         firstName,
         lastName,
         studentId,
@@ -112,7 +115,20 @@ export class Signup {
 
       try {
         await this.usersService.createUser(uid, userData);
+        console.log('USER CREATED:', uid);
+
+        await this.verificationService.createVerificationRequest({
+          userUid: uid,
+          alumniId: studentId,
+          fullName,
+          email,
+          program,
+          yearGraduated: Number(this.yearGraduated),
+          studentId,
+        });
+        console.log('VERIFICATION REQUEST CREATED:', studentId);
       } catch (firestoreError) {
+        console.error('FIRESTORE ERROR:', firestoreError);
         await this.authService.deleteCurrentAuthUser();
         throw firestoreError;
       }
@@ -120,12 +136,14 @@ export class Signup {
       await Swal.fire({
         icon: 'success',
         title: 'Signup Successful',
-        text: 'Your alumni account has been created.',
+        text: 'Your alumni account has been created and sent for verification.',
         confirmButtonText: 'Go to Login',
       });
 
       await this.router.navigate(['/login']);
     } catch (error: any) {
+      console.error('SIGNUP ERROR:', error);
+
       await Swal.fire({
         icon: 'error',
         title: 'Signup Failed',

@@ -1,0 +1,335 @@
+:host {
+  display: block;
+  width: 100%;
+  font-family: 'Inter', 'Segoe UI', Roboto, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.verification-page {
+  padding: 1.1rem 1.15rem;
+  background: #f6f8fc;
+  min-height: 100%;
+  color: #1f2937;
+}
+
+.page-heading {
+  margin-bottom: 0.95rem;
+}
+
+.heading-copy {
+  h1 {
+    margin: 0 0 0.18rem;
+    font-size: 1.05rem;
+    line-height: 1.2;
+    font-weight: 600;
+    color: #111827;
+    letter-spacing: -0.01em;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.84rem;
+    line-height: 1.4;
+    color: #667085;
+    font-weight: 400;
+  }
+}
+
+.status-card,
+.timeline-card,
+.details-card {
+  background: #ffffff;
+  border: 1px solid #e9edf5;
+  border-radius: 16px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+}
+
+.status-card {
+  margin-bottom: 1rem;
+  padding: 2rem 1.15rem 1.45rem;
+  text-align: center;
+  border-color: #a7f3d0;
+  background: linear-gradient(180deg, #f0fdf4 0%, #ecfdf3 100%);
+}
+
+.status-icon {
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 0.9rem;
+  border-radius: 999px;
+  background: #d1fae5;
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  i {
+    font-size: 1.85rem;
+    line-height: 1;
+  }
+}
+
+.status-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.42rem;
+  margin-bottom: 0.55rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #10b981;
+
+  &::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: currentColor;
+    display: inline-block;
+  }
+}
+
+.status-card h2 {
+  margin: 0 0 0.55rem;
+  font-size: 1.9rem;
+  line-height: 1.15;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.03em;
+}
+
+.status-card p {
+  max-width: 540px;
+  margin: 0 auto 1.2rem;
+  font-size: 0.96rem;
+  line-height: 1.6;
+  color: #667085;
+  font-weight: 400;
+}
+
+.alumni-id {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #e9edf5;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.72rem;
+  text-align: left;
+
+  i {
+    font-size: 1rem;
+    color: #10b981;
+    flex-shrink: 0;
+  }
+
+  span {
+    font-size: 0.92rem;
+    line-height: 1.45;
+    color: #475467;
+    font-weight: 500;
+  }
+
+  strong {
+    color: #0f172a;
+    font-weight: 700;
+  }
+}
+
+.timeline-card,
+.details-card {
+  margin-bottom: 1rem;
+}
+
+.timeline-card h3,
+.details-card h3 {
+  margin: 0;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid #eef2f7;
+  font-size: 0.98rem;
+  line-height: 1.2;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.timeline {
+  padding: 1.15rem;
+}
+
+.timeline-item {
+  position: relative;
+  display: flex;
+  gap: 0.9rem;
+  align-items: flex-start;
+  padding-bottom: 1.3rem;
+
+  &:last-child {
+    padding-bottom: 0;
+  }
+
+  &:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 46px;
+    left: 18px;
+    width: 2px;
+    height: calc(100% - 34px);
+    background: #4f46e5;
+    opacity: 0.95;
+  }
+
+  h4 {
+    margin: 0 0 0.18rem;
+    font-size: 0.96rem;
+    line-height: 1.3;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  span {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.84rem;
+    line-height: 1.35;
+    color: #667085;
+    font-weight: 400;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #98a2b3;
+    font-weight: 400;
+  }
+}
+
+.dot {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: #4f46e5;
+  border: 4px solid #eef2ff;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.16);
+  flex-shrink: 0;
+  position: relative;
+  margin-top: 1px;
+
+  &::after {
+    content: '✓';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  padding: 1.15rem;
+}
+
+.details-grid > div {
+  min-width: 0;
+}
+
+.details-grid span {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #667085;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.details-grid strong {
+  display: block;
+  font-size: 0.96rem;
+  line-height: 1.45;
+  color: #0f172a;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+@media (max-width: 992px) {
+  .details-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .verification-page {
+    padding: 0.9rem;
+  }
+
+  .status-card {
+    padding: 1.5rem 0.9rem 1.15rem;
+  }
+
+  .status-icon {
+    width: 68px;
+    height: 68px;
+
+    i {
+      font-size: 1.65rem;
+    }
+  }
+
+  .status-card h2 {
+    font-size: 1.55rem;
+  }
+
+  .status-card p {
+    font-size: 0.9rem;
+  }
+
+  .timeline-card h3,
+  .details-card h3 {
+    padding: 0.9rem 1rem;
+  }
+
+  .timeline {
+    padding: 1rem;
+  }
+
+  .timeline-item {
+    gap: 0.75rem;
+
+    &:not(:last-child)::after {
+      left: 16px;
+    }
+  }
+
+  .dot {
+    width: 32px;
+    height: 32px;
+  }
+
+  .details-grid {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+    gap: 0.9rem;
+  }
+
+  .alumni-id {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}

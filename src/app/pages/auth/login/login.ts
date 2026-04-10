@@ -70,18 +70,17 @@ export class Login {
         return;
       }
 
-      // TEMPORARY: allow pending users for UI testing only
       if (user.status === 'pending') {
         await Swal.fire({
-          icon: 'info',
-          title: 'Development Mode',
-          text: 'Pending account allowed for UI testing.',
-          timer: 1200,
-          showConfirmButton: false,
+          icon: 'warning',
+          title: 'Account Pending',
+          text: 'Your account is still pending approval.',
         });
+
+        await this.authService.logout();
+        return;
       }
 
-      // KEEP THIS BLOCK
       if (user.status === 'rejected') {
         await Swal.fire({
           icon: 'error',
@@ -101,16 +100,29 @@ export class Login {
         showConfirmButton: false,
       });
 
-      /**
-       * TEMPORARY HARD CODED REDIRECT
-       * Current phase is Officer UI building.
-       * Later replace this with role-based routing:
-       * - admin -> /admin/dashboard
-       * - officer -> /officer/dashboard
-       * - alumni -> /alumni/dashboard
-       */
-      await this.router.navigate(['/officer/dashboard']);
+      switch (user.role) {
+        case 'admin':
+          await this.router.navigate(['/admin/dashboard']);
+          break;
 
+        case 'officer':
+          await this.router.navigate(['/officer/dashboard']);
+          break;
+
+        case 'alumni':
+          await this.router.navigate(['/alumni/dashboard']);
+          break;
+
+        default:
+          await Swal.fire({
+            icon: 'error',
+            title: 'Login Failed',
+            text: 'Unknown user role.',
+          });
+
+          await this.authService.logout();
+          break;
+      }
     } catch (error: any) {
       await Swal.fire({
         icon: 'error',

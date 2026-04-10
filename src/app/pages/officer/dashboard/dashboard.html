@@ -1,25 +1,8 @@
 <section class="dashboard-page">
   <div class="page-heading">
-    <div>
+    <div class="heading-copy">
       <h1>Dashboard</h1>
-      <p>Welcome back. Here's your alumni management overview.</p>
-    </div>
-
-    <div class="page-actions">
-      <button type="button" class="action-btn secondary-btn">
-        <i class="pi pi-refresh"></i>
-        Refresh
-      </button>
-
-      <button type="button" class="action-btn secondary-btn">
-        <i class="pi pi-check-square"></i>
-        Review Requests
-      </button>
-
-      <button type="button" class="action-btn primary-btn">
-        <i class="pi pi-plus"></i>
-        Quick Add
-      </button>
+      <p>Welcome back. Here's an overview of the alumni management system.</p>
     </div>
   </div>
 
@@ -28,43 +11,31 @@
       class="stat-card"
       *ngFor="let card of summaryCards; trackBy: trackByIndex"
     >
-      <div class="stat-top">
+      <div class="stat-card-content">
+        <div class="stat-copy">
+          <span class="stat-label">{{ card.title }}</span>
+          <h2>{{ card.value }}</h2>
+          <p>{{ card.subtitle }}</p>
+        </div>
+
         <div class="stat-icon" [ngClass]="card.iconClass">
           <i [class]="card.icon"></i>
         </div>
-
-        <span
-          class="stat-trend"
-          [ngClass]="{
-            'trend-up': card.trendDirection === 'up',
-            'trend-down': card.trendDirection === 'down',
-            'trend-neutral': card.trendDirection === 'neutral'
-          }"
-        >
-          {{ card.trend }}
-        </span>
       </div>
-
-      <h2>{{ card.value }}</h2>
-      <h3>{{ card.title }}</h3>
-      <p>{{ card.subtitle }}</p>
     </article>
   </section>
 
   <section class="dashboard-main-grid">
     <article class="panel panel-large">
       <div class="panel-header">
-        <div class="panel-title-wrap">
-          <div class="panel-icon icon-soft-violet">
-            <i class="pi pi-check-circle"></i>
-          </div>
-          <div>
-            <h2>Verification Requests</h2>
-            <p>Recent pending verifications</p>
-          </div>
-        </div>
-
-        <button type="button" class="panel-link-btn">View All →</button>
+        <h2>Recent Verification Requests</h2>
+        <button
+          type="button"
+          class="panel-link-btn"
+          (click)="goToVerificationRequests()"
+        >
+          View all →
+        </button>
       </div>
 
       <div
@@ -78,9 +49,9 @@
               <th>Program</th>
               <th>Year</th>
               <th>Status</th>
-              <th class="action-col">Action</th>
             </tr>
           </thead>
+
           <tbody>
             <tr *ngFor="let item of verificationRequests; trackBy: trackById">
               <td class="td-name">{{ item.name }}</td>
@@ -91,24 +62,13 @@
                   class="status-badge"
                   [ngClass]="{
                     'status-pending': item.status === 'pending',
-                    'status-review': item.status === 'under-review',
-                    'status-verified': item.status === 'verified'
+                    'status-review': item.status === 'under_review',
+                    'status-approved': item.status === 'approved',
+                    'status-rejected': item.status === 'rejected'
                   }"
                 >
                   {{ getVerificationStatusLabel(item.status) }}
                 </span>
-              </td>
-              <td class="action-col">
-                <div class="table-actions">
-                  <button type="button" class="mini-btn ghost-btn">
-                    <i class="pi pi-eye"></i>
-                    Review
-                  </button>
-                  <button type="button" class="mini-btn approve-btn">
-                    <i class="pi pi-check-circle"></i>
-                    Approve
-                  </button>
-                </div>
               </td>
             </tr>
           </tbody>
@@ -119,237 +79,51 @@
         <div class="empty-state">
           <i class="pi pi-inbox"></i>
           <h3>No verification requests yet</h3>
-          <p>Incoming alumni verification requests will appear here.</p>
+          <p>Incoming requests will appear here.</p>
         </div>
       </ng-template>
     </article>
 
     <article class="panel panel-side">
       <div class="panel-header">
-        <div class="panel-title-wrap">
-          <div class="panel-icon icon-soft-purple">
-            <i class="pi pi-chart-bar"></i>
-          </div>
-          <div>
-            <h2>Tracer Study Insights</h2>
-            <p>Employment status overview</p>
-          </div>
-        </div>
-
-        <button type="button" class="panel-link-btn">Details →</button>
+        <h2>Recent Activity</h2>
       </div>
 
-      <div class="tracer-summary">
-        <div class="tracer-bar">
-          <div
-            *ngFor="let segment of tracerSegments; trackBy: trackByIndex"
-            class="tracer-segment"
-            [ngClass]="segment.colorClass"
-            [style.width.%]="segment.value"
-          ></div>
-        </div>
-
-        <div class="tracer-legend">
-          <div class="legend-item" *ngFor="let segment of tracerSegments; trackBy: trackByIndex">
-            <div class="legend-left">
-              <span class="legend-dot" [ngClass]="segment.colorClass"></span>
-              <span>{{ segment.label }}</span>
-            </div>
-            <strong>{{ segment.value }}%</strong>
-          </div>
-        </div>
-      </div>
-
-      <div class="mini-chart-card">
-        <div class="mini-chart-header">
-          <span>Monthly Responses</span>
-          <strong class="trend-up">+21%</strong>
-        </div>
-
-        <div class="month-row">
-          <span *ngFor="let month of monthlyResponseMonths; trackBy: trackByIndex">
-            {{ month }}
-          </span>
-        </div>
-      </div>
-
-      <div class="tracer-metrics">
-        <div class="metric-card">
-          <h3>1,206</h3>
-          <p>Total Responses</p>
-        </div>
-
-        <div class="metric-card">
-          <h3>82%</h3>
-          <p>Response Rate</p>
-        </div>
-      </div>
-    </article>
-  </section>
-
-  <section class="bottom-grid">
-    <article class="panel">
-      <div class="panel-header">
-        <div class="panel-title-wrap">
-          <div class="panel-icon icon-soft-green">
-            <i class="pi pi-users"></i>
-          </div>
-          <div>
-            <h2>Recent Alumni Records</h2>
-            <p>Latest profiles updated</p>
-          </div>
-        </div>
-
-        <button type="button" class="panel-link-btn">View All →</button>
-      </div>
-
-      <div *ngIf="recentAlumniRecords.length > 0; else emptyAlumni">
+      <div *ngIf="recentActivities.length > 0; else emptyActivities">
         <div
-          class="list-item alumni-item"
-          *ngFor="let alumni of recentAlumniRecords; trackBy: trackById"
+          class="activity-item"
+          *ngFor="let activity of recentActivities; trackBy: trackById"
         >
-          <div class="list-left">
-            <div class="avatar-circle">
-              {{ getInitials(alumni.fullName) }}
-            </div>
-
-            <div class="list-text">
-              <h3>{{ alumni.fullName }}</h3>
-              <p>{{ alumni.program }} · {{ alumni.yearGraduated }}</p>
-            </div>
-          </div>
-
-          <span
-            class="status-pill"
+          <div
+            class="activity-icon"
             [ngClass]="{
-              'pill-employed': alumni.employmentStatus === 'Employed',
-              'pill-self-employed': alumni.employmentStatus === 'Self-Employed',
-              'pill-unemployed': alumni.employmentStatus === 'Unemployed',
-              'pill-further-studies': alumni.employmentStatus === 'Further Studies'
+              'activity-job': activity.type === 'job',
+              'activity-event': activity.type === 'event',
+              'activity-announcement': activity.type === 'announcement'
             }"
           >
-            {{ alumni.employmentStatus }}
-          </span>
-        </div>
-      </div>
-
-      <ng-template #emptyAlumni>
-        <div class="empty-state">
-          <i class="pi pi-users"></i>
-          <h3>No alumni records yet</h3>
-          <p>Recent alumni records will appear once profiles are added.</p>
-        </div>
-      </ng-template>
-    </article>
-
-    <article class="panel">
-      <div class="panel-header">
-        <div class="panel-title-wrap">
-          <div class="panel-icon icon-soft-amber">
-            <i class="pi pi-briefcase"></i>
-          </div>
-          <div>
-            <h2>Recent Job Postings</h2>
-            <p>Active opportunities</p>
-          </div>
-        </div>
-
-        <button type="button" class="panel-link-btn">View All →</button>
-      </div>
-
-      <div *ngIf="recentJobPostings.length > 0; else emptyJobs">
-        <div
-          class="list-item job-item"
-          *ngFor="let job of recentJobPostings; trackBy: trackById"
-        >
-          <div class="list-text">
-            <div class="job-top-row">
-              <h3>{{ job.title }}</h3>
-              <span
-                class="status-pill"
-                [ngClass]="{
-                  'pill-employed': job.type === 'Full-time',
-                  'pill-self-employed': job.type === 'Part-time',
-                  'pill-unemployed': job.type === 'Contract'
-                }"
-              >
-                {{ job.type }}
-              </span>
-            </div>
-
-            <p class="job-company">{{ job.company }}</p>
-            <p class="job-meta">
-              <i class="pi pi-map-marker"></i>
-              {{ job.location }}
-              <span class="dot-sep">•</span>
-              {{ job.postedDate }}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <ng-template #emptyJobs>
-        <div class="empty-state">
-          <i class="pi pi-briefcase"></i>
-          <h3>No job postings yet</h3>
-          <p>Published opportunities will appear here.</p>
-        </div>
-      </ng-template>
-    </article>
-
-    <article class="panel">
-      <div class="panel-header">
-        <div class="panel-title-wrap">
-          <div class="panel-icon icon-soft-blue">
-            <i class="pi pi-calendar"></i>
-          </div>
-          <div>
-            <h2>Events & Announcements</h2>
-            <p>Upcoming and recent updates</p>
-          </div>
-        </div>
-
-        <button type="button" class="panel-link-btn">View All →</button>
-      </div>
-
-      <div *ngIf="eventsAnnouncements.length > 0; else emptyEventsAnnouncements">
-        <div
-          class="list-item announcement-item"
-          *ngFor="let item of eventsAnnouncements; trackBy: trackById"
-        >
-          <div class="list-left">
-            <div
-              class="mini-type-icon"
+            <i
+              class="pi"
               [ngClass]="{
-                'mini-event': item.type === 'event',
-                'mini-announcement': item.type === 'announcement'
+                'pi-briefcase': activity.type === 'job',
+                'pi-calendar': activity.type === 'event',
+                'pi-megaphone': activity.type === 'announcement'
               }"
-            >
-              <i
-                class="pi"
-                [ngClass]="{
-                  'pi-calendar': item.type === 'event',
-                  'pi-megaphone': item.type === 'announcement'
-                }"
-              ></i>
-            </div>
+            ></i>
+          </div>
 
-            <div class="list-text">
-              <h3>{{ item.title }}</h3>
-              <p>
-                {{ item.dateLabel }}
-                <span *ngIf="item.timeLabel"> · {{ item.timeLabel }}</span>
-              </p>
-            </div>
+          <div class="activity-text">
+            <h3>{{ activity.title }}</h3>
+            <p>{{ activity.date }}</p>
           </div>
         </div>
       </div>
 
-      <ng-template #emptyEventsAnnouncements>
+      <ng-template #emptyActivities>
         <div class="empty-state">
-          <i class="pi pi-calendar"></i>
-          <h3>No events or announcements yet</h3>
-          <p>New updates will appear here once published.</p>
+          <i class="pi pi-history"></i>
+          <h3>No recent activity</h3>
+          <p>Recent updates will appear here.</p>
         </div>
       </ng-template>
     </article>

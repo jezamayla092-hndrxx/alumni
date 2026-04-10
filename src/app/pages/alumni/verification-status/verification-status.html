@@ -1,0 +1,113 @@
+<section class="verification-page">
+  <div class="page-heading">
+    <div class="heading-copy">
+      <h1>Verification Status</h1>
+      <p>Track your alumni verification progress and review details.</p>
+    </div>
+  </div>
+
+  <div class="status-card status-loading" *ngIf="loading">
+    <h2>Loading verification status...</h2>
+    <p>Please wait while we load your latest verification request.</p>
+  </div>
+
+  <div class="status-card status-error" *ngIf="!loading && errorMessage">
+    <h2>Unable to Load Verification Status</h2>
+    <p>{{ errorMessage }}</p>
+  </div>
+
+  <ng-container *ngIf="!loading && !errorMessage">
+    <div
+      class="status-card"
+      [ngClass]="{
+        'status-approved-card': status === 'approved',
+        'status-pending-card': status === 'pending' || status === 'under_review',
+        'status-rejected-card': status === 'rejected',
+        'status-empty-card': status === 'none'
+      }"
+    >
+      <div class="status-icon">
+        <i
+          class="pi"
+          [ngClass]="{
+            'pi-check': status === 'approved',
+            'pi-clock': status === 'pending' || status === 'under_review',
+            'pi-times': status === 'rejected',
+            'pi-info-circle': status === 'none'
+          }"
+        ></i>
+      </div>
+
+      <div class="status-label">{{ statusLabel }}</div>
+
+      <h2>{{ titleText }}</h2>
+
+      <p>{{ descriptionText }}</p>
+
+      <div class="alumni-id" *ngIf="status === 'approved'">
+        <i class="pi pi-id-card"></i>
+        <span><strong>Alumni ID:</strong> {{ alumniId }}</span>
+      </div>
+    </div>
+
+    <div class="timeline-card" *ngIf="verification">
+      <h3>Verification Timeline</h3>
+
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="dot"></div>
+          <div>
+            <h4>Application Submitted</h4>
+            <span>{{ submittedDate }}</span>
+            <p>
+              Alumni verification request submitted with all required documents.
+            </p>
+          </div>
+        </div>
+
+        <div class="timeline-item" *ngIf="status === 'approved' || status === 'rejected'">
+          <div class="dot"></div>
+          <div>
+            <h4>
+              {{ status === 'approved' ? 'Verification Complete' : 'Verification Result' }}
+            </h4>
+            <span>{{ reviewedDate }}</span>
+            <p>
+              {{
+                status === 'approved'
+                  ? 'Alumni status successfully verified and recorded in the system.'
+                  : 'Your verification request has been reviewed and marked as rejected.'
+              }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="details-card" *ngIf="verification">
+      <h3>Verification Details</h3>
+
+      <div class="details-grid">
+        <div>
+          <span>Submitted</span>
+          <strong>{{ submittedDate }}</strong>
+        </div>
+
+        <div>
+          <span>Reviewed</span>
+          <strong>{{ reviewedDate }}</strong>
+        </div>
+
+        <div>
+          <span>Reviewed By</span>
+          <strong>{{ reviewedBy }}</strong>
+        </div>
+
+        <div>
+          <span>Remarks</span>
+          <strong>{{ remarks }}</strong>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</section>

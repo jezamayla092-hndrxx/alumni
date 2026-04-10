@@ -1,0 +1,132 @@
+<section class="records-page">
+  <div class="page-heading">
+    <h1>Alumni Records</h1>
+    <p>Browse and manage verified alumni profiles in the system.</p>
+  </div>
+
+  <section class="filters-card">
+    <div class="filters-grid">
+      <div class="search-field">
+        <i class="pi pi-search"></i>
+        <input
+          type="text"
+          placeholder="Search alumni..."
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="applyFilters()"
+        />
+      </div>
+
+      <div class="select-field">
+        <select [(ngModel)]="selectedProgram" (change)="applyFilters()">
+          <option *ngFor="let program of programOptions" [value]="program">
+            {{ program }}
+          </option>
+        </select>
+        <i class="pi pi-angle-down"></i>
+      </div>
+
+      <div class="select-field">
+        <select [(ngModel)]="selectedYear" (change)="applyFilters()">
+          <option *ngFor="let year of yearOptions" [value]="year">
+            {{ year }}
+          </option>
+        </select>
+        <i class="pi pi-angle-down"></i>
+      </div>
+
+      <div class="select-field">
+        <select [(ngModel)]="selectedStatus" (change)="applyFilters()">
+          <option *ngFor="let status of statusOptions" [value]="status">
+            {{ status }}
+          </option>
+        </select>
+        <i class="pi pi-angle-down"></i>
+      </div>
+    </div>
+  </section>
+
+  <section class="table-card">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>NAME</th>
+            <th>PROGRAM</th>
+            <th>YEAR GRADUATED</th>
+            <th>ACCOUNT STATUS</th>
+            <th>EMPLOYMENT STATUS</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngIf="loading">
+            <td colspan="5" class="empty-state">Loading alumni records...</td>
+          </tr>
+
+          <tr *ngIf="!loading && loadError">
+            <td colspan="5" class="empty-state">{{ loadError }}</td>
+          </tr>
+
+          <tr
+            *ngFor="let record of filteredAlumniRecords; trackBy: trackByRecord"
+          >
+            <td class="name-cell">{{ record.fullName }}</td>
+            <td>{{ record.program }}</td>
+            <td>{{ record.yearGraduated }}</td>
+
+            <!-- ACCOUNT STATUS -->
+            <td>
+              <span
+                class="status-pill"
+                [ngClass]="{
+                  active: record.accountStatus === 'Active',
+                  inactive: record.accountStatus === 'Inactive'
+                }"
+              >
+                {{ record.accountStatus }}
+              </span>
+            </td>
+
+            <!-- EMPLOYMENT STATUS -->
+            <td>
+              <!-- SHOW EYE IF N/A -->
+              <ng-container *ngIf="record.employmentStatus !== 'N/A'; else eye">
+                <span
+                  class="status-pill"
+                  [ngClass]="{
+                    employed: record.employmentStatus === 'Employed',
+                    'self-employed': record.employmentStatus === 'Self-Employed',
+                    unemployed: record.employmentStatus === 'Unemployed',
+                    studies: record.employmentStatus === 'Further Studies'
+                  }"
+                >
+                  {{ record.employmentStatus }}
+                </span>
+              </ng-container>
+
+              <!-- EYE ICON -->
+              <ng-template #eye>
+                <span class="eye-icon">
+                  <i class="pi pi-eye"></i>
+                </span>
+              </ng-template>
+            </td>
+          </tr>
+
+          <tr
+            *ngIf="!loading && !loadError && filteredAlumniRecords.length === 0"
+          >
+            <td colspan="5" class="empty-state">
+              No alumni records found.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="table-footnote">
+    Showing {{ filteredAlumniRecords.length }} of {{ alumniRecords.length }}
+    alumni records
+  </p>
+</section>
