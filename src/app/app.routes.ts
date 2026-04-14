@@ -51,7 +51,14 @@ export const routes: Routes = [
       { path: 'dashboard', component: AlumniDashboard },
       { path: 'verification-status', component: VerificationStatus },
       { path: 'employment-status', component: EmploymentStatusComponent },
+      { path: 'my-profile', component: MyProfile },
     ],
+  },
+
+  {
+    path: 'admin',
+    redirectTo: 'officer/dashboard',
+    pathMatch: 'prefix',
   },
 
   { path: '**', redirectTo: 'login' },

@@ -97,11 +97,6 @@ export class MainLayout implements OnInit, OnDestroy {
       route: '/alumni/verification-status',
     },
     {
-      label: 'Alumni Directory',
-      icon: 'pi-users',
-      route: '/alumni/alumni-directory',
-    },
-    {
       label: 'Employment Status',
       icon: 'pi-briefcase',
       route: '/alumni/employment-status',
@@ -334,8 +329,6 @@ export class MainLayout implements OnInit, OnDestroy {
       this.pageTitle = 'Dashboard';
     } else if (url.includes('/alumni/verification-status')) {
       this.pageTitle = 'Verification Status';
-    } else if (url.includes('/alumni/alumni-directory')) {
-      this.pageTitle = 'Alumni Directory';
     } else if (url.includes('/alumni/employment-status')) {
       this.pageTitle = 'Employment Status';
     } else if (url.includes('/alumni/job-opportunities')) {

@@ -92,17 +92,18 @@ export class Login {
         return;
       }
 
-      await Swal.fire({
-        icon: 'success',
-        title: 'Login Successful',
-        text: `Welcome back, ${user.fullName || user.email}!`,
-        timer: 1200,
-        showConfirmButton: false,
-      });
+      Swal.close();
+      document.body.classList.remove(
+        'swal2-height-auto',
+        'swal2-shown',
+        'swal2-no-backdrop'
+      );
+      document.body.style.removeProperty('padding-right');
+      document.body.style.removeProperty('overflow');
 
       switch (user.role) {
         case 'admin':
-          await this.router.navigate(['/admin/dashboard']);
+          await this.router.navigate(['/officer/dashboard']);
           break;
 
         case 'officer':
@@ -121,9 +122,19 @@ export class Login {
           });
 
           await this.authService.logout();
-          break;
+          return;
       }
-    } catch (error: any) {
+
+      void Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: `Welcome back, ${user.fullName || user.email}!`,
+        showConfirmButton: false,
+        timer: 1800,
+        timerProgressBar: true,
+      });
+    } catch (error) {
       await Swal.fire({
         icon: 'error',
         title: 'Login Failed',
