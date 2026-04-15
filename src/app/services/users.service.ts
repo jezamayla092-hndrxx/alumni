@@ -46,7 +46,12 @@ export class UsersService {
   }
 
   async getAlumniUsers(): Promise<User[]> {
-    const alumniQuery = query(this.usersCollection, where('role', '==', 'alumni'));
+    const alumniQuery = query(
+      this.usersCollection,
+      where('role', '==', 'alumni'),
+      where('isVerified', '==', true)
+    );
+
     const snapshot = await getDocs(alumniQuery);
 
     return snapshot.docs.map((docItem) => ({

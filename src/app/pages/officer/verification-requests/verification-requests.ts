@@ -84,15 +84,21 @@ export class VerificationRequestsComponent implements OnInit, OnDestroy {
     });
   }
 
+  isUIBusy(): boolean {
+    return this.modalBusy || !!this.processingRequestId;
+  }
+
   setFilter(filter: VerificationFilter): void {
-    if (this.modalBusy || Swal.isVisible()) return;
+    if (this.isUIBusy()) return;
+
     this.activeFilter = filter;
+    this.cdr.detectChanges();
   }
 
   openDetails(request: VerificationRequest, event?: Event): void {
     event?.stopPropagation();
 
-    if (this.modalBusy || Swal.isVisible()) return;
+    if (this.isUIBusy()) return;
 
     this.selectedRequest = request;
     this.showDetailsModal = true;

@@ -1,6 +1,209 @@
-<section class="placeholder-page">
-  <div class="placeholder-card">
-    <h1>Announcements</h1>
-    <p>This module is not built yet.</p>
+<section class="records-page">
+  <div class="page-heading">
+    <div>
+      <h1>Announcements</h1>
+      <p>Create and manage notices and updates for alumni.</p>
+    </div>
+
+    <button type="button" class="create-btn" (click)="openCreateModal()">
+      <i class="pi pi-plus"></i>
+      <span>New Announcement</span>
+    </button>
   </div>
+
+  <section class="filters-card">
+    <div class="filters-grid">
+      <div class="search-field">
+        <i class="pi pi-search"></i>
+        <input
+          type="text"
+          placeholder="Search announcements..."
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="applyFilters()"
+        />
+      </div>
+
+      <div class="select-field">
+        <select [(ngModel)]="selectedStatus" (change)="applyFilters()">
+          <option *ngFor="let status of statusOptions" [value]="status">
+            {{ status }}
+          </option>
+        </select>
+        <i class="pi pi-angle-down"></i>
+      </div>
+    </div>
+  </section>
+
+  <section class="table-card">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>TITLE</th>
+            <th>DATE POSTED</th>
+            <th>STATUS</th>
+            <th>ACTIONS</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngIf="loading">
+            <td colspan="4" class="empty-state">Loading announcements...</td>
+          </tr>
+
+          <tr *ngIf="!loading && loadError">
+            <td colspan="4" class="empty-state">{{ loadError }}</td>
+          </tr>
+
+          <tr
+            *ngFor="let item of filteredAnnouncements; trackBy: trackByAnnouncement"
+          >
+            <td class="title-cell">
+              <div class="title-main">{{ item.title }}</div>
+              <div class="title-sub">{{ getPreviewText(item) }}</div>
+            </td>
+
+            <td>{{ getDisplayDate(item) }}</td>
+
+            <td>
+              <span
+                class="status-pill"
+                [ngClass]="{
+                  published: item.status === 'Published',
+                  draft: item.status === 'Draft'
+                }"
+              >
+                {{ item.status }}
+              </span>
+            </td>
+
+            <td>
+              <div class="actions-cell">
+                <button
+                  type="button"
+                  class="action-icon edit"
+                  (click)="openEditModal(item)"
+                  aria-label="Edit announcement"
+                >
+                  <i class="pi pi-pencil"></i>
+                </button>
+
+                <button
+                  type="button"
+                  class="action-icon delete"
+                  (click)="openDeleteModal(item)"
+                  aria-label="Delete announcement"
+                >
+                  <i class="pi pi-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr
+            *ngIf="!loading && !loadError && filteredAnnouncements.length === 0"
+          >
+            <td colspan="4" class="empty-state">No announcements found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="table-footnote">
+    Showing {{ filteredAnnouncements.length }} of {{ announcements.length }}
+    announcements
+  </p>
 </section>
+
+<div class="modal-backdrop" *ngIf="showAnnouncementModal">
+  <div class="modal announcement-modal">
+    <div class="modal-header">
+      <h2>{{ isEditMode ? 'Edit Announcement' : 'New Announcement' }}</h2>
+      <button type="button" (click)="closeAnnouncementModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field full">
+          <label for="title">Title</label>
+          <input
+            id="title"
+            type="text"
+            [(ngModel)]="form.title"
+            placeholder="Enter announcement title"
+          />
+        </div>
+
+        <div class="field full">
+          <label for="content">Content</label>
+          <textarea
+            id="content"
+            rows="6"
+            [(ngModel)]="form.content"
+            placeholder="Write the announcement content"
+          ></textarea>
+        </div>
+
+        <div class="field">
+          <label for="status">Status</label>
+          <div class="select-wrap">
+            <select id="status" [(ngModel)]="form.status">
+              <option value="Published">Published</option>
+              <option value="Draft">Draft</option>
+            </select>
+            <i class="pi pi-angle-down"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="secondary-btn"
+          (click)="closeAnnouncementModal()"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          class="primary-btn"
+          (click)="saveAnnouncement()"
+          [disabled]="saving || !form.title.trim() || !form.content.trim()"
+        >
+          {{ saving ? 'Saving...' : (isEditMode ? 'Save Changes' : 'Create Announcement') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" *ngIf="showDeleteModal">
+  <div class="confirm-modal">
+    <div class="confirm-icon">
+      <i class="pi pi-trash"></i>
+    </div>
+
+    <h3>Delete Announcement</h3>
+    <p>
+      Are you sure you want to delete
+      <strong>{{ announcementToDelete?.title }}</strong>?
+    </p>
+
+    <div class="confirm-actions">
+      <button type="button" class="secondary-btn" (click)="closeDeleteModal()">
+        Cancel
+      </button>
+
+      <button
+        type="button"
+        class="danger-btn"
+        (click)="confirmDelete()"
+        [disabled]="deleting"
+      >
+        {{ deleting ? 'Deleting...' : 'Delete' }}
+      </button>
+    </div>
+  </div>
+</div>

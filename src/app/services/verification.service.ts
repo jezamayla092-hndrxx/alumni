@@ -116,6 +116,14 @@ export class VerificationService {
       reviewedAt: null,
       reviewedBy: '',
     });
+
+    if (data.userUid) {
+      const userRef = doc(db, 'users', data.userUid);
+      await updateDoc(userRef, {
+        status: 'pending',
+        isVerified: false,
+      });
+    }
   }
 
   async approveRequest(
@@ -144,6 +152,7 @@ export class VerificationService {
       await updateDoc(userRef, {
         status: 'verified',
         isVerified: true,
+        role: 'alumni',
       });
     }
   }
@@ -189,6 +198,20 @@ export class VerificationService {
       reviewedBy,
       reviewedAt: new Date(),
     });
+
+    const requestSnap = await getDoc(requestRef);
+
+    if (requestSnap.exists()) {
+      const requestData = requestSnap.data() as VerificationRequest;
+
+      if (requestData.userUid) {
+        const userRef = doc(db, 'users', requestData.userUid);
+        await updateDoc(userRef, {
+          status: 'under_review',
+          isVerified: false,
+        });
+      }
+    }
   }
 
   private toMillis(value: any): number {

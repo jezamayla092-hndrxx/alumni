@@ -54,7 +54,7 @@
             <th>PROGRAM</th>
             <th>YEAR GRADUATED</th>
             <th>ACCOUNT STATUS</th>
-            <th>EMPLOYMENT STATUS</th>
+            <th>EMPLOYMENT</th>
           </tr>
         </thead>
 
@@ -74,7 +74,6 @@
             <td>{{ record.program }}</td>
             <td>{{ record.yearGraduated }}</td>
 
-            <!-- ACCOUNT STATUS -->
             <td>
               <span
                 class="status-pill"
@@ -87,29 +86,15 @@
               </span>
             </td>
 
-            <!-- EMPLOYMENT STATUS -->
             <td>
-              <!-- SHOW EYE IF N/A -->
-              <ng-container *ngIf="record.employmentStatus !== 'N/A'; else eye">
-                <span
-                  class="status-pill"
-                  [ngClass]="{
-                    employed: record.employmentStatus === 'Employed',
-                    'self-employed': record.employmentStatus === 'Self-Employed',
-                    unemployed: record.employmentStatus === 'Unemployed',
-                    studies: record.employmentStatus === 'Further Studies'
-                  }"
-                >
-                  {{ record.employmentStatus }}
-                </span>
-              </ng-container>
-
-              <!-- EYE ICON -->
-              <ng-template #eye>
-                <span class="eye-icon">
-                  <i class="pi pi-eye"></i>
-                </span>
-              </ng-template>
+              <span
+                class="eye-icon"
+                role="button"
+                tabindex="0"
+                (click)="openProfileModal(record)"
+              >
+                <i class="pi pi-eye"></i>
+              </span>
             </td>
           </tr>
 
@@ -130,3 +115,175 @@
     alumni records
   </p>
 </section>
+
+<div class="modal-backdrop" *ngIf="showProfileModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Alumni Profile</h2>
+      <button type="button" (click)="closeProfileModal()">✕</button>
+    </div>
+
+    <div class="modal-body" *ngIf="selectedAlumni">
+      <div class="profile-header">
+        <div class="avatar">
+          {{ selectedAlumni.fullName.charAt(0) }}
+        </div>
+
+        <div>
+          <h3>{{ selectedAlumni.fullName }}</h3>
+          <p>{{ selectedAlumni.program }}</p>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div>
+          <strong>Year Graduated</strong>
+          <p>{{ selectedAlumni.yearGraduated }}</p>
+        </div>
+
+        <div>
+          <strong>Account Status</strong>
+          <p>
+            <span
+              class="status-pill"
+              [ngClass]="{
+                active: selectedAlumni.accountStatus === 'Active',
+                inactive: selectedAlumni.accountStatus === 'Inactive'
+              }"
+            >
+              {{ selectedAlumni.accountStatus }}
+            </span>
+          </p>
+        </div>
+
+        <div>
+          <strong>Employment Status</strong>
+          <p>
+            <span
+              class="status-pill"
+              [ngClass]="{
+                employed: selectedAlumni.employmentStatus === 'Employed',
+                'self-employed': selectedAlumni.employmentStatus === 'Self-Employed',
+                unemployed: selectedAlumni.employmentStatus === 'Unemployed',
+                studies: selectedAlumni.employmentStatus === 'Further Studies',
+                neutral: selectedAlumni.employmentStatus === 'N/A'
+              }"
+            >
+              {{ selectedAlumni.employmentStatus }}
+            </span>
+          </p>
+        </div>
+      </div>
+
+      <div class="details-section">
+        <h4>Employment Details</h4>
+
+        <div
+          class="details-list"
+          *ngIf="selectedAlumni.employmentStatus === 'Employed'"
+        >
+          <div class="details-item">
+            <span class="label">Company</span>
+            <span class="value">{{
+              selectedAlumni.employmentDetails?.companyName || 'N/A'
+            }}</span>
+          </div>
+          <div class="details-item">
+            <span class="label">Job Title</span>
+            <span class="value">{{
+              selectedAlumni.employmentDetails?.jobTitle || 'N/A'
+            }}</span>
+          </div>
+          <div class="details-item">
+            <span class="label">Employment Type</span>
+            <span class="value">{{
+              selectedAlumni.employmentDetails?.employmentType || 'N/A'
+            }}</span>
+          </div>
+          <div class="details-item">
+            <span class="label">Industry</span>
+            <span class="value">{{
+              selectedAlumni.employmentDetails?.industry || 'N/A'
+            }}</span>
+          </div>
+          <div class="details-item">
+            <span class="label">Work Location</span>
+            <span class="value">{{
+              selectedAlumni.employmentDetails?.workLocation || 'N/A'
+            }}</span>
+          </div>
+          <div class="details-item">
+            <span class="label">Date Hired</span>
+            <span class="value">{{
+              selectedAlumni.employmentDetails?.dateHired || 'N/A'
+            }}</span>
+          </div>
+        </div>
+
+        <div
+          class="details-list"
+          *ngIf="selectedAlumni.employmentStatus === 'Self-Employed'"
+        >
+          <div class="details-item">
+            <span class="label">Business Name</span>
+            <span class="value">{{
+              selectedAlumni.employmentDetails?.businessName || 'N/A'
+            }}</span>
+          </div>
+          <div class="details-item">
+            <span class="label">Business Type</span>
+            <span class="value">{{
+              selectedAlumni.employmentDetails?.businessType || 'N/A'
+            }}</span>
+          </div>
+          <div class="details-item">
+            <span class="label">Business Location</span>
+            <span class="value">{{
+              selectedAlumni.employmentDetails?.businessLocation || 'N/A'
+            }}</span>
+          </div>
+        </div>
+
+        <div
+          class="details-list"
+          *ngIf="selectedAlumni.employmentStatus === 'Further Studies'"
+        >
+          <div class="details-item">
+            <span class="label">School / University</span>
+            <span class="value">{{
+              selectedAlumni.employmentDetails?.schoolName || 'N/A'
+            }}</span>
+          </div>
+          <div class="details-item">
+            <span class="label">Degree / Program</span>
+            <span class="value">{{
+              selectedAlumni.employmentDetails?.degreeProgram || 'N/A'
+            }}</span>
+          </div>
+        </div>
+
+        <div
+          class="details-list"
+          *ngIf="selectedAlumni.employmentStatus === 'Unemployed'"
+        >
+          <div class="details-item">
+            <span class="label">Notes / Current Activity</span>
+            <span class="value">{{
+              selectedAlumni.employmentDetails?.notes || 'N/A'
+            }}</span>
+          </div>
+        </div>
+
+        <div
+          class="details-list"
+          *ngIf="selectedAlumni.employmentStatus === 'N/A'"
+        >
+          <div class="details-item">
+            <span class="label">Employment Details</span>
+            <span class="value">No employment information submitted yet.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,6 +1,103 @@
-<section class="placeholder-page">
-  <div class="placeholder-card">
-    <h1>Events</h1>
-    <p>This module is not built yet.</p>
+<section class="events-page">
+  <div class="header">
+    <div>
+      <h1>Events</h1>
+      <p>Manage and organize alumni events.</p>
+    </div>
+
+    <button class="create-btn" (click)="openCreate()">
+      + New Event
+    </button>
+  </div>
+
+  <div class="search">
+    <input
+      type="text"
+      placeholder="Search events..."
+      [(ngModel)]="searchTerm"
+      (ngModelChange)="applyFilters()"
+    />
+  </div>
+
+  <!-- FEATURED -->
+  <div *ngIf="featuredEvent" class="featured">
+    <img [src]="featuredEvent.imageUrl || 'https://picsum.photos/800/300'" />
+
+    <div class="content">
+      <h2>{{ featuredEvent.title }}</h2>
+      <p>{{ featuredEvent.description }}</p>
+
+      <div class="meta">
+        <span>{{ featuredEvent.eventDate }}</span>
+        <span>{{ featuredEvent.startTime }} - {{ featuredEvent.endTime }}</span>
+        <span>{{ featuredEvent.location }}</span>
+      </div>
+
+      <div class="actions">
+        <button (click)="openEdit(featuredEvent)">Edit</button>
+        <button class="danger" (click)="openDelete(featuredEvent)">
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARDS -->
+  <div class="grid">
+    <div *ngFor="let e of upcomingEvents" class="card">
+      <div class="date">{{ e.eventDate }}</div>
+
+      <h3>{{ e.title }}</h3>
+      <p>{{ e.description }}</p>
+
+      <div class="meta">
+        <span>{{ e.startTime }} - {{ e.endTime }}</span>
+        <span>{{ e.location }}</span>
+      </div>
+
+      <div class="actions">
+        <button (click)="openEdit(e)">Edit</button>
+        <button class="danger" (click)="openDelete(e)">Delete</button>
+      </div>
+    </div>
   </div>
 </section>
+
+<!-- MODAL -->
+<div *ngIf="showModal" class="modal">
+  <div class="modal-box">
+    <h2>{{ selectedEvent ? 'Edit Event' : 'New Event' }}</h2>
+
+    <input placeholder="Title" [(ngModel)]="form.title" />
+    <textarea placeholder="Description" [(ngModel)]="form.description"></textarea>
+
+    <input type="date" [(ngModel)]="form.eventDate" />
+    <input type="time" [(ngModel)]="form.startTime" />
+    <input type="time" [(ngModel)]="form.endTime" />
+    <input placeholder="Location" [(ngModel)]="form.location" />
+
+    <label>
+      <input type="checkbox" [(ngModel)]="form.isFeatured" />
+      Featured Event
+    </label>
+
+    <div class="modal-actions">
+      <button (click)="closeModal()">Cancel</button>
+      <button (click)="save()">
+        {{ saving ? 'Saving...' : 'Save' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE -->
+<div *ngIf="showDeleteModal" class="modal">
+  <div class="modal-box small">
+    <p>Delete this event?</p>
+
+    <button (click)="closeDelete()">Cancel</button>
+    <button class="danger" (click)="confirmDelete()">
+      {{ deleting ? 'Deleting...' : 'Delete' }}
+    </button>
+  </div>
+</div>

@@ -52,11 +52,7 @@ export class MainLayout implements OnInit, OnDestroy {
   private routerEventsSub?: Subscription;
 
   officerNavItems: NavItem[] = [
-    {
-      label: 'Dashboard',
-      icon: 'pi-home',
-      route: '/officer/dashboard',
-    },
+    { label: 'Dashboard', icon: 'pi-home', route: '/officer/dashboard' },
     {
       label: 'Verification Requests',
       icon: 'pi-check-square',
@@ -68,16 +64,7 @@ export class MainLayout implements OnInit, OnDestroy {
       icon: 'pi-id-card',
       route: '/officer/alumni-records',
     },
-    {
-      label: 'Job Postings',
-      icon: 'pi-briefcase',
-      route: '/officer/job-postings',
-    },
-    {
-      label: 'Events',
-      icon: 'pi-calendar',
-      route: '/officer/events',
-    },
+    { label: 'Events', icon: 'pi-calendar', route: '/officer/events' },
     {
       label: 'Announcements',
       icon: 'pi-megaphone',
@@ -86,11 +73,7 @@ export class MainLayout implements OnInit, OnDestroy {
   ];
 
   alumniNavItems: NavItem[] = [
-    {
-      label: 'Dashboard',
-      icon: 'pi-home',
-      route: '/alumni/dashboard',
-    },
+    { label: 'Dashboard', icon: 'pi-home', route: '/alumni/dashboard' },
     {
       label: 'Verification Status',
       icon: 'pi-check-circle',
@@ -100,16 +83,6 @@ export class MainLayout implements OnInit, OnDestroy {
       label: 'Employment Status',
       icon: 'pi-briefcase',
       route: '/alumni/employment-status',
-    },
-    {
-      label: 'Job Opportunities',
-      icon: 'pi-building',
-      route: '/alumni/job-opportunities',
-    },
-    {
-      label: 'Events & Announcements',
-      icon: 'pi-calendar',
-      route: '/alumni/events-announcements',
     },
   ];
 
@@ -140,11 +113,9 @@ export class MainLayout implements OnInit, OnDestroy {
   }
 
   get navItems(): NavItem[] {
-    if (this.currentUser?.role === 'alumni') {
-      return this.alumniNavItems;
-    }
-
-    return this.officerNavItems;
+    return this.currentUser?.role === 'alumni'
+      ? this.alumniNavItems
+      : this.officerNavItems;
   }
 
   get currentUserInitial(): string {
@@ -183,29 +154,21 @@ export class MainLayout implements OnInit, OnDestroy {
   }
 
   toggleSidebar(): void {
-    if (this.isMobileView) {
-      this.sidebarCollapsed = !this.sidebarCollapsed;
-    } else {
-      this.sidebarCollapsed = !this.sidebarCollapsed;
-    }
-
+    this.sidebarCollapsed = !this.sidebarCollapsed;
     this.userMenuOpen = false;
+    this.cdr.detectChanges();
   }
 
   closeSidebarOnMobile(): void {
     if (this.isMobileView) {
       this.sidebarCollapsed = true;
     }
-
     this.userMenuOpen = false;
   }
 
   toggleUserMenu(): void {
     this.userMenuOpen = !this.userMenuOpen;
-  }
-
-  closeUserMenu(): void {
-    this.userMenuOpen = false;
+    this.cdr.detectChanges();
   }
 
   toggleDarkMode(): void {
@@ -215,6 +178,8 @@ export class MainLayout implements OnInit, OnDestroy {
     if (isPlatformBrowser(this.platformId)) {
       localStorage.setItem('atms-dark-mode', JSON.stringify(this.darkMode));
     }
+
+    this.cdr.detectChanges();
   }
 
   goToProfile(): void {
@@ -269,15 +234,13 @@ export class MainLayout implements OnInit, OnDestroy {
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement | null;
-
-    if (!target) {
-      return;
-    }
+    if (!target) return;
 
     const clickedInsideUserMenu = !!target.closest('.topbar-user');
 
     if (!clickedInsideUserMenu && this.userMenuOpen) {
       this.userMenuOpen = false;
+      this.cdr.detectChanges();
     }
   }
 
@@ -305,58 +268,33 @@ export class MainLayout implements OnInit, OnDestroy {
         const navEnd = event as NavigationEnd;
         this.setPageTitle(navEnd.urlAfterRedirects);
         this.userMenuOpen = false;
+        this.cdr.detectChanges();
       });
   }
 
   private setPageTitle(url: string): void {
-    if (url.includes('/officer/dashboard')) {
-      this.pageTitle = 'Dashboard';
-    } else if (url.includes('/officer/verification-requests')) {
+    if (url.includes('dashboard')) this.pageTitle = 'Dashboard';
+    else if (url.includes('verification'))
       this.pageTitle = 'Verification Requests';
-    } else if (url.includes('/officer/alumni-records')) {
-      this.pageTitle = 'Alumni Records';
-    } else if (url.includes('/officer/job-postings')) {
-      this.pageTitle = 'Job Postings';
-    } else if (url.includes('/officer/events')) {
-      this.pageTitle = 'Events';
-    } else if (url.includes('/officer/announcements')) {
-      this.pageTitle = 'Announcements';
-    } else if (url.includes('/officer/my-profile')) {
-      this.pageTitle = 'My Profile';
-    } else if (url.includes('/officer/settings')) {
-      this.pageTitle = 'Settings';
-    } else if (url.includes('/alumni/dashboard')) {
-      this.pageTitle = 'Dashboard';
-    } else if (url.includes('/alumni/verification-status')) {
-      this.pageTitle = 'Verification Status';
-    } else if (url.includes('/alumni/employment-status')) {
+    else if (url.includes('alumni-records')) this.pageTitle = 'Alumni Records';
+    else if (url.includes('events')) this.pageTitle = 'Events';
+    else if (url.includes('announcements')) this.pageTitle = 'Announcements';
+    else if (url.includes('profile')) this.pageTitle = 'My Profile';
+    else if (url.includes('settings')) this.pageTitle = 'Settings';
+    else if (url.includes('employment'))
       this.pageTitle = 'Employment Status';
-    } else if (url.includes('/alumni/job-opportunities')) {
-      this.pageTitle = 'Job Opportunities';
-    } else if (url.includes('/alumni/events-announcements')) {
-      this.pageTitle = 'Events & Announcements';
-    } else if (url.includes('/alumni/my-profile')) {
-      this.pageTitle = 'My Profile';
-    } else if (url.includes('/alumni/settings')) {
-      this.pageTitle = 'Settings';
-    } else {
-      this.pageTitle = 'Dashboard';
-    }
+    else this.pageTitle = 'Dashboard';
   }
 
   private restoreDarkMode(): void {
-    if (!isPlatformBrowser(this.platformId)) {
-      return;
-    }
+    if (!isPlatformBrowser(this.platformId)) return;
 
     const savedDarkMode = localStorage.getItem('atms-dark-mode');
     this.darkMode = savedDarkMode ? JSON.parse(savedDarkMode) : false;
   }
 
   private handleInitialSidebarState(): void {
-    if (!isPlatformBrowser(this.platformId)) {
-      return;
-    }
+    if (!isPlatformBrowser(this.platformId)) return;
 
     this.isMobileView = window.innerWidth <= 768;
     this.sidebarCollapsed = this.isMobileView;
@@ -374,21 +312,16 @@ export class MainLayout implements OnInit, OnDestroy {
 
       const userDoc = await this.usersService.getUserById(authUser.uid);
 
-      if (userDoc) {
-        this.currentUser = userDoc;
-        return;
-      }
-
-      this.currentUser = {
-        uid: authUser.uid,
-        email: authUser.email ?? '',
-        role: this.inferRoleFromUrl(),
-        firstName: '',
-        lastName: '',
-        fullName: authUser.displayName ?? '',
-      } as User;
+      this.currentUser =
+        userDoc ||
+        ({
+          uid: authUser.uid,
+          email: authUser.email ?? '',
+          role: this.inferRoleFromUrl(),
+          fullName: authUser.displayName ?? '',
+        } as User);
     } catch (error) {
-      console.error('Failed to load current user:', error);
+      console.error('Failed to load user:', error);
       this.currentUser = null;
       await this.router.navigate(['/login']);
     }
@@ -397,13 +330,8 @@ export class MainLayout implements OnInit, OnDestroy {
   private inferRoleFromUrl(): 'admin' | 'officer' | 'alumni' {
     const url = this.router.url || '';
 
-    if (url.startsWith('/alumni')) {
-      return 'alumni';
-    }
-
-    if (url.startsWith('/officer')) {
-      return 'officer';
-    }
+    if (url.startsWith('/alumni')) return 'alumni';
+    if (url.startsWith('/officer')) return 'officer';
 
     return 'officer';
   }

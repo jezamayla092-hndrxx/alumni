@@ -1,83 +1,86 @@
 <section class="verification-page">
   <div class="page-heading">
-    <div class="heading-copy">
-      <h1>Verification Requests</h1>
-      <p>Review and process alumni registration applications.</p>
-    </div>
+    <h1>Verification Requests</h1>
+    <p>Review and process alumni registration applications.</p>
   </div>
 
-  <div class="toolbar">
-    <div class="search-box">
-      <span class="search-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <path
-            d="M10.5 4a6.5 6.5 0 1 1 0 13a6.5 6.5 0 0 1 0-13Zm0 1.5a5 5 0 1 0 0 10a5 5 0 0 0 0-10Zm8.56 11.44l1.94 1.94a.75.75 0 1 1-1.06 1.06L18 18a.75.75 0 1 1 1.06-1.06Z"
-          />
-        </svg>
-      </span>
+  <section class="filters-card">
+    <div class="filters-grid verification-filters-grid">
+      <div class="search-field">
+        <i class="pi pi-search"></i>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          placeholder="Search by name, email, program, or student ID..."
+          [disabled]="modalBusy || !!processingRequestId"
+        />
+      </div>
 
-      <input
-        type="text"
-        [(ngModel)]="searchTerm"
-        placeholder="Search by name, email, program, or student ID..."
-        [disabled]="modalBusy || !!processingRequestId"
-      />
+      <div class="filter-buttons">
+        <button
+          type="button"
+          class="filter-btn"
+          [class.active]="activeFilter === 'all'"
+          [disabled]="modalBusy || !!processingRequestId"
+          (click)="setFilter('all')"
+        >
+          All
+        </button>
+
+        <button
+          type="button"
+          class="filter-btn pending"
+          [class.active]="activeFilter === 'pending'"
+          [disabled]="modalBusy || !!processingRequestId"
+          (click)="setFilter('pending')"
+        >
+          Pending
+        </button>
+
+        <button
+          type="button"
+          class="filter-btn review"
+          [class.active]="activeFilter === 'under_review'"
+          [disabled]="modalBusy || !!processingRequestId"
+          (click)="setFilter('under_review')"
+        >
+          Under Review
+        </button>
+
+        <button
+          type="button"
+          class="filter-btn approved"
+          [class.active]="activeFilter === 'approved'"
+          [disabled]="modalBusy || !!processingRequestId"
+          (click)="setFilter('approved')"
+        >
+          Approved
+        </button>
+
+        <button
+          type="button"
+          class="filter-btn rejected"
+          [class.active]="activeFilter === 'rejected'"
+          [disabled]="modalBusy || !!processingRequestId"
+          (click)="setFilter('rejected')"
+        >
+          Rejected
+        </button>
+      </div>
     </div>
+  </section>
 
-    <div class="filter-buttons">
-      <button
-        type="button"
-        class="filter-btn all-btn"
-        [class.active]="activeFilter === 'all'"
-        [disabled]="modalBusy || !!processingRequestId"
-        (click)="setFilter('all')"
-      >
-        All
-      </button>
-
-      <button
-        type="button"
-        class="filter-btn pending-btn"
-        [class.active]="activeFilter === 'pending'"
-        [disabled]="modalBusy || !!processingRequestId"
-        (click)="setFilter('pending')"
-      >
-        Pending
-      </button>
-
-      <button
-        type="button"
-        class="filter-btn approved-btn"
-        [class.active]="activeFilter === 'approved'"
-        [disabled]="modalBusy || !!processingRequestId"
-        (click)="setFilter('approved')"
-      >
-        Approved
-      </button>
-
-      <button
-        type="button"
-        class="filter-btn rejected-btn"
-        [class.active]="activeFilter === 'rejected'"
-        [disabled]="modalBusy || !!processingRequestId"
-        (click)="setFilter('rejected')"
-      >
-        Rejected
-      </button>
-    </div>
-  </div>
-
-  <section class="panel verification-panel">
-    <div class="table-wrapper">
+  <section class="table-card">
+    <div class="table-scroll">
       <table class="verification-table">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Program</th>
-            <th>Year Graduated</th>
-            <th>Date Submitted</th>
-            <th>Status</th>
-            <th class="actions-col">Actions</th>
+            <th>NAME</th>
+            <th>PROGRAM</th>
+            <th>YEAR GRADUATED</th>
+            <th>DATE SUBMITTED</th>
+            <th>STATUS</th>
+            <th class="actions-col">ACTIONS</th>
           </tr>
         </thead>
 
@@ -95,13 +98,13 @@
           <tr
             *ngFor="let request of filteredRequests; trackBy: trackByRequestId"
           >
-            <td class="td-name">{{ request.fullName }}</td>
+            <td class="name-cell">{{ request.fullName }}</td>
             <td>{{ request.program || '—' }}</td>
             <td>{{ request.yearGraduated || '—' }}</td>
             <td>{{ formatDate(request.submittedAt) }}</td>
             <td>
               <span
-                class="status-badge"
+                class="status-pill"
                 [ngClass]="getStatusClass(request.status)"
               >
                 {{ getStatusLabel(request.status) }}
@@ -116,11 +119,7 @@
                   [disabled]="modalBusy || !!processingRequestId"
                   (click)="openDetails(request, $event)"
                 >
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path
-                      d="M12 5c5.23 0 9.27 4.37 10.54 6c-1.27 1.63-5.31 6-10.54 6S2.73 12.63 1.46 11C2.73 9.37 6.77 5 12 5Zm0 1.5c-4.15 0-7.54 3.16-8.74 4.5c1.2 1.34 4.59 4.5 8.74 4.5s7.54-3.16 8.74-4.5c-1.2-1.34-4.59-4.5-8.74-4.5Zm0 1.75A2.75 2.75 0 1 1 12 13.75A2.75 2.75 0 0 1 12 8.25Zm0 1.5a1.25 1.25 0 1 0 0 2.5a1.25 1.25 0 0 0 0-2.5Z"
-                    />
-                  </svg>
+                  <i class="pi pi-eye"></i>
                 </button>
 
                 <button
@@ -204,7 +203,7 @@
       </div>
 
       <span
-        class="status-badge"
+        class="status-pill"
         [ngClass]="getStatusClass(selectedRequest.status)"
       >
         {{ getStatusLabel(selectedRequest.status) }}

@@ -8,7 +8,7 @@ import {
 import { FormsModule } from '@angular/forms';
 
 import { UsersService } from '../../../services/users.service';
-import { User } from '../../../models/user.model';
+import { User, EmploymentDetails } from '../../../models/user.model';
 
 type DisplayEmploymentStatus =
   | 'Employed'
@@ -26,6 +26,7 @@ interface AlumniRecordView {
   program: string;
   yearGraduated: string;
   employmentStatus: DisplayEmploymentStatus;
+  employmentDetails?: EmploymentDetails;
   accountStatus: AccountStatus;
 }
 
@@ -52,6 +53,10 @@ export class AlumniRecords implements OnInit {
   loading = true;
   loadError = '';
 
+  // 🔥 MODAL STATE
+  selectedAlumni: AlumniRecordView | null = null;
+  showProfileModal = false;
+
   constructor(
     private usersService: UsersService,
     private cdr: ChangeDetectorRef,
@@ -73,25 +78,28 @@ export class AlumniRecords implements OnInit {
       const alumniUsers = await this.usersService.getAlumniUsers();
 
       this.zone.run(() => {
-        this.alumniRecords = alumniUsers.map((user) => this.mapUserToView(user));
+        this.alumniRecords = alumniUsers.map((user) =>
+          this.mapUserToView(user)
+        );
 
+        // FILTER OPTIONS
         const programs = Array.from(
           new Set(
             this.alumniRecords
-              .map((record) => record.program)
-              .filter((program) => !!program && program !== 'N/A')
+              .map((r) => r.program)
+              .filter((p) => p !== 'N/A')
           )
-        ).sort((a, b) => a.localeCompare(b));
+        );
 
         this.programOptions = ['All Programs', ...programs];
 
         const years = Array.from(
           new Set(
             this.alumniRecords
-              .map((record) => record.yearGraduated)
-              .filter((year) => !!year && year !== 'N/A')
+              .map((r) => r.yearGraduated)
+              .filter((y) => y !== 'N/A')
           )
-        ).sort((a, b) => Number(b) - Number(a));
+        );
 
         this.yearOptions = ['All Years', ...years];
 
@@ -104,8 +112,6 @@ export class AlumniRecords implements OnInit {
         this.loadError = 'Failed to load alumni records.';
         this.alumniRecords = [];
         this.filteredAlumniRecords = [];
-        this.programOptions = ['All Programs'];
-        this.yearOptions = ['All Years'];
       });
     } finally {
       this.zone.run(() => {
@@ -123,8 +129,7 @@ export class AlumniRecords implements OnInit {
         !search ||
         record.fullName.toLowerCase().includes(search) ||
         record.program.toLowerCase().includes(search) ||
-        record.email.toLowerCase().includes(search) ||
-        record.yearGraduated.toLowerCase().includes(search);
+        record.email.toLowerCase().includes(search);
 
       const matchesProgram =
         this.selectedProgram === 'All Programs' ||
@@ -138,7 +143,9 @@ export class AlumniRecords implements OnInit {
         this.selectedStatus === 'All Status' ||
         record.accountStatus === this.selectedStatus;
 
-      return matchesSearch && matchesProgram && matchesYear && matchesStatus;
+      return (
+        matchesSearch && matchesProgram && matchesYear && matchesStatus
+      );
     });
 
     if (triggerDetectChanges) {
@@ -146,8 +153,21 @@ export class AlumniRecords implements OnInit {
     }
   }
 
+  // 🔥 FIX FOR YOUR ERROR
   trackByRecord(index: number, record: AlumniRecordView): string {
     return record.id || `${record.fullName}-${record.email}-${index}`;
+  }
+
+  // 🔥 OPEN MODAL
+  openProfileModal(record: AlumniRecordView): void {
+    this.selectedAlumni = record;
+    this.showProfileModal = true;
+  }
+
+  // 🔥 CLOSE MODAL
+  closeProfileModal(): void {
+    this.showProfileModal = false;
+    this.selectedAlumni = null;
   }
 
   private mapUserToView(user: User): AlumniRecordView {
@@ -158,21 +178,21 @@ export class AlumniRecords implements OnInit {
     const fullName =
       `${firstName} ${lastName}`.trim() ||
       fallbackFullName ||
-      user.email?.trim() ||
+      user.email ||
       'Unnamed Alumni';
 
     return {
       id: user.id,
       fullName,
-      email: user.email?.trim() ?? '',
-      program: user.program?.trim() || 'N/A',
-      yearGraduated:
-        user.yearGraduated !== undefined &&
-        user.yearGraduated !== null &&
-        !Number.isNaN(Number(user.yearGraduated))
-          ? String(user.yearGraduated)
-          : 'N/A',
-      employmentStatus: this.normalizeEmploymentStatus(user.employmentStatus),
+      email: user.email ?? '',
+      program: user.program ?? 'N/A',
+      yearGraduated: user.yearGraduated
+        ? String(user.yearGraduated)
+        : 'N/A',
+      employmentStatus: this.normalizeEmploymentStatus(
+        user.employmentStatus
+      ),
+      employmentDetails: user.employmentDetails, // 🔥 IMPORTANT
       accountStatus: user.isActive ? 'Active' : 'Inactive',
     };
   }

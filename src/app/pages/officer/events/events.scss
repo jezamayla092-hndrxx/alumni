@@ -1,14 +1,242 @@
 :host {
   display: block;
+  width: 100%;
+  font-family: 'Inter', 'Segoe UI', Roboto, Arial, sans-serif;
 }
 
-.placeholder-page {
-  padding: 24px;
+* {
+  box-sizing: border-box;
 }
 
-.placeholder-card {
+.events-page {
+  padding: 1.1rem 1.15rem;
+  background: #f6f8fc;
+  min-height: 100%;
+  color: #1f2937;
+}
+
+/* HEADER */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.9rem;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.header p {
+  margin: 0;
+  font-size: 0.84rem;
+  color: #667085;
+}
+
+.create-btn {
+  height: 40px;
+  padding: 0 1rem;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #6d28d9, #7c5cff);
+  color: white;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(109, 40, 217, 0.18);
+}
+
+/* SEARCH */
+.search input {
+  width: 100%;
+  height: 40px;
+  border-radius: 14px;
+  border: 1px solid #e9edf5;
+  padding: 0 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+}
+
+/* FEATURED */
+.featured {
+  display: flex;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 20px;
-  padding: 32px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid #e9edf5;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  margin-bottom: 1rem;
+}
+
+.featured img {
+  width: 48%;
+  object-fit: cover;
+}
+
+.featured .content {
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.featured h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.featured p {
+  font-size: 0.9rem;
+  color: #667085;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+/* GRID */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+/* CARD */
+.card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 1rem;
+  border: 1px solid #e9edf5;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.card h3 {
+  margin: 0;
+  font-size: 0.96rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.card p {
+  font-size: 0.84rem;
+  color: #667085;
+}
+
+/* DATE BADGE */
+.date {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #7c5cff;
+  background: #f4f3ff;
+  padding: 0.3rem 0.55rem;
+  border-radius: 8px;
+  width: fit-content;
+}
+
+/* ACTIONS */
+.actions {
+  margin-top: 0.4rem;
+  display: flex;
+  gap: 0.4rem;
+}
+
+.actions button {
+  border: none;
+  border-radius: 10px;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  background: #f3f4f6;
+}
+
+.actions button:hover {
+  background: #e5e7eb;
+}
+
+.actions .danger {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* MODAL */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-box {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 1.2rem;
+  width: 420px;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.modal-box.small {
+  width: 300px;
+}
+
+.modal-box input,
+.modal-box textarea {
+  border: 1px solid #e9edf5;
+  border-radius: 12px;
+  padding: 0.6rem;
+  font-size: 0.85rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.modal-actions button {
+  padding: 0.5rem 0.9rem;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+}
+
+.modal-actions button:last-child {
+  background: linear-gradient(135deg, #6d28d9, #7c5cff);
+  color: white;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .featured {
+    flex-direction: column;
+  }
+
+  .featured img {
+    width: 100%;
+    height: 200px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
 }

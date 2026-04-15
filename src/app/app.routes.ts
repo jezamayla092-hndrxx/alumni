@@ -11,7 +11,6 @@ import { MyProfile } from './pages/shared/my-profile/my-profile';
 // Officer pages
 import { VerificationRequestsComponent } from './pages/officer/verification-requests/verification-requests';
 import { AlumniRecords } from './pages/officer/alumni-records/alumni-records';
-import { JobPostings } from './pages/officer/job-postings/job-postings';
 import { Events } from './pages/officer/events/events';
 import { Announcements } from './pages/officer/announcements/announcements';
 
@@ -33,9 +32,11 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: Dashboard },
-      { path: 'verification-requests', component: VerificationRequestsComponent },
+      {
+        path: 'verification-requests',
+        component: VerificationRequestsComponent,
+      },
       { path: 'alumni-records', component: AlumniRecords },
-      { path: 'job-postings', component: JobPostings },
       { path: 'events', component: Events },
       { path: 'announcements', component: Announcements },
       { path: 'my-profile', component: MyProfile },

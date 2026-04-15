@@ -1,243 +1,436 @@
+import {
+  ChangeDetectorRef,
+  Component,
+  OnInit,
+  inject,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import {
+  FormBuilder,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 
-type EmploymentStatusType =
-  | 'employed'
-  | 'self_employed'
-  | 'studying'
-  | 'unemployed';
+import {
+  EmploymentDetails,
+  EmploymentStatus,
+  User,
+} from '../../../models/user.model';
+import { EmploymentStatusService } from '../../../services/employment-status.service';
 
-interface EmploymentFormData {
-  employed: {
-    companyName: string;
-    jobTitle: string;
-    employmentType: string;
-    industry: string;
-    workLocation: string;
-    dateHired: string;
-  };
-  selfEmployed: {
-    businessName: string;
-    businessType: string;
-    businessLocation: string;
-  };
-  studying: {
-    schoolName: string;
-    degreeProgram: string;
-  };
-  unemployed: {
-    notes: string;
-  };
-}
+type EmploymentTab = 'Employed' | 'Self-employed' | 'Studying' | 'Unemployed';
+
+type EmploymentFormValue = {
+  companyName: string;
+  jobTitle: string;
+  employmentType: string;
+  industry: string;
+  workLocation: string;
+  dateHired: string;
+
+  businessName: string;
+  businessType: string;
+  businessLocation: string;
+
+  schoolName: string;
+  degreeProgram: string;
+
+  notes: string;
+};
 
 @Component({
   selector: 'app-employment-status',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './employment-status.html',
   styleUrls: ['./employment-status.scss'],
 })
-export class EmploymentStatusComponent {
-  selectedStatus: EmploymentStatusType = 'employed';
-  savedStatus: EmploymentStatusType = 'employed';
+export class EmploymentStatusComponent implements OnInit {
+  private fb = inject(FormBuilder);
+  private employmentService = inject(EmploymentStatusService);
+  private cdr = inject(ChangeDetectorRef);
 
-  // TEMPORARY: demo-only sidebar/user values
-  alumniName = 'Maria Dela Cruz';
-  batchLabel = 'Batch 2019';
+  loading = true;
+  saving = false;
+  saveMessage = '';
+  loadError = '';
 
-  // TEMPORARY: demo-only updated date display
-  lastUpdated = 'March 28, 2026';
+  selectedStatus: EmploymentTab = 'Employed';
+  lastUpdatedLabel = 'Last updated —';
 
-  employmentTypes = ['Full-time', 'Part-time', 'Contract', 'Freelance'];
-  industries = [
+  employmentTypeOptions = [
+    'Full-time',
+    'Part-time',
+    'Contract',
+    'Freelance',
+    'Internship',
+    'Temporary',
+  ];
+
+  industryOptions = [
     'Information Technology',
     'Education',
     'Healthcare',
     'Finance',
     'Retail',
-    'Engineering',
     'Government',
-    'Other',
+    'Engineering',
+    'Business Process Outsourcing',
+    'Hospitality',
+    'Others',
   ];
 
-  formData: EmploymentFormData = {
-    employed: {
-      companyName: 'TechCorp Philippines',
-      jobTitle: 'Frontend Developer',
-      employmentType: 'Full-time',
-      industry: 'Information Technology',
-      workLocation: 'Makati City',
-      dateHired: '2025-01-15',
-    },
-    selfEmployed: {
-      businessName: '',
-      businessType: '',
-      businessLocation: '',
-    },
-    studying: {
-      schoolName: '',
-      degreeProgram: '',
-    },
-    unemployed: {
-      notes: '',
-    },
-  };
+  form = this.fb.nonNullable.group({
+    companyName: [''],
+    jobTitle: [''],
+    employmentType: ['Full-time'],
+    industry: ['Information Technology'],
+    workLocation: [''],
+    dateHired: [''],
 
-  setStatus(status: EmploymentStatusType): void {
-    this.selectedStatus = status;
+    businessName: [''],
+    businessType: [''],
+    businessLocation: [''],
+
+    schoolName: [''],
+    degreeProgram: [''],
+
+    notes: [''],
+  });
+
+  ngOnInit(): void {
+    this.loadEmployment();
   }
 
-  saveChanges(): void {
-    this.savedStatus = this.selectedStatus;
-    this.lastUpdated = this.formatDate(new Date());
+  loadEmployment(): void {
+    this.loading = true;
+    this.loadError = '';
 
-    // TEMPORARY SHORTCUT:
-    // This currently only updates the UI state locally.
-    // Replace this later with service call to Firebase / backend.
-    console.log('Saved employment status:', {
-      status: this.savedStatus,
-      data: this.getSavedData(),
-      lastUpdated: this.lastUpdated,
+    this.employmentService.getCurrentUserEmployment().subscribe({
+      next: (data: User | null) => {
+        if (data) {
+          this.selectedStatus = this.mapStoredStatusToTab(data.employmentStatus);
+
+          this.form.patchValue({
+            companyName: data.employmentDetails?.companyName ?? '',
+            jobTitle: data.employmentDetails?.jobTitle ?? '',
+            employmentType: data.employmentDetails?.employmentType ?? 'Full-time',
+            industry:
+              data.employmentDetails?.industry ?? 'Information Technology',
+            workLocation: data.employmentDetails?.workLocation ?? '',
+            dateHired: this.normalizeDateForInput(
+              data.employmentDetails?.dateHired ?? ''
+            ),
+
+            businessName: data.employmentDetails?.businessName ?? '',
+            businessType: data.employmentDetails?.businessType ?? '',
+            businessLocation: data.employmentDetails?.businessLocation ?? '',
+
+            schoolName: data.employmentDetails?.schoolName ?? '',
+            degreeProgram: data.employmentDetails?.degreeProgram ?? '',
+
+            notes: data.employmentDetails?.notes ?? '',
+          });
+
+          this.lastUpdatedLabel = this.formatUpdatedAt(
+            data.employmentDetails?.updatedAt
+          );
+        }
+
+        this.applyValidators();
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err: unknown) => {
+        console.error('Failed to load employment data:', err);
+        this.loadError = 'Failed to load employment information.';
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
     });
   }
 
-  get currentStatusTitle(): string {
-    switch (this.savedStatus) {
-      case 'employed':
+  selectStatus(status: EmploymentTab): void {
+    this.selectedStatus = status;
+    this.saveMessage = '';
+    this.applyValidators();
+  }
+
+  applyValidators(): void {
+    const controls = this.form.controls;
+
+    controls.companyName.clearValidators();
+    controls.jobTitle.clearValidators();
+    controls.employmentType.clearValidators();
+    controls.industry.clearValidators();
+    controls.workLocation.clearValidators();
+    controls.dateHired.clearValidators();
+
+    controls.businessName.clearValidators();
+    controls.businessType.clearValidators();
+    controls.businessLocation.clearValidators();
+
+    controls.schoolName.clearValidators();
+    controls.degreeProgram.clearValidators();
+
+    controls.notes.clearValidators();
+
+    if (this.selectedStatus === 'Employed') {
+      controls.companyName.setValidators([Validators.required]);
+      controls.jobTitle.setValidators([Validators.required]);
+      controls.employmentType.setValidators([Validators.required]);
+      controls.industry.setValidators([Validators.required]);
+      controls.workLocation.setValidators([Validators.required]);
+      controls.dateHired.setValidators([Validators.required]);
+    }
+
+    if (this.selectedStatus === 'Self-employed') {
+      controls.businessName.setValidators([Validators.required]);
+      controls.businessType.setValidators([Validators.required]);
+      controls.businessLocation.setValidators([Validators.required]);
+    }
+
+    if (this.selectedStatus === 'Studying') {
+      controls.schoolName.setValidators([Validators.required]);
+      controls.degreeProgram.setValidators([Validators.required]);
+    }
+
+    controls.companyName.updateValueAndValidity({ emitEvent: false });
+    controls.jobTitle.updateValueAndValidity({ emitEvent: false });
+    controls.employmentType.updateValueAndValidity({ emitEvent: false });
+    controls.industry.updateValueAndValidity({ emitEvent: false });
+    controls.workLocation.updateValueAndValidity({ emitEvent: false });
+    controls.dateHired.updateValueAndValidity({ emitEvent: false });
+
+    controls.businessName.updateValueAndValidity({ emitEvent: false });
+    controls.businessType.updateValueAndValidity({ emitEvent: false });
+    controls.businessLocation.updateValueAndValidity({ emitEvent: false });
+
+    controls.schoolName.updateValueAndValidity({ emitEvent: false });
+    controls.degreeProgram.updateValueAndValidity({ emitEvent: false });
+
+    controls.notes.updateValueAndValidity({ emitEvent: false });
+  }
+
+  async saveEmployment(): Promise<void> {
+    this.saveMessage = '';
+    this.applyValidators();
+    this.form.markAllAsTouched();
+
+    if (this.form.invalid) {
+      this.saveMessage = 'Please complete the required fields first.';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.saving = true;
+    this.cdr.detectChanges();
+
+    const raw: EmploymentFormValue = this.form.getRawValue();
+
+    const employmentStatus: EmploymentStatus =
+      this.mapTabToStoredStatus(this.selectedStatus);
+
+    const employmentDetails: EmploymentDetails = {};
+
+    if (this.selectedStatus === 'Employed') {
+      employmentDetails.companyName = raw.companyName.trim();
+      employmentDetails.jobTitle = raw.jobTitle.trim();
+      employmentDetails.employmentType = raw.employmentType;
+      employmentDetails.industry = raw.industry;
+      employmentDetails.workLocation = raw.workLocation.trim();
+      employmentDetails.dateHired = raw.dateHired;
+    }
+
+    if (this.selectedStatus === 'Self-employed') {
+      employmentDetails.businessName = raw.businessName.trim();
+      employmentDetails.businessType = raw.businessType.trim();
+      employmentDetails.businessLocation = raw.businessLocation.trim();
+    }
+
+    if (this.selectedStatus === 'Studying') {
+      employmentDetails.schoolName = raw.schoolName.trim();
+      employmentDetails.degreeProgram = raw.degreeProgram.trim();
+    }
+
+    if (this.selectedStatus === 'Unemployed') {
+      employmentDetails.notes = raw.notes.trim();
+    }
+
+    try {
+      console.log('[EmploymentComponent] saving started');
+
+      await this.employmentService.saveEmployment(
+        employmentStatus,
+        employmentDetails
+      );
+
+      console.log('[EmploymentComponent] saving finished');
+
+      this.saveMessage = 'Employment information saved successfully.';
+      this.lastUpdatedLabel = 'Last updated just now';
+    } catch (err: unknown) {
+      console.error('[EmploymentComponent] save failed:', err);
+      this.saveMessage = 'Failed to save employment information.';
+    } finally {
+      this.saving = false;
+      this.cdr.detectChanges();
+
+      setTimeout(() => {
+        this.cdr.detectChanges();
+      }, 0);
+    }
+  }
+
+  hasError(controlName: keyof EmploymentFormValue): boolean {
+    const control = this.form.controls[controlName];
+    return control.invalid && (control.dirty || control.touched);
+  }
+
+  getStatusDescription(): string {
+    switch (this.selectedStatus) {
+      case 'Employed':
+        return 'Currently working at a company or organization';
+      case 'Self-employed':
+        return 'Running your own business or freelancing';
+      case 'Studying':
+        return 'Pursuing further education or a degree';
+      case 'Unemployed':
+        return 'Currently not employed';
+    }
+  }
+
+  getStatusClass(): string {
+    switch (this.selectedStatus) {
+      case 'Employed':
+        return 'employed';
+      case 'Self-employed':
+        return 'self-employed';
+      case 'Studying':
+        return 'studying';
+      case 'Unemployed':
+        return 'unemployed';
+    }
+  }
+
+  getSummaryPrimary(): string {
+    const raw: EmploymentFormValue = this.form.getRawValue();
+
+    switch (this.selectedStatus) {
+      case 'Employed':
+        return raw.companyName || '—';
+      case 'Self-employed':
+        return raw.businessName || '—';
+      case 'Studying':
+        return raw.schoolName || '—';
+      case 'Unemployed':
+        return raw.notes || '—';
+    }
+  }
+
+  getSummarySecondary(): string {
+    const raw: EmploymentFormValue = this.form.getRawValue();
+
+    switch (this.selectedStatus) {
+      case 'Employed':
+        return raw.jobTitle || '—';
+      case 'Self-employed':
+        return raw.businessType || '—';
+      case 'Studying':
+        return raw.degreeProgram || '—';
+      case 'Unemployed':
+        return 'Not currently employed';
+    }
+  }
+
+  getSummaryTertiary(): string {
+    const raw: EmploymentFormValue = this.form.getRawValue();
+
+    switch (this.selectedStatus) {
+      case 'Employed':
+        return raw.employmentType || '—';
+      case 'Self-employed':
+        return raw.businessLocation || '—';
+      case 'Studying':
+        return 'Further Studies';
+      case 'Unemployed':
+        return 'Available';
+    }
+  }
+
+  private mapTabToStoredStatus(tab: EmploymentTab): EmploymentStatus {
+    switch (tab) {
+      case 'Employed':
         return 'Employed';
-      case 'self_employed':
+      case 'Self-employed':
+        return 'Self-Employed';
+      case 'Studying':
+        return 'Further Studies';
+      case 'Unemployed':
+        return 'Unemployed';
+    }
+  }
+
+  private mapStoredStatusToTab(status?: EmploymentStatus): EmploymentTab {
+    switch (status) {
+      case 'Employed':
+        return 'Employed';
+      case 'Self-Employed':
         return 'Self-employed';
-      case 'studying':
+      case 'Further Studies':
         return 'Studying';
-      case 'unemployed':
+      case 'Unemployed':
         return 'Unemployed';
       default:
-        return 'Employment Status';
+        return 'Employed';
     }
   }
 
-  get currentStatusDescription(): string {
-    switch (this.savedStatus) {
-      case 'employed':
-        return 'Currently working at a company or organization';
-      case 'self_employed':
-        return 'Running your own business or freelancing';
-      case 'studying':
-        return 'Pursuing further education or a degree';
-      case 'unemployed':
-        return 'Currently not employed';
-      default:
-        return '';
+  private formatUpdatedAt(updatedAt: unknown): string {
+    if (!updatedAt) {
+      return 'Last updated —';
+    }
+
+    try {
+      const maybeTimestamp = updatedAt as { toDate?: () => Date };
+      const date =
+        typeof maybeTimestamp.toDate === 'function'
+          ? maybeTimestamp.toDate()
+          : new Date(updatedAt as string | number | Date);
+
+      return `Last updated ${date.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      })}`;
+    } catch {
+      return 'Last updated recently';
     }
   }
 
-  get statusBadgeClass(): string {
-    switch (this.savedStatus) {
-      case 'employed':
-        return 'badge-employed';
-      case 'self_employed':
-        return 'badge-self-employed';
-      case 'studying':
-        return 'badge-studying';
-      case 'unemployed':
-        return 'badge-unemployed';
-      default:
-        return '';
+  private normalizeDateForInput(value: string): string {
+    if (!value) return '';
+
+    // already yyyy-mm-dd
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return value;
     }
-  }
 
-  get statusCardIconClass(): string {
-    switch (this.savedStatus) {
-      case 'employed':
-        return 'icon-employed';
-      case 'self_employed':
-        return 'icon-self-employed';
-      case 'studying':
-        return 'icon-studying';
-      case 'unemployed':
-        return 'icon-unemployed';
-      default:
-        return '';
+    // dd/mm/yyyy -> yyyy-mm-dd
+    const slashMatch = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (slashMatch) {
+      const [, dd, mm, yyyy] = slashMatch;
+      return `${yyyy}-${mm}-${dd}`;
     }
-  }
 
-  getSavedData(): { label: string; value: string }[] {
-    switch (this.savedStatus) {
-      case 'employed':
-        return [
-          {
-            label: 'Company',
-            value: this.formData.employed.companyName || '—',
-          },
-          {
-            label: 'Position',
-            value: this.formData.employed.jobTitle || '—',
-          },
-          {
-            label: 'Type',
-            value: this.formData.employed.employmentType || '—',
-          },
-        ];
-
-      case 'self_employed':
-        return [
-          {
-            label: 'Business',
-            value: this.formData.selfEmployed.businessName || '—',
-          },
-          {
-            label: 'Type',
-            value: this.formData.selfEmployed.businessType || '—',
-          },
-          {
-            label: 'Location',
-            value: this.formData.selfEmployed.businessLocation || '—',
-          },
-        ];
-
-      case 'studying':
-        return [
-          {
-            label: 'School',
-            value: this.formData.studying.schoolName || '—',
-          },
-          {
-            label: 'Program',
-            value: this.formData.studying.degreeProgram || '—',
-          },
-          {
-            label: 'Status',
-            value: 'Continuing Education',
-          },
-        ];
-
-      case 'unemployed':
-        return [
-          {
-            label: 'Status',
-            value: 'Currently not employed',
-          },
-          {
-            label: 'Activity',
-            value: this.formData.unemployed.notes || 'No notes provided',
-          },
-          {
-            label: 'Availability',
-            value: 'Open',
-          },
-        ];
-
-      default:
-        return [];
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      return '';
     }
-  }
 
-  private formatDate(date: Date): string {
-    return date.toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    });
+    const yyyy = parsed.getFullYear();
+    const mm = String(parsed.getMonth() + 1).padStart(2, '0');
+    const dd = String(parsed.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   }
 }

@@ -6,7 +6,7 @@
   >
     <div
       class="sidebar-backdrop"
-      *ngIf="!sidebarCollapsed"
+      *ngIf="isMobileView && !sidebarCollapsed"
       (click)="toggleSidebar()"
     ></div>
 
@@ -74,8 +74,6 @@
           >
             <i class="pi pi-bars"></i>
           </button>
-
-          <div class="topbar-title">{{ pageTitle }}</div>
         </div>
 
         <div class="topbar-right">
