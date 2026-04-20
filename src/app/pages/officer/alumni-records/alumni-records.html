@@ -116,8 +116,12 @@
   </p>
 </section>
 
-<div class="modal-backdrop" *ngIf="showProfileModal">
-  <div class="modal">
+<div
+  class="modal-backdrop"
+  *ngIf="showProfileModal"
+  (click)="closeProfileModal()"
+>
+  <div class="modal alumni-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h2>Alumni Profile</h2>
       <button type="button" (click)="closeProfileModal()">✕</button>
@@ -188,30 +192,35 @@
               selectedAlumni.employmentDetails?.companyName || 'N/A'
             }}</span>
           </div>
+
           <div class="details-item">
             <span class="label">Job Title</span>
             <span class="value">{{
               selectedAlumni.employmentDetails?.jobTitle || 'N/A'
             }}</span>
           </div>
+
           <div class="details-item">
             <span class="label">Employment Type</span>
             <span class="value">{{
               selectedAlumni.employmentDetails?.employmentType || 'N/A'
             }}</span>
           </div>
+
           <div class="details-item">
             <span class="label">Industry</span>
             <span class="value">{{
               selectedAlumni.employmentDetails?.industry || 'N/A'
             }}</span>
           </div>
+
           <div class="details-item">
             <span class="label">Work Location</span>
             <span class="value">{{
               selectedAlumni.employmentDetails?.workLocation || 'N/A'
             }}</span>
           </div>
+
           <div class="details-item">
             <span class="label">Date Hired</span>
             <span class="value">{{
@@ -230,12 +239,14 @@
               selectedAlumni.employmentDetails?.businessName || 'N/A'
             }}</span>
           </div>
+
           <div class="details-item">
             <span class="label">Business Type</span>
             <span class="value">{{
               selectedAlumni.employmentDetails?.businessType || 'N/A'
             }}</span>
           </div>
+
           <div class="details-item">
             <span class="label">Business Location</span>
             <span class="value">{{
@@ -254,6 +265,7 @@
               selectedAlumni.employmentDetails?.schoolName || 'N/A'
             }}</span>
           </div>
+
           <div class="details-item">
             <span class="label">Degree / Program</span>
             <span class="value">{{

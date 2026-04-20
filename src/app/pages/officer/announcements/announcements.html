@@ -55,9 +55,7 @@
             <td colspan="4" class="empty-state">{{ loadError }}</td>
           </tr>
 
-          <tr
-            *ngFor="let item of filteredAnnouncements; trackBy: trackByAnnouncement"
-          >
+          <tr *ngFor="let item of filteredAnnouncements; trackBy: trackByAnnouncement">
             <td class="title-cell">
               <div class="title-main">{{ item.title }}</div>
               <div class="title-sub">{{ getPreviewText(item) }}</div>
@@ -79,30 +77,18 @@
 
             <td>
               <div class="actions-cell">
-                <button
-                  type="button"
-                  class="action-icon edit"
-                  (click)="openEditModal(item)"
-                  aria-label="Edit announcement"
-                >
+                <button class="action-icon edit" (click)="openEditModal(item)">
                   <i class="pi pi-pencil"></i>
                 </button>
 
-                <button
-                  type="button"
-                  class="action-icon delete"
-                  (click)="openDeleteModal(item)"
-                  aria-label="Delete announcement"
-                >
+                <button class="action-icon delete" (click)="openDeleteModal(item)">
                   <i class="pi pi-trash"></i>
                 </button>
               </div>
             </td>
           </tr>
 
-          <tr
-            *ngIf="!loading && !loadError && filteredAnnouncements.length === 0"
-          >
+          <tr *ngIf="!loading && !loadError && filteredAnnouncements.length === 0">
             <td colspan="4" class="empty-state">No announcements found.</td>
           </tr>
         </tbody>
@@ -111,44 +97,34 @@
   </section>
 
   <p class="table-footnote">
-    Showing {{ filteredAnnouncements.length }} of {{ announcements.length }}
-    announcements
+    Showing {{ filteredAnnouncements.length }} of {{ announcements.length }} announcements
   </p>
 </section>
 
+<!-- CREATE / EDIT MODAL -->
 <div class="modal-backdrop" *ngIf="showAnnouncementModal">
   <div class="modal announcement-modal">
     <div class="modal-header">
       <h2>{{ isEditMode ? 'Edit Announcement' : 'New Announcement' }}</h2>
-      <button type="button" (click)="closeAnnouncementModal()">✕</button>
+      <button (click)="closeAnnouncementModal()">✕</button>
     </div>
 
     <div class="modal-body">
       <div class="form-grid">
         <div class="field full">
-          <label for="title">Title</label>
-          <input
-            id="title"
-            type="text"
-            [(ngModel)]="form.title"
-            placeholder="Enter announcement title"
-          />
+          <label>Title</label>
+          <input [(ngModel)]="form.title" placeholder="Enter announcement title" />
         </div>
 
         <div class="field full">
-          <label for="content">Content</label>
-          <textarea
-            id="content"
-            rows="6"
-            [(ngModel)]="form.content"
-            placeholder="Write the announcement content"
-          ></textarea>
+          <label>Content</label>
+          <textarea [(ngModel)]="form.content" placeholder="Write the announcement content"></textarea>
         </div>
 
         <div class="field">
-          <label for="status">Status</label>
+          <label>Status</label>
           <div class="select-wrap">
-            <select id="status" [(ngModel)]="form.status">
+            <select [(ngModel)]="form.status">
               <option value="Published">Published</option>
               <option value="Draft">Draft</option>
             </select>
@@ -158,16 +134,9 @@
       </div>
 
       <div class="modal-actions">
-        <button
-          type="button"
-          class="secondary-btn"
-          (click)="closeAnnouncementModal()"
-        >
-          Cancel
-        </button>
+        <button class="secondary-btn" (click)="closeAnnouncementModal()">Cancel</button>
 
         <button
-          type="button"
           class="primary-btn"
           (click)="saveAnnouncement()"
           [disabled]="saving || !form.title.trim() || !form.content.trim()"
@@ -179,6 +148,7 @@
   </div>
 </div>
 
+<!-- DELETE MODAL -->
 <div class="modal-backdrop" *ngIf="showDeleteModal">
   <div class="confirm-modal">
     <div class="confirm-icon">
@@ -186,22 +156,12 @@
     </div>
 
     <h3>Delete Announcement</h3>
-    <p>
-      Are you sure you want to delete
-      <strong>{{ announcementToDelete?.title }}</strong>?
-    </p>
+    <p>Are you sure you want to delete <strong>{{ announcementToDelete?.title }}</strong>?</p>
 
     <div class="confirm-actions">
-      <button type="button" class="secondary-btn" (click)="closeDeleteModal()">
-        Cancel
-      </button>
+      <button class="secondary-btn" (click)="closeDeleteModal()">Cancel</button>
 
-      <button
-        type="button"
-        class="danger-btn"
-        (click)="confirmDelete()"
-        [disabled]="deleting"
-      >
+      <button class="danger-btn" (click)="confirmDelete()" [disabled]="deleting">
         {{ deleting ? 'Deleting...' : 'Delete' }}
       </button>
     </div>
