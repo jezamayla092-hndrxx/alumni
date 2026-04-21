@@ -1,49 +1,77 @@
 <div class="login-page">
-  <div class="login-card">
-    <div class="login-header">
-      <h1>ATMS Login</h1>
-      <p>Sign in to continue</p>
-    </div>
+  <div class="login-shell">
 
-    <div class="form-group">
-      <label for="email">Email</label>
-      <input
-        id="email"
-        type="email"
-        [(ngModel)]="email"
-        placeholder="Enter your email"
-        [disabled]="loading"
-      />
-    </div>
+    <!-- LEFT SIDE -->
+    <section class="promo-panel">
+      <div class="brand-area">
+        <img src="ustp-logo.png" alt="USTP Logo" class="ustp-logo" />
 
-    <div class="form-group">
-      <label for="password">Password</label>
-      <div class="password-wrapper">
-        <input
-          id="password"
-          [type]="showPassword ? 'text' : 'password'"
-          [(ngModel)]="password"
-          placeholder="Enter your password"
-          [disabled]="loading"
-        />
-        <button
-          type="button"
-          class="toggle-password"
-          (click)="togglePassword()"
-          [disabled]="loading"
-        >
-          {{ showPassword ? 'Hide' : 'Show' }}
-        </button>
+        <div class="brand-text">
+          <h1>Alumni Tracking and Management System</h1>
+          <p class="portal-label">USTP Villanueva</p>
+        </div>
       </div>
-    </div>
 
-    <button class="login-btn" (click)="onLogin()" [disabled]="loading">
-      {{ loading ? 'Logging in...' : 'Login' }}
-    </button>
+      <div class="promo-content">
+        <h2>
+          Manage alumni,
+          <span>track records,</span>
+          and strengthen engagement.
+        </h2>
 
-    <p class="signup-link">
-      Don’t have an account?
-      <a routerLink="/signup">Sign up</a>
-    </p>
+        <p>
+          A modern and reliable platform that helps the university organize alumni
+          information, monitor graduate records, and maintain stronger alumni
+          connections in one centralized portal.
+        </p>
+      </div>
+    </section>
+
+    <!-- RIGHT SIDE -->
+    <section class="form-panel">
+      <div class="login-card">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input
+            id="email"
+            type="email"
+            [(ngModel)]="email"
+            placeholder="Enter your email"
+            [disabled]="loading"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="password-wrapper">
+            <input
+              id="password"
+              [type]="showPassword ? 'text' : 'password'"
+              [(ngModel)]="password"
+              placeholder="Enter your password"
+              [disabled]="loading"
+            />
+            <button
+              type="button"
+              class="toggle-password"
+              (click)="togglePassword()"
+              [disabled]="loading"
+            >
+              {{ showPassword ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+        </div>
+
+        <button class="login-btn" (click)="onLogin()" [disabled]="loading">
+          {{ loading ? 'Logging in...' : 'Log in' }}
+        </button>
+
+        <p class="signup-link">
+          No account yet?
+          <a routerLink="/signup">Sign up</a>
+        </p>
+      </div>
+    </section>
+
   </div>
 </div>
