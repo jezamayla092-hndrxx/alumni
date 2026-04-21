@@ -30,46 +30,113 @@
     <!-- RIGHT SIDE -->
     <section class="form-panel">
       <div class="login-card">
-        <div class="form-group">
-          <label for="email">Email</label>
+
+        <!-- EMAIL -->
+        <div class="form-field">
           <input
             id="email"
             type="email"
             [(ngModel)]="email"
-            placeholder="Enter your email"
+            name="email"
+            placeholder=" "
             [disabled]="loading"
+            autocomplete="email"
           />
+          <label for="email">Email</label>
         </div>
 
-        <div class="form-group">
+        <!-- PASSWORD -->
+        <div class="form-field password-field">
+          <input
+            id="password"
+            [type]="showPassword ? 'text' : 'password'"
+            [(ngModel)]="password"
+            name="password"
+            placeholder=" "
+            [disabled]="loading"
+            autocomplete="current-password"
+          />
+
           <label for="password">Password</label>
-          <div class="password-wrapper">
-            <input
-              id="password"
-              [type]="showPassword ? 'text' : 'password'"
-              [(ngModel)]="password"
-              placeholder="Enter your password"
-              [disabled]="loading"
-            />
-            <button
-              type="button"
-              class="toggle-password"
-              (click)="togglePassword()"
-              [disabled]="loading"
+
+          <button
+            type="button"
+            class="toggle-password"
+            (click)="togglePassword()"
+            [disabled]="loading"
+            *ngIf="password && password.length > 0"
+            aria-label="Toggle password visibility"
+          >
+            <!-- PASSWORD HIDDEN -->
+            <svg
+              *ngIf="!showPassword"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              class="eye-svg"
             >
-              {{ showPassword ? 'Hide' : 'Show' }}
-            </button>
-          </div>
+              <path
+                d="M3 3l18 18"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+              />
+              <path
+                d="M10.7 5.6A11.3 11.3 0 0 1 12 5.5c6.7 0 10.5 6.5 10.5 6.5a18.7 18.7 0 0 1-4.1 4.8"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M6.2 6.2A18.3 18.3 0 0 0 1.5 12S5.3 18.5 12 18.5c1.8 0 3.4-.5 4.8-1.2"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+
+            <!-- PASSWORD VISIBLE -->
+            <svg
+              *ngIf="showPassword"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              class="eye-svg"
+            >
+              <path
+                d="M1.5 12s3.8-6.5 10.5-6.5S22.5 12 22.5 12s-3.8 6.5-10.5 6.5S1.5 12 1.5 12Z"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle
+                cx="12"
+                cy="12"
+                r="3"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              />
+            </svg>
+          </button>
         </div>
 
+        <!-- LOGIN BUTTON -->
         <button class="login-btn" (click)="onLogin()" [disabled]="loading">
           {{ loading ? 'Logging in...' : 'Log in' }}
         </button>
 
+        <!-- SIGNUP -->
         <p class="signup-link">
           No account yet?
           <a routerLink="/signup">Sign up</a>
         </p>
+
       </div>
     </section>
 
