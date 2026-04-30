@@ -6,7 +6,6 @@ import Swal from 'sweetalert2';
 
 import { AuthService } from '../../../services/auth.service';
 import { UsersService } from '../../../services/users.service';
-import { User } from '../../../models/user.model';
 
 @Component({
   selector: 'app-login',
@@ -93,19 +92,18 @@ export class Login {
       }
 
       Swal.close();
+
       document.body.classList.remove(
         'swal2-height-auto',
         'swal2-shown',
         'swal2-no-backdrop'
       );
+
       document.body.style.removeProperty('padding-right');
       document.body.style.removeProperty('overflow');
 
       switch (user.role) {
         case 'admin':
-          await this.router.navigate(['/officer/dashboard']);
-          break;
-
         case 'officer':
           await this.router.navigate(['/officer/dashboard']);
           break;

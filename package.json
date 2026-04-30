@@ -38,6 +38,7 @@
     "primeicons": "^7.0.0",
     "rxjs": "~7.8.0",
     "sweetalert2": "^11.26.24",
+    "three": "^0.184.0",
     "tslib": "^2.3.0",
     "zone.js": "^0.15.1"
   },
@@ -47,6 +48,7 @@
     "@angular/compiler-cli": "^20.3.18",
     "@types/express": "^5.0.1",
     "@types/node": "^20.17.19",
+    "@types/three": "^0.184.0",
     "jsdom": "^27.1.0",
     "typescript": "~5.8.2",
     "vitest": "^3.2.4"
