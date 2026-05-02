@@ -1,132 +1,176 @@
 <div class="signup-page">
-  <div class="signup-card">
-    <div class="signup-header">
-      <h1>Create Alumni Account</h1>
-      <p>Fill in your details to register</p>
-    </div>
-
-    <div class="form-grid">
-      <div class="form-group">
-        <label for="firstName">First Name</label>
-        <input
-          id="firstName"
-          type="text"
-          [(ngModel)]="firstName"
-          placeholder="Enter first name"
-          [disabled]="loading"
-        />
+  <section class="form-panel">
+    <div class="signup-card">
+      <div class="signup-header">
+        <h1>Create Alumni Account</h1>
+        <p>Fill in your details for alumni verification</p>
       </div>
 
-      <div class="form-group">
-        <label for="lastName">Last Name</label>
-        <input
-          id="lastName"
-          type="text"
-          [(ngModel)]="lastName"
-          placeholder="Enter last name"
-          [disabled]="loading"
-        />
-      </div>
-    </div>
+      <div class="form-grid">
+        <div class="form-field">
+          <input id="firstName" type="text" [(ngModel)]="firstName" placeholder=" " [disabled]="loading" />
+          <label for="firstName">First Name</label>
+        </div>
 
-    <div class="form-group">
-      <label for="email">Email</label>
-      <input
-        id="email"
-        type="email"
-        [(ngModel)]="email"
-        placeholder="Enter email"
-        [disabled]="loading"
-      />
-    </div>
-
-    <div class="form-grid">
-      <div class="form-group">
-        <label for="studentId">Student / University ID</label>
-        <input
-          id="studentId"
-          type="text"
-          [(ngModel)]="studentId"
-          placeholder="Enter ID number"
-          [disabled]="loading"
-        />
+        <div class="form-field">
+          <input id="middleName" type="text" [(ngModel)]="middleName" placeholder=" " [disabled]="loading" />
+          <label for="middleName">Middle Name</label>
+        </div>
       </div>
 
-      <div class="form-group">
-        <label for="yearGraduated">Year Graduated</label>
-        <input
-          id="yearGraduated"
-          type="number"
-          [(ngModel)]="yearGraduated"
-          placeholder="e.g. 2024"
-          [disabled]="loading"
-        />
+      <div class="form-grid">
+        <div class="form-field">
+          <input id="lastName" type="text" [(ngModel)]="lastName" placeholder=" " [disabled]="loading" />
+          <label for="lastName">Last Name</label>
+        </div>
+
+        <div class="form-field">
+          <input id="suffix" type="text" [(ngModel)]="suffix" placeholder=" " [disabled]="loading" />
+          <label for="suffix">Suffix (Optional)</label>
+        </div>
       </div>
-    </div>
 
-    <div class="form-group">
-      <label for="program">Program</label>
-      <select
-        id="program"
-        [(ngModel)]="program"
-        [disabled]="loading"
-      >
-        <option value="" disabled selected>Select program</option>
-        <option *ngFor="let item of programs" [value]="item">
-          {{ item }}
-        </option>
-      </select>
-    </div>
+      <div class="form-field">
+        <input id="email" type="email" [(ngModel)]="email" placeholder=" " [disabled]="loading" />
+        <label for="email">Email</label>
+      </div>
 
-    <div class="form-group">
-      <label for="password">Password</label>
-      <div class="password-wrapper">
+      <div class="form-field">
+        <input id="contactNumber" type="text" [(ngModel)]="contactNumber" placeholder=" " [disabled]="loading" />
+        <label for="contactNumber">Contact Number</label>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-field">
+          <input id="studentId" type="text" [(ngModel)]="studentId" placeholder=" " [disabled]="loading" />
+          <label for="studentId">Student / University ID</label>
+        </div>
+
+        <div class="form-field">
+          <input id="yearGraduated" type="number" [(ngModel)]="yearGraduated" placeholder=" " [disabled]="loading" />
+          <label for="yearGraduated">Year Graduated</label>
+        </div>
+      </div>
+
+      <!-- PROGRAM -->
+      <div class="form-field program-field">
+        <button
+          type="button"
+          class="program-trigger"
+          (click)="toggleProgramDropdown($event)"
+          [disabled]="loading"
+          [class.active]="programDropdownOpen"
+        >
+          <span class="program-text" [class.placeholder]="!program">
+            {{ program || 'Select program' }}
+          </span>
+
+          <span class="material-symbols-outlined arrow">
+            {{ programDropdownOpen ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}
+          </span>
+        </button>
+
+        <div class="program-menu" *ngIf="programDropdownOpen" (click)="$event.stopPropagation()">
+          <button
+            type="button"
+            class="program-option"
+            *ngFor="let item of programs"
+            (click)="selectProgram(item)"
+          >
+            {{ item }}
+          </button>
+        </div>
+      </div>
+
+      <!-- MULTI DOCUMENT UPLOAD -->
+      <div class="upload-box">
+        <div class="upload-info">
+          <span class="material-symbols-outlined">upload_file</span>
+
+          <div>
+            <strong>Verification Documents</strong>
+
+            <p *ngIf="selectedDocuments.length === 0">
+              Upload diploma, TOR, certificate, school ID, etc.
+            </p>
+
+            <ul *ngIf="selectedDocuments.length > 0" class="file-list">
+              <li *ngFor="let file of selectedDocuments">
+                {{ file.name }}
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <label class="upload-btn">
+          Choose Files
+          <input
+            type="file"
+            multiple
+            accept=".pdf,.jpg,.jpeg,.png"
+            (change)="onDocumentsSelected($event)"
+            [disabled]="loading"
+          />
+        </label>
+      </div>
+
+      <p class="upload-note">
+        You can upload multiple documents for faster verification.
+      </p>
+
+      <!-- PASSWORD -->
+      <div class="form-field password-field">
         <input
           id="password"
           [type]="showPassword ? 'text' : 'password'"
           [(ngModel)]="password"
-          placeholder="Enter password"
+          placeholder=" "
           [disabled]="loading"
         />
+        <label for="password">Password</label>
+
         <button
           type="button"
           class="toggle-password"
           (click)="togglePassword()"
-          [disabled]="loading"
+          *ngIf="password"
         >
-          {{ showPassword ? 'Hide' : 'Show' }}
+          <span class="material-symbols-outlined">
+            {{ showPassword ? 'visibility' : 'visibility_off' }}
+          </span>
         </button>
       </div>
-    </div>
 
-    <div class="form-group">
-      <label for="confirmPassword">Confirm Password</label>
-      <div class="password-wrapper">
+      <div class="form-field password-field">
         <input
           id="confirmPassword"
           [type]="showConfirmPassword ? 'text' : 'password'"
           [(ngModel)]="confirmPassword"
-          placeholder="Confirm password"
+          placeholder=" "
           [disabled]="loading"
         />
+        <label for="confirmPassword">Confirm Password</label>
+
         <button
           type="button"
           class="toggle-password"
           (click)="toggleConfirmPassword()"
-          [disabled]="loading"
+          *ngIf="confirmPassword"
         >
-          {{ showConfirmPassword ? 'Hide' : 'Show' }}
+          <span class="material-symbols-outlined">
+            {{ showConfirmPassword ? 'visibility' : 'visibility_off' }}
+          </span>
         </button>
       </div>
+
+      <button class="signup-btn" (click)="onSignup()" [disabled]="loading">
+        {{ loading ? 'Creating Account...' : 'Create Account' }}
+      </button>
+
+      <p class="login-link">
+        Already have an account?
+        <a routerLink="/login">Login</a>
+      </p>
     </div>
-
-    <button class="signup-btn" (click)="onSignup()" [disabled]="loading">
-      {{ loading ? 'Creating Account...' : 'Create Account' }}
-    </button>
-
-    <p class="login-link">
-      Already have an account?
-      <a routerLink="/login">Login</a>
-    </p>
-  </div>
+  </section>
 </div>

@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
+import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 
 import { AuthService } from '../../../services/auth.service';
 import { UsersService } from '../../../services/users.service';
@@ -18,17 +19,23 @@ import { User } from '../../../models/user.model';
 })
 export class Signup {
   firstName = '';
+  middleName = '';
   lastName = '';
+  suffix = '';
   email = '';
+  contactNumber = '';
   studentId = '';
   program = '';
   yearGraduated: number | null = null;
   password = '';
   confirmPassword = '';
 
+  selectedDocuments: File[] = [];
+
   loading = false;
   showPassword = false;
   showConfirmPassword = false;
+  programDropdownOpen = false;
 
   programs = [
     'Information Technology',
@@ -43,140 +50,102 @@ export class Signup {
     private router: Router
   ) {}
 
+  @HostListener('document:click')
+  handleClickOutside(): void {
+    this.programDropdownOpen = false;
+  }
+
+  @HostListener('document:keydown.escape')
+  handleEscape(): void {
+    this.programDropdownOpen = false;
+  }
+
+  onDocumentsSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const files = input.files;
+
+    if (!files) return;
+
+    const allowed = ['application/pdf', 'image/jpeg', 'image/png'];
+    const maxSize = 5 * 1024 * 1024;
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+
+      if (!allowed.includes(file.type) || file.size > maxSize) continue;
+
+      this.selectedDocuments.push(file);
+    }
+
+    input.value = '';
+  }
+
   async onSignup(): Promise<void> {
-    const firstName = this.firstName.trim();
-    const lastName = this.lastName.trim();
-    const email = this.email.trim().toLowerCase();
-    const studentId = this.studentId.trim();
-    const program = this.program.trim();
-    const password = this.password.trim();
-    const confirmPassword = this.confirmPassword.trim();
-
-    if (
-      !firstName ||
-      !lastName ||
-      !email ||
-      !studentId ||
-      !program ||
-      !this.yearGraduated ||
-      !password ||
-      !confirmPassword
-    ) {
-      await Swal.fire({
-        icon: 'warning',
-        title: 'Missing Fields',
-        text: 'Please complete all required fields.',
-        confirmButtonText: 'OK',
-      });
-      return;
-    }
-
-    if (password.length < 6) {
-      await Swal.fire({
-        icon: 'warning',
-        title: 'Weak Password',
-        text: 'Password must be at least 6 characters.',
-        confirmButtonText: 'OK',
-      });
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      await Swal.fire({
-        icon: 'error',
-        title: 'Password Mismatch',
-        text: 'Password and confirm password do not match.',
-        confirmButtonText: 'OK',
-      });
-      return;
-    }
-
     this.loading = true;
 
     try {
-      const credential = await this.authService.signup(email, password);
+      const credential = await this.authService.signup(this.email, this.password);
       const uid = credential.user.uid;
-      const fullName = `${firstName} ${lastName}`;
+
+      let documentUrls: string[] = [];
+
+      for (const file of this.selectedDocuments) {
+        const res = await this.uploadVerificationDocument(uid, file);
+        documentUrls.push(res);
+      }
 
       const userData: User = {
         id: uid,
-        email,
+        email: this.email,
         role: 'alumni',
-        fullName,
-        firstName,
-        lastName,
-        studentId,
-        program,
+        fullName: `${this.firstName} ${this.lastName}`,
+        program: this.program,
         yearGraduated: Number(this.yearGraduated),
+        verificationDocuments: documentUrls,
         status: 'pending',
-        isActive: true,
         createdAt: new Date().toISOString(),
-      };
+      } as User;
 
-      try {
-        await this.usersService.createUser(uid, userData);
-        console.log('USER CREATED:', uid);
-
-        await this.verificationService.createVerificationRequest({
-          userUid: uid,
-          alumniId: studentId,
-          fullName,
-          email,
-          program,
-          yearGraduated: Number(this.yearGraduated),
-          studentId,
-        });
-        console.log('VERIFICATION REQUEST CREATED:', studentId);
-      } catch (firestoreError) {
-        console.error('FIRESTORE ERROR:', firestoreError);
-        await this.authService.deleteCurrentAuthUser();
-        throw firestoreError;
-      }
+      await this.usersService.createUser(uid, userData);
 
       await Swal.fire({
         icon: 'success',
         title: 'Signup Successful',
-        text: 'Your alumni account has been created and sent for verification.',
-        confirmButtonText: 'Go to Login',
       });
 
-      await this.router.navigate(['/login']);
-    } catch (error: any) {
-      console.error('SIGNUP ERROR:', error);
-
-      await Swal.fire({
+      this.router.navigate(['/login']);
+    } catch (err) {
+      Swal.fire({
         icon: 'error',
         title: 'Signup Failed',
-        text: this.getErrorMessage(error?.code),
-        confirmButtonText: 'OK',
       });
     } finally {
       this.loading = false;
     }
   }
 
-  togglePassword(): void {
+  togglePassword() {
     this.showPassword = !this.showPassword;
   }
 
-  toggleConfirmPassword(): void {
+  toggleConfirmPassword() {
     this.showConfirmPassword = !this.showConfirmPassword;
   }
 
-  private getErrorMessage(code: string): string {
-    switch (code) {
-      case 'auth/email-already-in-use':
-        return 'This email is already registered.';
-      case 'auth/invalid-email':
-        return 'Invalid email format.';
-      case 'auth/weak-password':
-        return 'Password is too weak.';
-      case 'permission-denied':
-        return 'Firestore denied access. Please check your Firestore rules.';
-      case 'unavailable':
-        return 'Service is temporarily unavailable. Please try again.';
-      default:
-        return 'Signup failed. Please try again.';
-    }
+  toggleProgramDropdown(event: MouseEvent) {
+    event.stopPropagation();
+    this.programDropdownOpen = !this.programDropdownOpen;
+  }
+
+  selectProgram(program: string) {
+    this.program = program;
+    this.programDropdownOpen = false;
+  }
+
+  private async uploadVerificationDocument(uid: string, file: File): Promise<string> {
+    const storage = getStorage();
+    const fileRef = ref(storage, `verification/${uid}/${file.name}`);
+    await uploadBytes(fileRef, file);
+    return await getDownloadURL(fileRef);
   }
 }
