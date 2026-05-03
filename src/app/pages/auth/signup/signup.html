@@ -14,14 +14,14 @@
 
         <div class="form-field">
           <input id="middleName" type="text" [(ngModel)]="middleName" placeholder=" " [disabled]="loading" />
-          <label for="middleName">Middle Name</label>
+          <label for="middleName">Middle Initial</label>
         </div>
       </div>
 
       <div class="form-grid">
         <div class="form-field">
           <input id="lastName" type="text" [(ngModel)]="lastName" placeholder=" " [disabled]="loading" />
-          <label for="lastName">Last Name</label>
+          <label for="lastName">Surname</label>
         </div>
 
         <div class="form-field">
@@ -35,9 +35,42 @@
         <label for="email">Email</label>
       </div>
 
-      <div class="form-field">
-        <input id="contactNumber" type="text" [(ngModel)]="contactNumber" placeholder=" " [disabled]="loading" />
-        <label for="contactNumber">Contact Number</label>
+      <div class="phone-field" (click)="$event.stopPropagation()">
+        <label class="phone-floating-label">Contact Number</label>
+
+        <div class="phone-control">
+          <input
+            id="phoneNumber"
+            type="tel"
+            [(ngModel)]="phoneNumber"
+            placeholder="Contact Number"
+            [disabled]="loading"
+          />
+
+          <button
+            type="button"
+            class="country-trigger"
+            (click)="toggleCountryDropdown($event)"
+            [disabled]="loading"
+          >
+            <span class="country-code">{{ selectedCountry.dialCode }}</span>
+            <span class="material-symbols-outlined country-arrow">
+              {{ countryDropdownOpen ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}
+            </span>
+          </button>
+        </div>
+
+        <div class="country-menu" *ngIf="countryDropdownOpen">
+          <button
+            type="button"
+            class="country-option"
+            *ngFor="let country of countries"
+            (click)="selectCountry(country)"
+          >
+            <span class="country-name">{{ country.name }}</span>
+            <span class="country-dial">{{ country.dialCode }}</span>
+          </button>
+        </div>
       </div>
 
       <div class="form-grid">
@@ -52,7 +85,6 @@
         </div>
       </div>
 
-      <!-- PROGRAM -->
       <div class="form-field program-field">
         <button
           type="button"
@@ -82,43 +114,25 @@
         </div>
       </div>
 
-      <!-- MULTI DOCUMENT UPLOAD -->
-      <div class="upload-box">
-        <div class="upload-info">
-          <span class="material-symbols-outlined">upload_file</span>
-
-          <div>
-            <strong>Verification Documents</strong>
-
-            <p *ngIf="selectedDocuments.length === 0">
-              Upload diploma, TOR, certificate, school ID, etc.
-            </p>
-
-            <ul *ngIf="selectedDocuments.length > 0" class="file-list">
-              <li *ngFor="let file of selectedDocuments">
-                {{ file.name }}
-              </li>
-            </ul>
-          </div>
+      <div class="upload-summary">
+        <div>
+          <strong>Verification Documents</strong>
+          <p>
+            {{ selectedDocuments.length }}
+            {{ selectedDocuments.length === 1 ? 'document' : 'documents' }} selected
+          </p>
         </div>
 
-        <label class="upload-btn">
-          Choose Files
-          <input
-            type="file"
-            multiple
-            accept=".pdf,.jpg,.jpeg,.png"
-            (change)="onDocumentsSelected($event)"
-            [disabled]="loading"
-          />
-        </label>
+        <button type="button" class="upload-open-btn" (click)="openUploadModal()" [disabled]="loading">
+          <span class="material-symbols-outlined">add</span>
+          Upload
+        </button>
       </div>
 
       <p class="upload-note">
-        You can upload multiple documents for faster verification.
+        Optional but recommended for faster alumni verification.
       </p>
 
-      <!-- PASSWORD -->
       <div class="form-field password-field">
         <input
           id="password"
@@ -133,7 +147,8 @@
           type="button"
           class="toggle-password"
           (click)="togglePassword()"
-          *ngIf="password"
+          [disabled]="loading"
+          *ngIf="password && password.length > 0"
         >
           <span class="material-symbols-outlined">
             {{ showPassword ? 'visibility' : 'visibility_off' }}
@@ -155,7 +170,8 @@
           type="button"
           class="toggle-password"
           (click)="toggleConfirmPassword()"
-          *ngIf="confirmPassword"
+          [disabled]="loading"
+          *ngIf="confirmPassword && confirmPassword.length > 0"
         >
           <span class="material-symbols-outlined">
             {{ showConfirmPassword ? 'visibility' : 'visibility_off' }}
@@ -173,4 +189,73 @@
       </p>
     </div>
   </section>
+</div>
+
+<div class="modal-backdrop" *ngIf="uploadModalOpen" (click)="closeUploadModal()">
+  <div class="upload-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <h2>Upload Verification Documents</h2>
+        <p>Upload diploma, TOR, certificate, school ID, alumni ID, or other proof.</p>
+      </div>
+
+      <button type="button" class="modal-close" (click)="closeUploadModal()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <label class="modal-upload-btn">
+      <span class="material-symbols-outlined">upload_file</span>
+      Choose Files
+      <input
+        type="file"
+        multiple
+        accept=".pdf,.jpg,.jpeg,.png"
+        (change)="onDocumentsSelected($event)"
+        [disabled]="loading"
+      />
+    </label>
+
+    <div class="empty-documents" *ngIf="selectedDocuments.length === 0">
+      <span class="material-symbols-outlined">description</span>
+      <p>No documents selected yet.</p>
+    </div>
+
+    <div class="document-grid" *ngIf="selectedDocuments.length > 0">
+      <div class="document-card" *ngFor="let doc of selectedDocuments; let i = index">
+        <button
+          type="button"
+          class="remove-document"
+          (click)="removeDocument(i)"
+          [disabled]="loading"
+          aria-label="Remove document"
+        >
+          ×
+        </button>
+
+        <div class="document-preview image-preview" *ngIf="doc.kind === 'image'">
+          <img [src]="doc.previewUrl" [alt]="doc.file.name" />
+        </div>
+
+        <a
+          class="document-preview pdf-preview"
+          *ngIf="doc.kind === 'pdf'"
+          [href]="doc.previewUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span class="material-symbols-outlined">picture_as_pdf</span>
+          <small>Open PDF</small>
+        </a>
+
+        <p class="document-name" [title]="doc.file.name">
+          {{ doc.file.name }}
+        </p>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="done-btn" (click)="closeUploadModal()">Done</button>
+    </div>
+  </div>
 </div>
