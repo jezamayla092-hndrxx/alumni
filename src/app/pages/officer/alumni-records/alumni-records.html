@@ -86,6 +86,7 @@
               </span>
             </td>
 
+            <!-- ✅ FIXED: removed rejectRequest -->
             <td>
               <span
                 class="eye-icon"
@@ -116,6 +117,7 @@
   </p>
 </section>
 
+<!-- MODAL -->
 <div
   class="modal-backdrop"
   *ngIf="showProfileModal"
@@ -188,44 +190,44 @@
         >
           <div class="details-item">
             <span class="label">Company</span>
-            <span class="value">{{
-              selectedAlumni.employmentDetails?.companyName || 'N/A'
-            }}</span>
+            <span class="value">
+              {{ selectedAlumni.employmentDetails?.companyName || 'N/A' }}
+            </span>
           </div>
 
           <div class="details-item">
             <span class="label">Job Title</span>
-            <span class="value">{{
-              selectedAlumni.employmentDetails?.jobTitle || 'N/A'
-            }}</span>
+            <span class="value">
+              {{ selectedAlumni.employmentDetails?.jobTitle || 'N/A' }}
+            </span>
           </div>
 
           <div class="details-item">
             <span class="label">Employment Type</span>
-            <span class="value">{{
-              selectedAlumni.employmentDetails?.employmentType || 'N/A'
-            }}</span>
+            <span class="value">
+              {{ selectedAlumni.employmentDetails?.employmentType || 'N/A' }}
+            </span>
           </div>
 
           <div class="details-item">
             <span class="label">Industry</span>
-            <span class="value">{{
-              selectedAlumni.employmentDetails?.industry || 'N/A'
-            }}</span>
+            <span class="value">
+              {{ selectedAlumni.employmentDetails?.industry || 'N/A' }}
+            </span>
           </div>
 
           <div class="details-item">
             <span class="label">Work Location</span>
-            <span class="value">{{
-              selectedAlumni.employmentDetails?.workLocation || 'N/A'
-            }}</span>
+            <span class="value">
+              {{ selectedAlumni.employmentDetails?.workLocation || 'N/A' }}
+            </span>
           </div>
 
           <div class="details-item">
             <span class="label">Date Hired</span>
-            <span class="value">{{
-              selectedAlumni.employmentDetails?.dateHired || 'N/A'
-            }}</span>
+            <span class="value">
+              {{ selectedAlumni.employmentDetails?.dateHired || 'N/A' }}
+            </span>
           </div>
         </div>
 
@@ -235,23 +237,23 @@
         >
           <div class="details-item">
             <span class="label">Business Name</span>
-            <span class="value">{{
-              selectedAlumni.employmentDetails?.businessName || 'N/A'
-            }}</span>
+            <span class="value">
+              {{ selectedAlumni.employmentDetails?.businessName || 'N/A' }}
+            </span>
           </div>
 
           <div class="details-item">
             <span class="label">Business Type</span>
-            <span class="value">{{
-              selectedAlumni.employmentDetails?.businessType || 'N/A'
-            }}</span>
+            <span class="value">
+              {{ selectedAlumni.employmentDetails?.businessType || 'N/A' }}
+            </span>
           </div>
 
           <div class="details-item">
             <span class="label">Business Location</span>
-            <span class="value">{{
-              selectedAlumni.employmentDetails?.businessLocation || 'N/A'
-            }}</span>
+            <span class="value">
+              {{ selectedAlumni.employmentDetails?.businessLocation || 'N/A' }}
+            </span>
           </div>
         </div>
 
@@ -261,16 +263,16 @@
         >
           <div class="details-item">
             <span class="label">School / University</span>
-            <span class="value">{{
-              selectedAlumni.employmentDetails?.schoolName || 'N/A'
-            }}</span>
+            <span class="value">
+              {{ selectedAlumni.employmentDetails?.schoolName || 'N/A' }}
+            </span>
           </div>
 
           <div class="details-item">
             <span class="label">Degree / Program</span>
-            <span class="value">{{
-              selectedAlumni.employmentDetails?.degreeProgram || 'N/A'
-            }}</span>
+            <span class="value">
+              {{ selectedAlumni.employmentDetails?.degreeProgram || 'N/A' }}
+            </span>
           </div>
         </div>
 
@@ -280,9 +282,9 @@
         >
           <div class="details-item">
             <span class="label">Notes / Current Activity</span>
-            <span class="value">{{
-              selectedAlumni.employmentDetails?.notes || 'N/A'
-            }}</span>
+            <span class="value">
+              {{ selectedAlumni.employmentDetails?.notes || 'N/A' }}
+            </span>
           </div>
         </div>
 
@@ -292,7 +294,9 @@
         >
           <div class="details-item">
             <span class="label">Employment Details</span>
-            <span class="value">No employment information submitted yet.</span>
+            <span class="value">
+              No employment information submitted yet.
+            </span>
           </div>
         </div>
       </div>

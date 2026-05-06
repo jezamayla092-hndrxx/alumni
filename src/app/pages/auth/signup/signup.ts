@@ -41,22 +41,18 @@ export class Signup implements OnDestroy {
   lastName = '';
   suffix = '';
   email = '';
-
   contactNumber = '';
   phoneNumber = '';
-
   studentId = '';
   program = '';
   yearGraduated: number | null = null;
   password = '';
   confirmPassword = '';
-
   selectedDocuments: SelectedVerificationDocument[] = [];
-
   loading = false;
   showPassword = false;
   showConfirmPassword = false;
-  programDropdownOpen = false;
+  programDropdownOpen = false; // Make sure this is initialized as false
   countryDropdownOpen = false;
   uploadModalOpen = false;
 
@@ -129,10 +125,12 @@ export class Signup implements OnDestroy {
   openUploadModal(): void {
     if (this.loading) return;
     this.uploadModalOpen = true;
+    document.body.classList.add('modal-open'); // Prevent body scroll
   }
 
   closeUploadModal(): void {
     this.uploadModalOpen = false;
+    document.body.classList.remove('modal-open'); // Allow body scroll
   }
 
   onDocumentsSelected(event: Event): void {
@@ -142,7 +140,7 @@ export class Signup implements OnDestroy {
     if (files.length === 0) return;
 
     const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
-    const maxSize = 5 * 1024 * 1024;
+    const maxSize = 5 * 1024 * 1024; // 5 MB max size
     const maxFiles = 6;
 
     for (const file of files) {

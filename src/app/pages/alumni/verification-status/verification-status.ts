@@ -139,7 +139,7 @@ export class VerificationStatus implements OnInit, OnDestroy {
       this.verificationSub = this.verificationService
         .getLatestVerificationRequestByEmail(authUser.email)
         .subscribe({
-          next: (request) => {
+          next: (request: VerificationRequest | null) => {
             this.zone.run(() => {
               this.verification = request;
               this.loading = false;
@@ -147,7 +147,7 @@ export class VerificationStatus implements OnInit, OnDestroy {
               this.cdr.detectChanges();
             });
           },
-          error: (error) => {
+          error: (error: unknown) => {
             console.error('Failed to load verification status:', error);
 
             this.zone.run(() => {
@@ -159,7 +159,7 @@ export class VerificationStatus implements OnInit, OnDestroy {
             });
           },
         });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to initialize verification status:', error);
 
       this.zone.run(() => {

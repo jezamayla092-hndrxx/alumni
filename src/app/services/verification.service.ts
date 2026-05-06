@@ -10,8 +10,8 @@ import {
   query,
   updateDoc,
   where,
+  serverTimestamp,
 } from 'firebase/firestore';
-
 import { db } from '../firebase.config';
 import { VerificationRequest } from '../models/verification.model';
 
@@ -21,8 +21,47 @@ import { VerificationRequest } from '../models/verification.model';
 export class VerificationService {
   private verificationCollection = collection(db, 'verification_requests');
 
+  // ==============================
+  // GET LATEST REQUEST BY EMAIL
+  // ==============================
+  getLatestVerificationRequestByEmail(
+    email: string
+  ): Observable<VerificationRequest | null> {
+    return new Observable((observer) => {
+      const q = query(
+        this.verificationCollection,
+        where('email', '==', email.trim().toLowerCase()),
+        orderBy('submittedAt', 'desc')
+      );
+
+      const unsubscribe = onSnapshot(
+        q,
+        (snapshot) => {
+          if (!snapshot.empty) {
+            const docSnap = snapshot.docs[0];
+            observer.next({
+              id: docSnap.id,
+              ...(docSnap.data() as Omit<VerificationRequest, 'id'>),
+            });
+          } else {
+            observer.next(null);
+          }
+        },
+        (error) => {
+          console.error('Firestore error (latest request):', error);
+          observer.next(null); // prevents UI crash
+        }
+      );
+
+      return () => unsubscribe();
+    });
+  }
+
+  // ==============================
+  // GET ALL REQUESTS (FIXED SAFE)
+  // ==============================
   getAllVerificationRequests(): Observable<VerificationRequest[]> {
-    return new Observable<VerificationRequest[]>((observer) => {
+    return new Observable((observer) => {
       const q = query(
         this.verificationCollection,
         orderBy('submittedAt', 'desc')
@@ -41,7 +80,8 @@ export class VerificationService {
           observer.next(requests);
         },
         (error) => {
-          observer.error(error);
+          console.error('Firestore error (all requests):', error);
+          observer.next([]); // ✅ prevents blank page
         }
       );
 
@@ -49,49 +89,9 @@ export class VerificationService {
     });
   }
 
-  getLatestVerificationRequestByEmail(
-    email: string
-  ): Observable<VerificationRequest | null> {
-    return new Observable<VerificationRequest | null>((observer) => {
-      const normalizedEmail = email.trim().toLowerCase();
-
-      const q = query(
-        this.verificationCollection,
-        where('email', '==', normalizedEmail)
-      );
-
-      const unsubscribe = onSnapshot(
-        q,
-        (snapshot) => {
-          if (snapshot.empty) {
-            observer.next(null);
-            return;
-          }
-
-          const requests: VerificationRequest[] = snapshot.docs.map(
-            (docSnap) => ({
-              id: docSnap.id,
-              ...(docSnap.data() as Omit<VerificationRequest, 'id'>),
-            })
-          );
-
-          const latestRequest = requests.sort((a, b) => {
-            const aTime = this.toMillis(a.submittedAt);
-            const bTime = this.toMillis(b.submittedAt);
-            return bTime - aTime;
-          })[0];
-
-          observer.next(latestRequest ?? null);
-        },
-        (error) => {
-          observer.error(error);
-        }
-      );
-
-      return () => unsubscribe();
-    });
-  }
-
+  // ==============================
+  // CREATE REQUEST (FIXED TIMESTAMP)
+  // ==============================
   async createVerificationRequest(data: {
     userUid: string;
     alumniId: string;
@@ -112,7 +112,7 @@ export class VerificationService {
       submittedDocuments: [],
       status: 'pending',
       remarks: '',
-      submittedAt: new Date(),
+      submittedAt: serverTimestamp(), // ✅ FIXED
       reviewedAt: null,
       reviewedBy: '',
     });
@@ -126,67 +126,29 @@ export class VerificationService {
     }
   }
 
-  async approveRequest(
+  // ==============================
+  // UPDATE STATUS (SAFE)
+  // ==============================
+  async updateStatus(
     requestId: string,
-    reviewedBy: string,
-    remarks: string = ''
+    status: 'approved' | 'rejected' | 'under_review' | 'pending'
   ): Promise<void> {
-    const requestRef = doc(db, 'verification_requests', requestId);
-    const requestSnap = await getDoc(requestRef);
+    try {
+      const requestRef = doc(db, 'verification_requests', requestId);
 
-    if (!requestSnap.exists()) {
-      throw new Error('Verification request not found.');
-    }
-
-    const requestData = requestSnap.data() as VerificationRequest;
-
-    await updateDoc(requestRef, {
-      status: 'approved',
-      reviewedBy,
-      reviewedAt: new Date(),
-      remarks,
-    });
-
-    if (requestData.userUid) {
-      const userRef = doc(db, 'users', requestData.userUid);
-      await updateDoc(userRef, {
-        status: 'verified',
-        isVerified: true,
-        role: 'alumni',
+      await updateDoc(requestRef, {
+        status,
+        updatedAt: serverTimestamp(), // ✅ FIXED
       });
+    } catch (error) {
+      console.error('Error updating verification status:', error);
+      throw error;
     }
   }
 
-  async rejectRequest(
-    requestId: string,
-    reviewedBy: string,
-    remarks: string
-  ): Promise<void> {
-    const requestRef = doc(db, 'verification_requests', requestId);
-    const requestSnap = await getDoc(requestRef);
-
-    if (!requestSnap.exists()) {
-      throw new Error('Verification request not found.');
-    }
-
-    const requestData = requestSnap.data() as VerificationRequest;
-
-    await updateDoc(requestRef, {
-      status: 'rejected',
-      reviewedBy,
-      reviewedAt: new Date(),
-      remarks,
-    });
-
-    if (requestData.userUid) {
-      const userRef = doc(db, 'users', requestData.userUid);
-      await updateDoc(userRef, {
-        status: 'rejected',
-        isVerified: false,
-      });
-    }
-  }
-
+  // ==============================
+  // MARK UNDER REVIEW
+  // ==============================
   async markAsUnderReview(
     requestId: string,
     reviewedBy: string
@@ -196,7 +158,7 @@ export class VerificationService {
     await updateDoc(requestRef, {
       status: 'under_review',
       reviewedBy,
-      reviewedAt: new Date(),
+      reviewedAt: serverTimestamp(), // ✅ FIXED
     });
 
     const requestSnap = await getDoc(requestRef);
@@ -214,18 +176,70 @@ export class VerificationService {
     }
   }
 
-  private toMillis(value: any): number {
-    if (!value) return 0;
+  // ==============================
+  // APPROVE
+  // ==============================
+  async approveRequest(
+    requestId: string,
+    reviewedBy: string,
+    remarks: string = ''
+  ): Promise<void> {
+    const requestRef = doc(db, 'verification_requests', requestId);
+    const requestSnap = await getDoc(requestRef);
 
-    if (typeof value?.toDate === 'function') {
-      return value.toDate().getTime();
+    if (!requestSnap.exists()) {
+      throw new Error('Verification request not found.');
     }
 
-    if (value instanceof Date) {
-      return value.getTime();
+    const requestData = requestSnap.data() as VerificationRequest;
+
+    await updateDoc(requestRef, {
+      status: 'approved',
+      reviewedBy,
+      reviewedAt: serverTimestamp(), // ✅ FIXED
+      remarks,
+    });
+
+    if (requestData.userUid) {
+      const userRef = doc(db, 'users', requestData.userUid);
+      await updateDoc(userRef, {
+        status: 'verified',
+        isVerified: true,
+        role: 'alumni',
+      });
+    }
+  }
+
+  // ==============================
+  // REJECT
+  // ==============================
+  async rejectRequest(
+    requestId: string,
+    reviewedBy: string,
+    remarks: string
+  ): Promise<void> {
+    const requestRef = doc(db, 'verification_requests', requestId);
+    const requestSnap = await getDoc(requestRef);
+
+    if (!requestSnap.exists()) {
+      throw new Error('Verification request not found.');
     }
 
-    const parsed = new Date(value).getTime();
-    return Number.isNaN(parsed) ? 0 : parsed;
+    const requestData = requestSnap.data() as VerificationRequest;
+
+    await updateDoc(requestRef, {
+      status: 'rejected',
+      reviewedBy,
+      reviewedAt: serverTimestamp(), // ✅ FIXED
+      remarks,
+    });
+
+    if (requestData.userUid) {
+      const userRef = doc(db, 'users', requestData.userUid);
+      await updateDoc(userRef, {
+        status: 'rejected',
+        isVerified: false,
+      });
+    }
   }
 }

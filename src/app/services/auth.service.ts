@@ -8,8 +8,9 @@ import {
   signInWithEmailAndPassword,
   signOut,
   User as FirebaseUser,
-  UserCredential,
+  UserCredential
 } from 'firebase/auth';
+
 import { BehaviorSubject, Observable } from 'rxjs';
 import { auth } from '../firebase.config';
 
@@ -17,19 +18,11 @@ import { auth } from '../firebase.config';
   providedIn: 'root',
 })
 export class AuthService {
-  /**
-   * STRUCTURAL FIX:
-   * These subjects let the app know whether Firebase has already finished
-   * restoring/checking the session after refresh.
-   */
-  private readonly currentUserSubject =
-    new BehaviorSubject<FirebaseUser | null>(null);
+  private readonly currentUserSubject = new BehaviorSubject<FirebaseUser | null>(null);
   private readonly authReadySubject = new BehaviorSubject<boolean>(false);
 
-  readonly currentUser$: Observable<FirebaseUser | null> =
-    this.currentUserSubject.asObservable();
-
-  readonly authReady$: Observable<boolean> = this.authReadySubject.asObservable();
+  readonly currentUser$ = this.currentUserSubject.asObservable();
+  readonly authReady$ = this.authReadySubject.asObservable();
 
   constructor() {
     onAuthStateChanged(auth, (user) => {
@@ -38,25 +31,22 @@ export class AuthService {
     });
   }
 
-  async login(email: string, password: string): Promise<UserCredential> {
-    /**
-     * FIX:
-     * Explicitly persist session in browser local storage.
-     * This helps keep user signed in after refresh/browser restart.
-     */
-    await setPersistence(auth, browserLocalPersistence);
+  // ✅ FIXED (no getAuth)
+  checkAuthStatus(): void {
+    onAuthStateChanged(auth, (user) => {
+      this.currentUserSubject.next(user);
+      this.authReadySubject.next(true);
+    });
+  }
 
-    return await signInWithEmailAndPassword(auth, email, password);
+  async login(email: string, password: string): Promise<UserCredential> {
+    await setPersistence(auth, browserLocalPersistence);
+    return signInWithEmailAndPassword(auth, email, password);
   }
 
   async signup(email: string, password: string): Promise<UserCredential> {
-    /**
-     * FIX:
-     * Keep signup session persistent too.
-     */
     await setPersistence(auth, browserLocalPersistence);
-
-    return await createUserWithEmailAndPassword(auth, email, password);
+    return createUserWithEmailAndPassword(auth, email, password);
   }
 
   async deleteCurrentAuthUser(): Promise<void> {
@@ -69,11 +59,6 @@ export class AuthService {
     await signOut(auth);
   }
 
-  /**
-   * WARNING:
-   * Only use this for quick reads after auth is already initialized.
-   * Do NOT use this as the main source for route startup checks on refresh.
-   */
   getCurrentUser(): FirebaseUser | null {
     return auth.currentUser;
   }
@@ -82,9 +67,6 @@ export class AuthService {
     return auth.currentUser?.uid ?? null;
   }
 
-  /**
-   * Good for one-time "wait until Firebase finishes restoring session" checks.
-   */
   getAuthState(): Promise<FirebaseUser | null> {
     return new Promise((resolve) => {
       const unsubscribe = onAuthStateChanged(auth, (user) => {
