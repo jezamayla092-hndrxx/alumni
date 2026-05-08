@@ -1,41 +1,74 @@
 <section class="verification-page">
 
+  <!-- Page Heading -->
   <div class="page-heading">
     <h1>Verification Requests</h1>
     <p>Review and process alumni registration applications.</p>
   </div>
 
-  <!-- FILTERS -->
+  <!-- Filters -->
   <section class="filters-card">
-
     <div class="verification-filters-grid">
 
       <div class="search-field">
         <i class="pi pi-search"></i>
-        <input type="text" [(ngModel)]="searchTerm" placeholder="Search..." />
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="applyFilters()"
+          placeholder="Search..."
+        />
       </div>
 
       <div class="filter-buttons">
+        <button
+          type="button"
+          class="filter-btn"
+          [class.active]="activeFilter === 'all'"
+          (click)="setFilter('all')">
+          All
+        </button>
 
-        <button class="filter-btn" [class.active]="activeFilter==='all'" (click)="setFilter('all')">All</button>
-        <button class="filter-btn pending" [class.active]="activeFilter==='pending'" (click)="setFilter('pending')">Pending</button>
-        <button class="filter-btn review" [class.active]="activeFilter==='under_review'" (click)="setFilter('under_review')">Under Review</button>
-        <button class="filter-btn approved" [class.active]="activeFilter==='approved'" (click)="setFilter('approved')">Approved</button>
-        <button class="filter-btn rejected" [class.active]="activeFilter==='rejected'" (click)="setFilter('rejected')">Rejected</button>
+        <button
+          type="button"
+          class="filter-btn pending"
+          [class.active]="activeFilter === 'pending'"
+          (click)="setFilter('pending')">
+          Pending
+        </button>
 
+        <button
+          type="button"
+          class="filter-btn review"
+          [class.active]="activeFilter === 'under_review'"
+          (click)="setFilter('under_review')">
+          Under Review
+        </button>
+
+        <button
+          type="button"
+          class="filter-btn approved"
+          [class.active]="activeFilter === 'approved'"
+          (click)="setFilter('approved')">
+          Approved
+        </button>
+
+        <button
+          type="button"
+          class="filter-btn rejected"
+          [class.active]="activeFilter === 'rejected'"
+          (click)="setFilter('rejected')">
+          Rejected
+        </button>
       </div>
 
     </div>
-
   </section>
 
-  <!-- TABLE -->
+  <!-- Table -->
   <section class="table-card">
-
     <div class="table-scroll">
-
       <table class="verification-table">
-
         <thead>
           <tr>
             <th>Name</th>
@@ -46,59 +79,135 @@
             <th>Actions</th>
           </tr>
         </thead>
-
         <tbody>
 
           <tr *ngIf="loading">
-            <td colspan="6">Loading...</td>
+            <td colspan="6" class="loading-cell">Loading...</td>
+          </tr>
+
+          <tr *ngIf="!loading && filteredRequests.length === 0">
+            <td colspan="6" class="empty-state-cell">
+              <div class="empty-state">
+                <i class="pi pi-inbox"></i>
+                <h3>No verification requests found</h3>
+                <p>Try adjusting your search or filters.</p>
+              </div>
+            </td>
           </tr>
 
           <tr *ngFor="let request of filteredRequests; trackBy: trackByRequestId">
-
-            <td class="name-cell">{{ request.fullName }}</td>
+            <td class="name-cell">{{ request.fullName || '—' }}</td>
             <td>{{ request.program || '—' }}</td>
             <td>{{ request.yearGraduated || '—' }}</td>
             <td>{{ formatDate(request.submittedAt) }}</td>
-
             <td>
               <span class="status-pill" [ngClass]="getStatusClass(request.status)">
                 {{ getStatusLabel(request.status) }}
               </span>
             </td>
-
             <td>
-
-              <!-- REVIEW ICON -->
-              <button
-                *ngIf="request.status === 'pending'"
-                class="icon-btn"
-                (click)="markAsUnderReview(request, $event)"
-              >
-                ⏳
-              </button>
-
-              <!-- EYE ICON (FIXED - NO LIBRARY NEEDED) -->
-              <button
-                *ngIf="request.status !== 'pending'"
-                class="icon-btn view"
-                (click)="openDetails(request, $event)"
-              >
-                <svg viewBox="0 0 24 24" width="16" height="16">
-                  <path fill="currentColor"
-                    d="M12 5c-7 0-10 7-10 7s3 7 10 7 10-7 10-7-3-7-10-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/>
-                </svg>
-              </button>
-
+              <!-- Keep your existing eye icon -->
+              <span
+                class="eye-icon"
+                role="button"
+                tabindex="0"
+                (click)="openDetails(request, $event)">
+                <i class="pi pi-eye"></i>
+              </span>
             </td>
-
           </tr>
 
         </tbody>
-
       </table>
-
     </div>
-
   </section>
+
+  <!-- Modal -->
+  <div
+    class="modal-backdrop"
+    *ngIf="showDetailsModal"
+    (mousedown)="closeDetails($event)">
+    <div
+      class="details-modal"
+      (mousedown)="$event.stopPropagation()">
+
+      <button class="modal-close" (click)="closeDetails($event)">
+        <i class="pi pi-times"></i>
+      </button>
+
+      <div *ngIf="selectedRequest as req">
+        <div class="modal-header">
+          <h2>Verification Details</h2>
+        </div>
+
+        <div class="person-summary">
+          <div class="avatar">👤</div>
+          <div class="person-meta">
+            <h3>{{ req.fullName || '—' }}</h3>
+            <p>{{ req.email || '—' }}</p>
+          </div>
+        </div>
+
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-label">Program</div>
+            <div class="detail-value">{{ req.program || '—' }}</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Year Graduated</div>
+            <div class="detail-value">{{ req.yearGraduated || '—' }}</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Student ID</div>
+            <div class="detail-value">{{ req.studentId || '—' }}</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Date Submitted</div>
+            <div class="detail-value">{{ formatDate(req.submittedAt) }}</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Status</div>
+            <div class="detail-value">
+              <span class="status-pill" [ngClass]="getStatusClass(req.status)">
+                {{ getStatusLabel(req.status) }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Buttons with PrimeNG icons -->
+        <div class="modal-actions" *ngIf="req.status !== 'approved' && req.status !== 'rejected'">
+          <button
+            *ngIf="req.status === 'pending'"
+            class="action-btn review-btn"
+            [disabled]="modalBusy"
+            (click)="markAsUnderReview(req, $event)">
+            <i class="pi pi-refresh"></i> Mark as Under Review
+          </button>
+
+          <button
+            *ngIf="req.status === 'under_review'"
+            class="action-btn approve-btn"
+            [disabled]="modalBusy"
+            (click)="approveRequest(req, $event)">
+            <i class="pi pi-check"></i> Accept
+          </button>
+
+          <button
+            *ngIf="req.status === 'under_review'"
+            class="action-btn reject-btn"
+            [disabled]="modalBusy"
+            (click)="rejectRequest(req, $event)">
+            <i class="pi pi-times"></i> Reject
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
 
 </section>

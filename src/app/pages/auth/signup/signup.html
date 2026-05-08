@@ -37,13 +37,15 @@
         <label class="phone-floating-label">Contact Number</label>
 
         <div class="phone-control">
-          <input
-            id="phoneNumber"
-            type="tel"
-            [(ngModel)]="phoneNumber"
-            placeholder="Contact Number"
-            [disabled]="loading"
-          />
+          <div class="phone-input-wrapper">
+            <input
+              id="phoneNumber"
+              type="tel"
+              [(ngModel)]="phoneNumber"
+              placeholder=" "
+              [disabled]="loading"
+            />
+          </div>
 
           <button
             type="button"
@@ -76,7 +78,6 @@
           <input id="studentId" type="text" [(ngModel)]="studentId" placeholder=" " [disabled]="loading" />
           <label for="studentId">Student / University ID</label>
         </div>
-
         <div class="form-field">
           <input id="yearGraduated" type="number" [(ngModel)]="yearGraduated" placeholder=" " [disabled]="loading" />
           <label for="yearGraduated">Year Graduated</label>
@@ -94,7 +95,6 @@
           <span class="program-text" [class.placeholder]="!program">
             {{ program || 'Select program' }}
           </span>
-
           <span class="material-symbols-outlined arrow">
             {{ programDropdownOpen ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}
           </span>
@@ -181,10 +181,10 @@
         {{ loading ? 'Creating Account...' : 'Create Account' }}
       </button>
 
-      <p class="login-link">
+      <div class="login-link">
         Already have an account?
         <a routerLink="/login">Login</a>
-      </p>
+      </div>
     </div>
   </section>
 </div>
@@ -235,20 +235,16 @@
           <img [src]="doc.previewUrl" [alt]="doc.file.name" />
         </div>
 
-        <a
+        <div
           class="document-preview pdf-preview"
           *ngIf="doc.kind === 'pdf'"
-          [href]="doc.previewUrl"
-          target="_blank"
-          rel="noopener noreferrer"
+          (click)="openPdf(doc.previewUrl)"
         >
           <span class="material-symbols-outlined">picture_as_pdf</span>
           <small>Open PDF</small>
-        </a>
+        </div>
 
-        <p class="document-name" [title]="doc.file.name">
-          {{ doc.file.name }}
-        </p>
+        <p class="document-name" [title]="doc.file.name">{{ doc.file.name }}</p>
       </div>
     </div>
 

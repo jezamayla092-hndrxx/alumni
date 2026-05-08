@@ -1,12 +1,19 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  HostListener,
+  NgZone,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
 
-import { VerificationService } from '../../../services/verification.service';
 import { AuthService } from '../../../services/auth.service';
-import { UsersService } from '../../../services/users.service';
+import { VerificationService } from '../../../services/verification.service';
 import { VerificationRequest } from '../../../models/verification.model';
 
 type VerificationFilter =
@@ -27,11 +34,11 @@ export class VerificationRequestsComponent implements OnInit, OnDestroy {
   searchTerm = '';
   activeFilter: VerificationFilter = 'all';
 
-  showDetailsModal = false;
-  selectedRequest: VerificationRequest | null = null;
-
   loading = true;
   modalBusy = false;
+
+  showDetailsModal = false;
+  selectedRequest: VerificationRequest | null = null;
 
   verificationRequests: VerificationRequest[] = [];
   filteredRequests: VerificationRequest[] = [];
@@ -41,13 +48,20 @@ export class VerificationRequestsComponent implements OnInit, OnDestroy {
   constructor(
     private verificationService: VerificationService,
     private authService: AuthService,
-    private usersService: UsersService,
-    private ngZone: NgZone,
+    private router: Router,
+    private zone: NgZone,
     private cdr: ChangeDetectorRef
   ) {}
 
-  ngOnInit(): void {
-    this.loadVerificationRequests();
+  async ngOnInit(): Promise<void> {
+    const user = await this.authService.waitForAuthReady();
+
+    if (!user) {
+      await this.router.navigate(['/login']);
+      return;
+    }
+
+    this.loadRequests();
   }
 
   ngOnDestroy(): void {
@@ -55,192 +69,245 @@ export class VerificationRequestsComponent implements OnInit, OnDestroy {
     Swal.close();
   }
 
-  // =========================
-  // LOAD DATA (FIXED TS2322 HERE)
-  // =========================
-  private loadVerificationRequests(): void {
-    this.loading = true;
+  @HostListener('document:keydown.escape')
+  handleEscapeKey(): void {
+    if (this.showDetailsModal) this.closeDetails();
+  }
 
+  private loadRequests(): void {
+    this.loading = true;
     this.requestsSub?.unsubscribe();
 
-    this.requestsSub =
-      this.verificationService.getAllVerificationRequests().subscribe({
+    this.requestsSub = this.verificationService
+      .getAllVerificationRequests()
+      .subscribe({
         next: (requests) => {
-          this.ngZone.run(() => {
-            this.verificationRequests = (requests || []).map((r) => ({
-              ...r,
-              status: this.normalizeStatus(r.status),
-            }));
+          this.zone.run(() => {
+            this.verificationRequests = (requests || [])
+              .map((request) => ({
+                ...request,
+                status: this.normalizeStatus(request.status),
+              }))
+              .sort((a, b) => this.getRequestTime(b) - this.getRequestTime(a));
 
             this.applyFilters(false);
-
             this.loading = false;
             this.cdr.detectChanges();
           });
         },
-        error: (err) => {
-          console.error(err);
-          this.loading = false;
+        error: (error) => {
+          this.zone.run(() => {
+            console.error('Failed to load verification requests:', error);
+            this.verificationRequests = [];
+            this.filteredRequests = [];
+            this.loading = false;
+            this.cdr.detectChanges();
+          });
         },
       });
   }
 
-  // =========================
-  // SAFE STATUS NORMALIZER (NO TS ERROR)
-  // =========================
-  private normalizeStatus(status: any): VerificationRequest['status'] {
-    const s = (status || '')
-      .toString()
-      .toLowerCase()
-      .replace(/\s+/g, '_')
-      .trim();
-
-    switch (s) {
-      case 'pending':
-        return 'pending';
-      case 'under_review':
-        return 'under_review';
-      case 'approved':
-        return 'approved';
-      case 'rejected':
-        return 'rejected';
-      default:
-        return 'pending';
-    }
-  }
-
-  // =========================
-  // FILTER SYSTEM (STABLE)
-  // =========================
   applyFilters(triggerDetectChanges = true): void {
-  const keyword = this.searchTerm.trim().toLowerCase();
+    const keyword = this.searchTerm.trim().toLowerCase();
 
-  const filter = this.activeFilter;
+    this.filteredRequests = this.verificationRequests.filter((request) => {
+      return this.matchesSearch(request, keyword) && this.matchesFilter(request);
+    });
 
-  this.filteredRequests = this.verificationRequests.filter((request) => {
-    const status = this.normalizeStatus(request.status);
-
-    const matchesSearch =
-      !keyword ||
-      (request.fullName ?? '').toLowerCase().includes(keyword) ||
-      (request.email ?? '').toLowerCase().includes(keyword) ||
-      (request.program ?? '').toLowerCase().includes(keyword) ||
-      (request.studentId ?? '').toString().toLowerCase().includes(keyword);
-
-    const matchesFilter =
-      filter === 'all'
-        ? true
-        : status === filter;
-
-    return matchesSearch && matchesFilter;
-  });
-
-  if (triggerDetectChanges) {
-    this.cdr.detectChanges();
+    if (triggerDetectChanges) this.cdr.detectChanges();
   }
-}
+
+  private matchesSearch(request: VerificationRequest, keyword: string): boolean {
+    if (!keyword) return true;
+
+    return [
+      request.fullName,
+      request.email,
+      request.program,
+      request.studentId,
+      request.alumniId,
+    ]
+      .map((value) => String(value ?? '').toLowerCase())
+      .some((value) => value.includes(keyword));
+  }
+
+  private matchesFilter(request: VerificationRequest): boolean {
+    if (this.activeFilter === 'all') return true;
+    return this.normalizeStatus(request.status) === this.activeFilter;
+  }
 
   setFilter(filter: VerificationFilter): void {
     this.activeFilter = filter;
     this.applyFilters();
   }
 
-  // =========================
-  // MODAL
-  // =========================
   openDetails(request: VerificationRequest, event?: Event): void {
+    event?.preventDefault();
     event?.stopPropagation();
-    this.selectedRequest = request;
-    this.showDetailsModal = true;
+
+    this.zone.run(() => {
+      this.selectedRequest = { ...request };
+      this.showDetailsModal = true;
+      this.cdr.detectChanges();
+    });
   }
 
   closeDetails(event?: Event): void {
+    event?.preventDefault();
     event?.stopPropagation();
-    this.selectedRequest = null;
-    this.showDetailsModal = false;
+
+    this.zone.run(() => {
+      this.showDetailsModal = false;
+      this.selectedRequest = null;
+      this.modalBusy = false;
+      this.cdr.detectChanges();
+    });
   }
 
-  // =========================
-  // ACTIONS
-  // =========================
-  async approveRequest(request: VerificationRequest, event?: Event) {
+  async markAsUnderReview(
+    request: VerificationRequest,
+    event?: Event
+  ): Promise<void> {
+    event?.preventDefault();
     event?.stopPropagation();
 
-    const confirm = await Swal.fire({
-      title: 'Approve request?',
-      text: 'This will mark the user as verified.',
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonText: 'Yes, approve',
-    });
+    if (!request.id) return;
 
-    if (!confirm.isConfirmed) return;
+    const confirmed = await this.confirmAction(
+      'Mark as Under Review?',
+      'This will update the request status to Under Review.',
+      'question',
+      'Yes'
+    );
 
-    this.modalBusy = true;
+    if (!confirmed) return;
 
-    await this.verificationService.updateStatus(request.id!, 'approved');
+    await this.runRequestAction(
+      () => this.verificationService.markAsUnderReview(request.id!, this.getReviewer()),
+      'Updated!',
+      'Request is now marked as Under Review.',
+      'Failed to update request.'
+    );
+  }
 
-    this.modalBusy = false;
-    this.closeDetails();
+  async approveRequest(request: VerificationRequest, event?: Event) {
+    event?.preventDefault();
+    event?.stopPropagation();
 
-    Swal.fire('Approved!', 'User has been verified.', 'success');
+    if (!request.id) return;
 
-    this.loadVerificationRequests();
+    const confirmed = await this.confirmAction(
+      'Approve request?',
+      'This will verify the alumni account.',
+      'question',
+      'Yes, approve'
+    );
+
+    if (!confirmed) return;
+
+    await this.runRequestAction(
+      () => this.verificationService.approveRequest(request.id!, this.getReviewer()),
+      'Approved!',
+      'Alumni account has been verified.',
+      'Failed to approve request.'
+    );
   }
 
   async rejectRequest(request: VerificationRequest, event?: Event) {
+    event?.preventDefault();
     event?.stopPropagation();
 
-    const confirm = await Swal.fire({
+    if (!request.id) return;
+
+    const remarks = await this.askRejectReason();
+    if (!remarks) return;
+
+    await this.runRequestAction(
+      () => this.verificationService.rejectRequest(request.id!, this.getReviewer(), remarks),
+      'Rejected',
+      'Request has been rejected.',
+      'Failed to reject request.'
+    );
+  }
+
+  private async confirmAction(
+    title: string,
+    text: string,
+    icon: 'question' | 'warning',
+    confirmButtonText: string
+  ): Promise<boolean> {
+    const result = await Swal.fire({
+      title,
+      text,
+      icon,
+      showCancelButton: true,
+      confirmButtonText,
+    });
+    return result.isConfirmed;
+  }
+
+  private async askRejectReason(): Promise<string | null> {
+    const result = await Swal.fire({
       title: 'Reject request?',
-      text: 'This action cannot be undone.',
+      input: 'textarea',
+      inputLabel: 'Remarks / Reason',
+      inputPlaceholder: 'Enter reason for rejection...',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Yes, reject',
+      inputValidator: (value) => (!value?.trim() ? 'Please enter a reason.' : null),
     });
 
-    if (!confirm.isConfirmed) return;
-
-    this.modalBusy = true;
-
-    await this.verificationService.updateStatus(request.id!, 'rejected');
-
-    this.modalBusy = false;
-    this.closeDetails();
-
-    Swal.fire('Rejected', 'Request has been rejected.', 'success');
-
-    this.loadVerificationRequests();
+    return result.isConfirmed ? result.value.trim() : null;
   }
 
-  async markAsUnderReview(request: VerificationRequest, event?: Event) {
-    event?.stopPropagation();
+  private async runRequestAction(
+    action: () => Promise<void>,
+    successTitle: string,
+    successText: string,
+    errorText: string
+  ): Promise<void> {
+    try {
+      this.modalBusy = true;
+      this.cdr.detectChanges();
 
-    const confirm = await Swal.fire({
-      title: 'Mark as under review?',
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonText: 'Yes',
-    });
+      await action();
 
-    if (!confirm.isConfirmed) return;
-
-    this.modalBusy = true;
-
-    await this.verificationService.updateStatus(request.id!, 'under_review');
-
-    this.modalBusy = false;
-
-    Swal.fire('Updated!', 'Request moved to under review.', 'success');
-
-    this.loadVerificationRequests();
+      await Swal.fire(successTitle, successText, 'success');
+    } catch (error) {
+      console.error(error);
+      await Swal.fire('Error', errorText, 'error');
+    } finally {
+      this.modalBusy = false;
+      this.closeDetails();
+      this.cdr.detectChanges();
+    }
   }
 
-  // =========================
-  // HELPERS
-  // =========================
-  isUnderReview(status: string): boolean {
-    return this.normalizeStatus(status) === 'under_review';
+  private getReviewer(): string {
+    return this.authService.getCurrentUser()?.email || 'Officer';
+  }
+
+  private normalizeStatus(status: any): VerificationRequest['status'] {
+    const value = String(status ?? '').toLowerCase().replace(/\s+/g, '_').trim();
+    switch (value) {
+      case 'pending':
+      case 'under_review':
+      case 'approved':
+      case 'rejected':
+        return value;
+      default:
+        return 'pending';
+    }
+  }
+
+  private getRequestTime(request: VerificationRequest): number {
+    const raw = (request as any).submittedAt || (request as any).updatedAt || (request as any).reviewedAt;
+    if (!raw) return 0;
+    if (typeof raw === 'number') return raw;
+    if (raw?.seconds) return raw.seconds * 1000;
+    const parsed = new Date(raw).getTime();
+    return Number.isNaN(parsed) ? 0 : parsed;
   }
 
   getStatusClass(status: string): string {
@@ -275,7 +342,8 @@ export class VerificationRequestsComponent implements OnInit, OnDestroy {
 
   formatDate(value: any): string {
     if (!value) return '—';
-    return new Date(value).toLocaleDateString();
+    const date = value?.seconds ? new Date(value.seconds * 1000) : new Date(value);
+    return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString();
   }
 
   trackByRequestId(index: number, item: VerificationRequest): string {

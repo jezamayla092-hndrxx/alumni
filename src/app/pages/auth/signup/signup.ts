@@ -52,7 +52,7 @@ export class Signup implements OnDestroy {
   loading = false;
   showPassword = false;
   showConfirmPassword = false;
-  programDropdownOpen = false; // Make sure this is initialized as false
+  programDropdownOpen = false;
   countryDropdownOpen = false;
   uploadModalOpen = false;
 
@@ -125,12 +125,16 @@ export class Signup implements OnDestroy {
   openUploadModal(): void {
     if (this.loading) return;
     this.uploadModalOpen = true;
-    document.body.classList.add('modal-open'); // Prevent body scroll
+    document.body.classList.add('modal-open');
   }
 
   closeUploadModal(): void {
     this.uploadModalOpen = false;
-    document.body.classList.remove('modal-open'); // Allow body scroll
+    document.body.classList.remove('modal-open');
+  }
+
+  openPdf(url: string): void {
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 
   onDocumentsSelected(event: Event): void {
@@ -140,7 +144,7 @@ export class Signup implements OnDestroy {
     if (files.length === 0) return;
 
     const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
-    const maxSize = 5 * 1024 * 1024; // 5 MB max size
+    const maxSize = 5 * 1024 * 1024;
     const maxFiles = 6;
 
     for (const file of files) {
@@ -372,18 +376,14 @@ export class Signup implements OnDestroy {
 
   toggleProgramDropdown(event: MouseEvent): void {
     event.stopPropagation();
-
     if (this.loading) return;
-
     this.countryDropdownOpen = false;
     this.programDropdownOpen = !this.programDropdownOpen;
   }
 
   toggleCountryDropdown(event: MouseEvent): void {
     event.stopPropagation();
-
     if (this.loading) return;
-
     this.programDropdownOpen = false;
     this.countryDropdownOpen = !this.countryDropdownOpen;
   }

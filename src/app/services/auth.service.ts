@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import {
   browserLocalPersistence,
   createUserWithEmailAndPassword,
@@ -11,7 +11,7 @@ import {
   UserCredential
 } from 'firebase/auth';
 
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { auth } from '../firebase.config';
 
 @Injectable({
@@ -24,18 +24,27 @@ export class AuthService {
   readonly currentUser$ = this.currentUserSubject.asObservable();
   readonly authReady$ = this.authReadySubject.asObservable();
 
-  constructor() {
+  constructor(private zone: NgZone) {
     onAuthStateChanged(auth, (user) => {
-      this.currentUserSubject.next(user);
-      this.authReadySubject.next(true);
+      this.zone.run(() => {
+        this.currentUserSubject.next(user);
+        this.authReadySubject.next(true);
+      });
     });
   }
 
-  // ✅ FIXED (no getAuth)
-  checkAuthStatus(): void {
-    onAuthStateChanged(auth, (user) => {
-      this.currentUserSubject.next(user);
-      this.authReadySubject.next(true);
+  async waitForAuthReady(): Promise<FirebaseUser | null> {
+    if (this.authReadySubject.value) {
+      return this.currentUserSubject.value;
+    }
+
+    return new Promise((resolve) => {
+      const sub = this.authReady$.subscribe((ready) => {
+        if (ready) {
+          sub.unsubscribe();
+          resolve(this.currentUserSubject.value);
+        }
+      });
     });
   }
 
@@ -60,20 +69,15 @@ export class AuthService {
   }
 
   getCurrentUser(): FirebaseUser | null {
-    return auth.currentUser;
+    return this.currentUserSubject.value || auth.currentUser;
   }
 
   getCurrentUid(): string | null {
-    return auth.currentUser?.uid ?? null;
+    return this.getCurrentUser()?.uid ?? null;
   }
 
-  getAuthState(): Promise<FirebaseUser | null> {
-    return new Promise((resolve) => {
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
-        unsubscribe();
-        resolve(user);
-      });
-    });
+  async getAuthState(): Promise<FirebaseUser | null> {
+    return this.waitForAuthReady();
   }
 
   get isAuthReady(): boolean {

@@ -44,19 +44,19 @@ input[type='password']::-ms-clear {
 .signup-header {
   text-align: center;
   margin-bottom: 1.5rem;
+}
 
-  h1 {
-    margin: 0 0 0.35rem;
-    font-size: 1.75rem;
-    font-weight: 800;
-    color: #111827;
-  }
+.signup-header h1 {
+  margin: 0 0 0.35rem;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #111827;
+}
 
-  p {
-    margin: 0;
-    font-size: 0.94rem;
-    color: #64748b;
-  }
+.signup-header p {
+  margin: 0;
+  font-size: 0.94rem;
+  color: #64748b;
 }
 
 .form-grid {
@@ -113,7 +113,7 @@ input[type='password']::-ms-clear {
   color: #6d28d9;
 }
 
-/* Contact Number */
+/* ─── Phone Field ─── */
 .phone-field {
   position: relative;
   margin-bottom: 1.05rem;
@@ -123,19 +123,30 @@ input[type='password']::-ms-clear {
 .phone-floating-label {
   position: absolute;
   left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: #7c8798;
+  pointer-events: none;
+  transition: top 0.2s ease, font-size 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  z-index: 1;
+}
+
+/* FIX: :has() lets us style the label based on sibling/child state */
+.phone-field:has(.phone-control:focus-within) .phone-floating-label,
+.phone-field:has(input:not(:placeholder-shown)) .phone-floating-label {
   top: 9px;
-  z-index: 2;
+  transform: translateY(0);
   font-size: 0.66rem;
   font-weight: 700;
   color: #6d28d9;
-  pointer-events: none;
 }
 
 .phone-control {
-  width: 100%;
-  height: 52px;
   display: flex;
   align-items: center;
+  height: 52px;
   border: 1px solid #d7ddea;
   border-radius: 8px;
   background: #ffffff;
@@ -143,38 +154,45 @@ input[type='password']::-ms-clear {
   transition: border-color 0.22s ease, box-shadow 0.22s ease;
 }
 
-.phone-control:focus-within {
+.phone-field:has(.phone-control:focus-within) .phone-control {
   border-color: #7c3aed;
   box-shadow: 0 0 0 4px rgba(109, 40, 217, 0.12);
 }
 
-.phone-control input {
+.phone-input-wrapper {
   flex: 1;
   min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.phone-input-wrapper input {
+  width: 100%;
   height: 100%;
   border: none;
   outline: none;
   background: #ffffff;
   color: #0f172a;
   font-size: 0.95rem;
-  padding: 20px 1rem 8px 1rem;
+  padding: 20px 1rem 8px;
+  box-sizing: border-box;
 }
 
-.phone-control input::placeholder {
-  color: #7c8798;
+.phone-input-wrapper input::placeholder {
+  color: transparent;
 }
 
 .country-trigger {
   height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   min-width: 104px;
   border: none;
   border-left: 1px solid #e2e8f0;
   background: #ffffff;
   color: #0f172a;
   padding: 0 0.75rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   gap: 0.35rem;
   cursor: pointer;
   transition: background 0.18s ease;
@@ -198,16 +216,14 @@ input[type='password']::-ms-clear {
 .country-menu {
   position: absolute;
   top: calc(100% + 8px);
+  left: 0;
   right: 0;
-  width: 290px;
-  max-height: 240px;
-  overflow-y: auto;
-  padding: 0.45rem;
+  background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  background: #ffffff;
-  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.16);
-  z-index: 80;
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.14);
+  padding: 0.45rem;
+  z-index: 50;
   animation: dropdownFade 0.16s ease;
 }
 
@@ -215,15 +231,14 @@ input[type='password']::-ms-clear {
   width: 100%;
   border: none;
   background: transparent;
-  color: #0f172a;
-  padding: 0.75rem 0.85rem;
+  padding: 0.78rem 0.9rem;
   border-radius: 9px;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 0.5rem;
+  color: #0f172a;
+  font-size: 0.94rem;
   text-align: left;
   cursor: pointer;
+  display: flex;
+  justify-content: space-between;
   transition: background 0.18s ease, color 0.18s ease;
 }
 
@@ -233,17 +248,15 @@ input[type='password']::-ms-clear {
 }
 
 .country-name {
-  font-size: 0.9rem;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .country-dial {
-  color: #64748b;
-  font-size: 0.85rem;
   font-weight: 800;
+  color: #6d28d9;
 }
 
-/* Program dropdown */
+/* ─── Program Dropdown ─── */
 .program-field {
   position: relative;
   z-index: 20;
@@ -325,7 +338,7 @@ input[type='password']::-ms-clear {
   color: #6d28d9;
 }
 
-/* Upload */
+/* ─── Upload Section ─── */
 .upload-summary {
   margin-bottom: 0.35rem;
   border: 1px dashed #c4b5fd;
@@ -336,19 +349,19 @@ input[type='password']::-ms-clear {
   align-items: center;
   justify-content: space-between;
   gap: 0.9rem;
+}
 
-  strong {
-    display: block;
-    color: #111827;
-    font-size: 0.9rem;
-    font-weight: 800;
-  }
+.upload-summary strong {
+  display: block;
+  color: #111827;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
 
-  p {
-    margin: 0.15rem 0 0;
-    color: #64748b;
-    font-size: 0.8rem;
-  }
+.upload-summary p {
+  margin: 0.15rem 0 0;
+  color: #64748b;
+  font-size: 0.8rem;
 }
 
 .upload-open-btn {
@@ -364,10 +377,10 @@ input[type='password']::-ms-clear {
   align-items: center;
   gap: 0.28rem;
   transition: background 0.2s ease, transform 0.15s ease;
+}
 
-  .material-symbols-outlined {
-    font-size: 1.15rem;
-  }
+.upload-open-btn .material-symbols-outlined {
+  font-size: 1.15rem;
 }
 
 .upload-open-btn:hover:not(:disabled) {
@@ -386,7 +399,7 @@ input[type='password']::-ms-clear {
   font-size: 0.78rem;
 }
 
-/* Modal */
+/* ─── Modal ─── */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -417,20 +430,20 @@ input[type='password']::-ms-clear {
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1rem;
+}
 
-  h2 {
-    margin: 0;
-    color: #111827;
-    font-size: 1.25rem;
-    font-weight: 900;
-  }
+.modal-header h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 1.25rem;
+  font-weight: 900;
+}
 
-  p {
-    margin: 0.3rem 0 0;
-    color: #64748b;
-    font-size: 0.9rem;
-    line-height: 1.4;
-  }
+.modal-header p {
+  margin: 0.3rem 0 0;
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.4;
 }
 
 .modal-close {
@@ -444,10 +457,10 @@ input[type='password']::-ms-clear {
   display: grid;
   place-items: center;
   transition: background 0.18s ease, transform 0.15s ease;
+}
 
-  .material-symbols-outlined {
-    font-size: 1.25rem;
-  }
+.modal-close .material-symbols-outlined {
+  font-size: 1.25rem;
 }
 
 .modal-close:hover {
@@ -470,14 +483,14 @@ input[type='password']::-ms-clear {
   gap: 0.5rem;
   margin-bottom: 1rem;
   transition: background 0.2s ease, border-color 0.2s ease;
+}
 
-  input {
-    display: none;
-  }
+.modal-upload-btn input {
+  display: none;
+}
 
-  .material-symbols-outlined {
-    font-size: 1.45rem;
-  }
+.modal-upload-btn .material-symbols-outlined {
+  font-size: 1.45rem;
 }
 
 .modal-upload-btn:hover {
@@ -495,16 +508,16 @@ input[type='password']::-ms-clear {
   place-items: center;
   text-align: center;
   padding: 1rem;
+}
 
-  .material-symbols-outlined {
-    color: #6d28d9;
-    font-size: 2.2rem;
-  }
+.empty-documents .material-symbols-outlined {
+  color: #6d28d9;
+  font-size: 2.2rem;
+}
 
-  p {
-    margin: 0.35rem 0 0;
-    font-size: 0.9rem;
-  }
+.empty-documents p {
+  margin: 0.35rem 0 0;
+  font-size: 0.9rem;
 }
 
 .document-grid {
@@ -568,28 +581,27 @@ input[type='password']::-ms-clear {
   color: #6d28d9;
   border: 1px solid #eee7ff;
   background: #fbfaff;
+}
 
-  .material-symbols-outlined {
-    font-size: 2rem;
-  }
+.pdf-preview .material-symbols-outlined {
+  font-size: 2rem;
+}
 
-  small {
-    margin-top: 0.25rem;
-    font-size: 0.68rem;
-    font-weight: 900;
-  }
+.pdf-preview small {
+  margin-top: 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 900;
 }
 
 .document-name {
-  margin: 0.45rem 0 0;
-  color: #334155;
-  font-size: 0.72rem;
-  line-height: 1.25;
-  overflow: hidden;
   display: -webkit-box;
-  line-clamp: 2;
-  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  line-clamp: 2;
+  margin-top: 0.4rem;
+  font-size: 0.75rem;
+  color: #334155;
 }
 
 .modal-actions {
@@ -609,7 +621,7 @@ input[type='password']::-ms-clear {
   box-shadow: 0 12px 24px rgba(109, 40, 217, 0.2);
 }
 
-/* Password */
+/* ─── Password Fields ─── */
 .password-field input {
   padding-right: 48px;
 }
@@ -640,6 +652,7 @@ input[type='password']::-ms-clear {
   opacity: 0.8;
 }
 
+/* ─── Signup Button ─── */
 .signup-btn {
   width: 100%;
   margin-top: 0.55rem;
@@ -668,24 +681,24 @@ input[type='password']::-ms-clear {
   text-align: center;
   color: #64748b;
   font-size: 0.94rem;
-
-  a {
-    color: #6d28d9;
-    text-decoration: none;
-    font-weight: 800;
-  }
-
-  a:hover {
-    text-decoration: underline;
-  }
 }
 
+.login-link a {
+  color: #6d28d9;
+  text-decoration: none;
+  font-weight: 800;
+}
+
+.login-link a:hover {
+  text-decoration: underline;
+}
+
+/* ─── Animations ─── */
 @keyframes dropdownFade {
   from {
     opacity: 0;
     transform: translateY(-4px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -697,13 +710,13 @@ input[type='password']::-ms-clear {
     opacity: 0;
     transform: translateY(10px) scale(0.98);
   }
-
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
 }
 
+/* ─── Responsive ─── */
 @media (max-width: 640px) {
   .signup-page {
     padding: 1rem;

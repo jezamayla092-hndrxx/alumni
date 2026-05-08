@@ -5,7 +5,7 @@ import { Subject, filter, takeUntil } from 'rxjs';
 
 import { VerificationService } from '../../../services/verification.service';
 import { VerificationRequest } from '../../../models/verification.model';
-import { UsersService } from '../../../services/users.service';  // Added UsersService import
+import { UsersService } from '../../../services/users.service';
 
 type VerificationStatus = 'pending' | 'under_review' | 'approved' | 'rejected';
 type ActivityType = 'job' | 'event' | 'announcement';
@@ -13,7 +13,7 @@ type ActivityType = 'job' | 'event' | 'announcement';
 interface SummaryCard {
   title: string;
   value: string;
-  subtitle: string; // Removed mini text here
+  subtitle: string;
   icon: string;
   iconClass: string;
 }
@@ -43,82 +43,72 @@ interface ActivityPreview {
 export class Dashboard implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
-  summaryCards: SummaryCard[] = [
-    {
-      title: 'Pending Verifications',
-      value: '0',
-      subtitle: '', // Removed mini text here
-      icon: 'pi pi-shield',
-      iconClass: 'icon-violet',
-    },
-    {
-      title: 'Total Alumni',
-      value: '1,842', // This will be updated dynamically
-      subtitle: '', // Removed mini text here
-      icon: 'pi pi-users',
-      iconClass: 'icon-purple',
-    },
-    {
-      title: 'Active Job Posts',
-      value: '18',
-      subtitle: '', // Removed mini text here
-      icon: 'pi pi-briefcase',
-      iconClass: 'icon-amber',
-    },
-    {
-      title: 'Upcoming Events',
-      value: '3',
-      subtitle: '', // Removed mini text here
-      icon: 'pi pi-calendar',
-      iconClass: 'icon-blue',
-    },
-    {
-      title: 'Announcements',
-      value: '47',
-      subtitle: '', // Removed mini text here
-      icon: 'pi pi-megaphone',
-      iconClass: 'icon-pink',
-    },
-  ];
+  pendingVerifications = 0;
+  totalAlumni = 0;
+  thisMonthAlumni = 0;
+
+  activeJobPosts = 0;
+  upcomingEvents = 0;
+  announcements = 0;
+
+  verificationSubtitle = '';
+  loadingVerifications = false;
 
   verificationRequests: VerificationPreview[] = [];
 
-  recentActivities: ActivityPreview[] = [
-    {
-      id: 'ACT-001',
-      type: 'job',
-      title: 'Software Developer at Accenture',
-      date: 'Apr 8, 2026',
-    },
-    {
-      id: 'ACT-002',
-      type: 'event',
-      title: 'Grand Alumni Homecoming 2026',
-      date: 'Apr 7, 2026',
-    },
-    {
-      id: 'ACT-003',
-      type: 'announcement',
-      title: 'Updated alumni ID processing guidelines',
-      date: 'Apr 6, 2026',
-    },
-  ];
-
-  loadingVerifications = false;
-  totalAlumni: number = 0;  // Initialized total alumni count
-  thisMonthAlumni: number = 0;  // To track alumni count for this month
+  recentActivities: ActivityPreview[] = [];
 
   constructor(
     private verificationService: VerificationService,
-    private usersService: UsersService,  // Injected UsersService
+    private usersService: UsersService,
     private router: Router,
     private cdr: ChangeDetectorRef,
     private zone: NgZone
   ) {}
 
+  get summaryCards(): SummaryCard[] {
+    return [
+      {
+        title: 'Pending Verifications',
+        value: String(this.pendingVerifications),
+        subtitle: this.verificationSubtitle,
+        icon: 'pi pi-shield',
+        iconClass: 'icon-violet',
+      },
+      {
+        title: 'Total Alumni',
+        value: String(this.totalAlumni),
+        subtitle: '',
+        icon: 'pi pi-users',
+        iconClass: 'icon-purple',
+      },
+      {
+        title: 'Active Job Posts',
+        value: String(this.activeJobPosts),
+        subtitle: '',
+        icon: 'pi pi-briefcase',
+        iconClass: 'icon-amber',
+      },
+      {
+        title: 'Upcoming Events',
+        value: String(this.upcomingEvents),
+        subtitle: '',
+        icon: 'pi pi-calendar',
+        iconClass: 'icon-blue',
+      },
+      {
+        title: 'Announcements',
+        value: String(this.announcements),
+        subtitle: '',
+        icon: 'pi pi-megaphone',
+        iconClass: 'icon-pink',
+      },
+    ];
+  }
+
   ngOnInit(): void {
     this.loadVerificationDashboardData();
-    this.subscribeToRealTimeData();  // Subscribe to real-time data
+    this.subscribeToRealTimeData();
 
     this.router.events
       .pipe(
@@ -127,6 +117,7 @@ export class Dashboard implements OnInit, OnDestroy {
       )
       .subscribe((event) => {
         const nav = event as NavigationEnd;
+
         if (nav.urlAfterRedirects.includes('/officer/dashboard')) {
           this.loadVerificationDashboardData();
         }
@@ -153,18 +144,12 @@ export class Dashboard implements OnInit, OnDestroy {
               (request) => request.status === 'pending'
             );
 
-            this.summaryCards = this.summaryCards.map((card) =>
-              card.title === 'Pending Verifications'
-                ? {
-                    ...card,
-                    value: String(pendingRequests.length),
-                    subtitle:
-                      pendingRequests.length === 1
-                        ? '1 request awaiting review'
-                        : `${pendingRequests.length} requests awaiting review`,
-                  }
-                : card
-            );
+            this.pendingVerifications = pendingRequests.length;
+
+            this.verificationSubtitle =
+              pendingRequests.length === 1
+                ? '1 request awaiting review'
+                : `${pendingRequests.length} requests awaiting review`;
 
             this.verificationRequests = safeRequests
               .slice()
@@ -175,7 +160,7 @@ export class Dashboard implements OnInit, OnDestroy {
                 name: request.fullName || 'Unknown Applicant',
                 program: request.program || 'Not specified',
                 year: request.yearGraduated || '—',
-                status: request.status,
+                status: request.status || 'pending',
               }));
 
             this.loadingVerifications = false;
@@ -186,26 +171,35 @@ export class Dashboard implements OnInit, OnDestroy {
           this.zone.run(() => {
             console.error('Error loading verification dashboard data:', error);
 
-            this.summaryCards = this.summaryCards.map((card) =>
-              card.title === 'Pending Verifications'
-                ? {
-                    ...card,
-                    value: '0',
-                    subtitle: 'Failed to load verification data',
-                  }
-                : card
-            );
-
+            this.pendingVerifications = 0;
+            this.verificationSubtitle = 'Failed to load verification data';
             this.verificationRequests = [];
             this.loadingVerifications = false;
+
             this.cdr.detectChanges();
           });
         },
       });
   }
 
+  subscribeToRealTimeData(): void {
+    this.usersService.getAlumniCountRealTime((count) => {
+      this.zone.run(() => {
+        this.totalAlumni = count;
+        this.cdr.detectChanges();
+      });
+    });
+
+    this.usersService.getAlumniCountThisMonthRealTime((count) => {
+      this.zone.run(() => {
+        this.thisMonthAlumni = count;
+        this.cdr.detectChanges();
+      });
+    });
+  }
+
   private getRequestTime(request: VerificationRequest): number {
-    const raw = request.submittedAt;
+    const raw: any = request.submittedAt;
 
     if (!raw) return 0;
     if (typeof raw === 'number') return raw;
@@ -240,28 +234,5 @@ export class Dashboard implements OnInit, OnDestroy {
 
   trackByIndex(index: number): number {
     return index;
-  }
-
-  // Real-time subscription for total alumni and this month's alumni count
-  subscribeToRealTimeData(): void {
-    this.usersService.getAlumniCountRealTime((count) => {
-      this.totalAlumni = count;
-
-      // Update the Total Alumni summary card dynamically
-      this.summaryCards = this.summaryCards.map((card) =>
-        card.title === 'Total Alumni'
-          ? {
-              ...card,
-              value: String(this.totalAlumni),
-              subtitle: '', // No mini text for total alumni
-            }
-          : card
-      );
-      this.cdr.detectChanges();  // Ensure UI updates
-    });
-
-    this.usersService.getAlumniCountThisMonthRealTime((count) => {
-      this.thisMonthAlumni = count;
-    });
   }
 }
