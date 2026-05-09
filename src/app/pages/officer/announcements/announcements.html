@@ -1,167 +1,446 @@
-<section class="records-page">
-  <div class="page-heading">
-    <div>
-      <h1>Announcements</h1>
-      <p>Create and manage notices and updates for alumni.</p>
-    </div>
+<section class="announcements-page">
 
-    <button type="button" class="create-btn" (click)="openCreateModal()">
+  <!-- HEADER -->
+  <div class="page-header">
+    <div>
+      <div class="eyebrow">OFFICER PORTAL</div>
+      <h1>Announcements</h1>
+      <p>Create and manage official alumni updates.</p>
+    </div>
+    <button type="button" class="create-btn" (click)="openCreate()">
       <i class="pi pi-plus"></i>
-      <span>New Announcement</span>
+      Create Announcement
     </button>
   </div>
 
-  <section class="filters-card">
-    <div class="filters-grid">
-      <div class="search-field">
-        <i class="pi pi-search"></i>
-        <input
-          type="text"
-          placeholder="Search announcements..."
-          [(ngModel)]="searchTerm"
-          (ngModelChange)="applyFilters()"
-        />
-      </div>
-
-      <div class="select-field">
-        <select [(ngModel)]="selectedStatus" (change)="applyFilters()">
-          <option *ngFor="let status of statusOptions" [value]="status">
-            {{ status }}
-          </option>
-        </select>
-        <i class="pi pi-angle-down"></i>
+  <!-- SUMMARY CARDS -->
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-icon purple"><i class="pi pi-megaphone"></i></div>
+      <div class="summary-copy">
+        <strong>{{ totalCount }}</strong>
+        <span>Total</span>
       </div>
     </div>
-  </section>
-
-  <section class="table-card">
-    <div class="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>TITLE</th>
-            <th>DATE POSTED</th>
-            <th>STATUS</th>
-            <th>ACTIONS</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <tr *ngIf="loading">
-            <td colspan="4" class="empty-state">Loading announcements...</td>
-          </tr>
-
-          <tr *ngIf="!loading && loadError">
-            <td colspan="4" class="empty-state">{{ loadError }}</td>
-          </tr>
-
-          <tr *ngFor="let item of filteredAnnouncements; trackBy: trackByAnnouncement">
-            <td class="title-cell">
-              <div class="title-main">{{ item.title }}</div>
-              <div class="title-sub">{{ getPreviewText(item) }}</div>
-            </td>
-
-            <td>{{ getDisplayDate(item) }}</td>
-
-            <td>
-              <span
-                class="status-pill"
-                [ngClass]="{
-                  published: item.status === 'Published',
-                  draft: item.status === 'Draft'
-                }"
-              >
-                {{ item.status }}
-              </span>
-            </td>
-
-            <td>
-              <div class="actions-cell">
-                <button class="action-icon edit" (click)="openEditModal(item)">
-                  <i class="pi pi-pencil"></i>
-                </button>
-
-                <button class="action-icon delete" (click)="openDeleteModal(item)">
-                  <i class="pi pi-trash"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-
-          <tr *ngIf="!loading && !loadError && filteredAnnouncements.length === 0">
-            <td colspan="4" class="empty-state">No announcements found.</td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="summary-card">
+      <div class="summary-icon green"><i class="pi pi-check-circle"></i></div>
+      <div class="summary-copy">
+        <strong>{{ publishedCount }}</strong>
+        <span>Published</span>
+      </div>
     </div>
-  </section>
+    <div class="summary-card">
+      <div class="summary-icon amber"><i class="pi pi-file-edit"></i></div>
+      <div class="summary-copy">
+        <strong>{{ draftCount }}</strong>
+        <span>Drafts</span>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-icon blue"><i class="pi pi-thumbtack"></i></div>
+      <div class="summary-copy">
+        <strong>{{ pinnedCount }}</strong>
+        <span>Pinned</span>
+      </div>
+    </div>
+  </div>
 
-  <p class="table-footnote">
-    Showing {{ filteredAnnouncements.length }} of {{ announcements.length }} announcements
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="search-field">
+      <i class="pi pi-search"></i>
+      <input
+        type="text"
+        placeholder="Search announcements..."
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="applyFilters()"
+      />
+    </div>
+
+    <div class="select-field">
+      <select [(ngModel)]="filterStatus" (change)="applyFilters()">
+        <option value="">All Statuses</option>
+        <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+      </select>
+      <i class="pi pi-angle-down"></i>
+    </div>
+
+    <div class="select-field">
+      <select [(ngModel)]="filterCategory" (change)="applyFilters()">
+        <option value="">All Categories</option>
+        <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+      </select>
+      <i class="pi pi-angle-down"></i>
+    </div>
+
+    <button *ngIf="hasActiveFilters" type="button" class="clear-btn" (click)="clearFilters()">
+      <i class="pi pi-times"></i> Clear
+    </button>
+  </div>
+
+  <!-- LIST -->
+  <div class="list-shell">
+
+    <div class="empty-state" *ngIf="loading">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>Loading announcements...</span>
+    </div>
+
+    <div class="empty-state error-state" *ngIf="!loading && loadError">
+      <i class="pi pi-exclamation-circle"></i>
+      <span>{{ loadError }}</span>
+    </div>
+
+    <div class="empty-state" *ngIf="!loading && !loadError && filteredAnnouncements.length === 0">
+      <i class="pi pi-megaphone"></i>
+      <span *ngIf="hasActiveFilters">No announcements match your filters.</span>
+      <span *ngIf="!hasActiveFilters">No announcements yet. Click <strong>Create Announcement</strong> to get started.</span>
+    </div>
+
+    <div
+      class="announcement-row"
+      *ngFor="let item of filteredAnnouncements; trackBy: trackByAnnouncement"
+      [class.is-pinned]="item.isPinned"
+    >
+      <div class="row-main">
+        <div class="row-badges">
+          <span class="badge badge-pinned" *ngIf="item.isPinned">
+            <i class="pi pi-thumbtack"></i> Pinned
+          </span>
+          <span class="badge badge-category">{{ item.category }}</span>
+          <span class="badge" [ngClass]="{
+            'badge-published': item.status === 'Published',
+            'badge-draft':     item.status === 'Draft',
+            'badge-archived':  item.status === 'Archived'
+          }">{{ item.status }}</span>
+        </div>
+
+        <div class="row-title">{{ item.title }}</div>
+        <div class="row-preview">{{ getPreview(item) }}</div>
+
+        <div class="row-meta">
+          <span><i class="pi pi-eye"></i> {{ item.visibility }}</span>
+          <ng-container *ngIf="item.program && item.visibility === 'Specific Program'">
+            <span class="dot">—</span>
+            <span>{{ item.program }}</span>
+          </ng-container>
+          <span class="dot">·</span>
+          <span><i class="pi pi-calendar"></i> {{ formatDate(item.createdAt) }}</span>
+          <ng-container *ngIf="item.imageUrl">
+            <span class="dot">·</span>
+            <span><i class="pi pi-image"></i> Image</span>
+          </ng-container>
+          <ng-container *ngIf="item.attachmentUrl">
+            <span class="dot">·</span>
+            <span><i class="pi pi-paperclip"></i> {{ item.attachmentName || 'Attachment' }}</span>
+          </ng-container>
+        </div>
+      </div>
+
+      <div class="row-actions">
+        <button type="button" class="action-btn view-btn" title="View Details" (click)="openView(item)">
+          <i class="pi pi-eye"></i>
+        </button>
+        <button type="button" class="action-btn edit-btn" title="Edit" (click)="openEdit(item)">
+          <i class="pi pi-pencil"></i>
+        </button>
+        <button
+          type="button"
+          class="action-btn pin-btn"
+          [title]="item.isPinned ? 'Unpin' : 'Pin'"
+          (click)="togglePin(item)"
+        >
+          <i class="pi pi-thumbtack" [class.pin-active]="item.isPinned"></i>
+        </button>
+        <button
+          type="button"
+          class="action-btn archive-btn"
+          title="Archive"
+          *ngIf="item.status !== 'Archived'"
+          (click)="archive(item)"
+        >
+          <i class="pi pi-inbox"></i>
+        </button>
+        <button type="button" class="action-btn delete-btn" title="Delete" (click)="openDelete(item)">
+          <i class="pi pi-trash"></i>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="list-footnote" *ngIf="!loading && !loadError">
+    Showing {{ filteredAnnouncements.length }} of {{ announcements.length }}
+    announcement{{ announcements.length === 1 ? '' : 's' }}
   </p>
+
 </section>
 
-<!-- CREATE / EDIT MODAL -->
-<div class="modal-backdrop" *ngIf="showAnnouncementModal">
-  <div class="modal announcement-modal">
+
+<!-- ══════════════════════════════ ADD / EDIT MODAL -->
+<div class="modal-backdrop" *ngIf="showFormModal" (click)="closeFormModal()">
+  <div class="modal form-modal" (click)="$event.stopPropagation()">
+
     <div class="modal-header">
-      <h2>{{ isEditMode ? 'Edit Announcement' : 'New Announcement' }}</h2>
-      <button (click)="closeAnnouncementModal()">✕</button>
+      <div class="modal-header-copy">
+        <h2>{{ isEditMode ? 'Edit Announcement' : 'Create Announcement' }}</h2>
+        <p>{{ isEditMode ? 'Update the details of this announcement.' : 'Fill in the details for the new announcement.' }}</p>
+      </div>
+      <button type="button" class="close-btn" (click)="closeFormModal()">
+        <i class="pi pi-times"></i>
+      </button>
     </div>
 
     <div class="modal-body">
-      <div class="form-grid">
-        <div class="field full">
-          <label>Title</label>
-          <input [(ngModel)]="form.title" placeholder="Enter announcement title" />
-        </div>
 
-        <div class="field full">
-          <label>Content</label>
-          <textarea [(ngModel)]="form.content" placeholder="Write the announcement content"></textarea>
-        </div>
-
-        <div class="field">
-          <label>Status</label>
-          <div class="select-wrap">
-            <select [(ngModel)]="form.status">
-              <option value="Published">Published</option>
-              <option value="Draft">Draft</option>
-            </select>
-            <i class="pi pi-angle-down"></i>
+      <!-- Basic Info -->
+      <div class="form-section">
+        <div class="form-section-label"><i class="pi pi-info-circle"></i> Basic Information</div>
+        <div class="form-grid two-col">
+          <div class="field full">
+            <label>Announcement Title <span class="req">*</span></label>
+            <input type="text" [(ngModel)]="form.title" placeholder="Enter announcement title" />
+          </div>
+          <div class="field full">
+            <label>Content / Description <span class="req">*</span></label>
+            <textarea [(ngModel)]="form.content" placeholder="Write the announcement content..." rows="5"></textarea>
+          </div>
+          <div class="field">
+            <label>Category <span class="req">*</span></label>
+            <div class="select-wrap">
+              <select [(ngModel)]="form.category">
+                <option value="">Select category...</option>
+                <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+              </select>
+              <i class="pi pi-angle-down"></i>
+            </div>
+          </div>
+          <div class="field">
+            <label>Status</label>
+            <div class="select-wrap">
+              <select [(ngModel)]="form.status">
+                <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+              </select>
+              <i class="pi pi-angle-down"></i>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="modal-actions">
-        <button class="secondary-btn" (click)="closeAnnouncementModal()">Cancel</button>
+      <!-- Visibility -->
+      <div class="form-section">
+        <div class="form-section-label"><i class="pi pi-users"></i> Visibility</div>
+        <div class="form-grid two-col">
+          <div class="field" [class.full]="form.visibility !== 'Specific Program'">
+            <label>Visibility <span class="req">*</span></label>
+            <div class="select-wrap">
+              <select [(ngModel)]="form.visibility">
+                <option value="">Select visibility...</option>
+                <option *ngFor="let v of visibilities" [value]="v">{{ v }}</option>
+              </select>
+              <i class="pi pi-angle-down"></i>
+            </div>
+          </div>
+          <div class="field" *ngIf="form.visibility === 'Specific Program'">
+            <label>Program <span class="req">*</span></label>
+            <div class="select-wrap">
+              <select [(ngModel)]="form.program">
+                <option value="">Select program...</option>
+                <option *ngFor="let p of programs" [value]="p">{{ p }}</option>
+              </select>
+              <i class="pi pi-angle-down"></i>
+            </div>
+          </div>
+        </div>
 
-        <button
-          class="primary-btn"
-          (click)="saveAnnouncement()"
-          [disabled]="saving || !form.title.trim() || !form.content.trim()"
-        >
-          {{ saving ? 'Saving...' : (isEditMode ? 'Save Changes' : 'Create Announcement') }}
-        </button>
+        <label class="checkbox-row pin-row">
+          <div class="custom-checkbox" [class.checked]="form.isPinned">
+            <input type="checkbox" [(ngModel)]="form.isPinned" />
+            <i class="pi pi-check"></i>
+          </div>
+          <div class="checkbox-copy">
+            <span class="checkbox-label">Pin Announcement</span>
+            <span class="checkbox-hint">Pinned announcements are highlighted with a purple left border.</span>
+          </div>
+        </label>
       </div>
+
+      <!-- Image -->
+      <div class="form-section">
+        <div class="form-section-label">
+          <i class="pi pi-image"></i> Image
+          <span class="optional-label">(Optional)</span>
+        </div>
+
+        <div class="image-preview-block" *ngIf="currentImageUrl">
+          <img [src]="currentImageUrl" alt="Announcement image preview" class="image-preview" />
+          <div class="image-actions">
+            <label class="file-label-btn">
+              <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onImageSelected($event)" hidden />
+              <i class="pi pi-refresh"></i> Change Image
+            </label>
+            <button type="button" class="remove-file-btn" (click)="removeImage()">
+              <i class="pi pi-trash"></i> Remove
+            </button>
+          </div>
+        </div>
+
+        <div class="file-upload-zone" *ngIf="!currentImageUrl">
+          <i class="pi pi-cloud-upload"></i>
+          <p>Upload an image for this announcement</p>
+          <span>JPG, PNG, WEBP · Max 5MB</span>
+          <label class="file-label-btn primary-file-btn">
+            <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onImageSelected($event)" hidden />
+            <i class="pi pi-upload"></i> Choose Image
+          </label>
+        </div>
+      </div>
+
+      <!-- Attachment -->
+      <div class="form-section">
+        <div class="form-section-label">
+          <i class="pi pi-paperclip"></i> Attachment
+          <span class="optional-label">(Optional)</span>
+        </div>
+
+        <div class="attachment-block" *ngIf="currentAttachmentName">
+          <div class="attachment-info">
+            <i class="pi pi-file"></i>
+            <span>{{ currentAttachmentName }}</span>
+          </div>
+          <div class="image-actions">
+            <label class="file-label-btn">
+              <input type="file" accept=".pdf,.doc,.docx,image/jpeg,image/png" (change)="onAttachmentSelected($event)" hidden />
+              <i class="pi pi-refresh"></i> Change
+            </label>
+            <button type="button" class="remove-file-btn" (click)="removeAttachment()">
+              <i class="pi pi-trash"></i> Remove
+            </button>
+          </div>
+        </div>
+
+        <div class="file-upload-zone" *ngIf="!currentAttachmentName">
+          <i class="pi pi-cloud-upload"></i>
+          <p>Attach a file to this announcement</p>
+          <span>PDF, DOC, DOCX, JPG, PNG · Max 10MB</span>
+          <label class="file-label-btn primary-file-btn">
+            <input type="file" accept=".pdf,.doc,.docx,image/jpeg,image/png" (change)="onAttachmentSelected($event)" hidden />
+            <i class="pi pi-upload"></i> Choose File
+          </label>
+        </div>
+      </div>
+
+      <!-- Error -->
+      <div class="form-error" *ngIf="formError">
+        <i class="pi pi-exclamation-triangle"></i> {{ formError }}
+      </div>
+
     </div>
+
+    <div class="modal-footer">
+      <button type="button" class="secondary-btn" (click)="closeFormModal()">Cancel</button>
+      <button type="button" class="primary-btn" (click)="save()" [disabled]="saving">
+        <i class="pi pi-check"></i>
+        {{ saving ? 'Saving...' : (isEditMode ? 'Save Changes' : 'Create Announcement') }}
+      </button>
+    </div>
+
   </div>
 </div>
 
-<!-- DELETE MODAL -->
-<div class="modal-backdrop" *ngIf="showDeleteModal">
-  <div class="confirm-modal">
-    <div class="confirm-icon">
-      <i class="pi pi-trash"></i>
+
+<!-- ══════════════════════════════ VIEW MODAL -->
+<div class="modal-backdrop" *ngIf="showViewModal" (click)="closeViewModal()">
+  <div class="modal view-modal" (click)="$event.stopPropagation()">
+
+    <div class="modal-header" *ngIf="selectedAnnouncement">
+      <div class="modal-header-copy">
+        <div class="view-badges">
+          <span class="badge badge-pinned" *ngIf="selectedAnnouncement.isPinned">
+            <i class="pi pi-thumbtack"></i> Pinned
+          </span>
+          <span class="badge badge-category">{{ selectedAnnouncement.category }}</span>
+          <span class="badge" [ngClass]="{
+            'badge-published': selectedAnnouncement.status === 'Published',
+            'badge-draft':     selectedAnnouncement.status === 'Draft',
+            'badge-archived':  selectedAnnouncement.status === 'Archived'
+          }">{{ selectedAnnouncement.status }}</span>
+        </div>
+        <h2>{{ selectedAnnouncement.title }}</h2>
+      </div>
+      <button type="button" class="close-btn" (click)="closeViewModal()">
+        <i class="pi pi-times"></i>
+      </button>
     </div>
 
+    <div class="modal-body view-body" *ngIf="selectedAnnouncement">
+
+      <img
+        *ngIf="selectedAnnouncement.imageUrl"
+        [src]="selectedAnnouncement.imageUrl"
+        alt="Announcement image"
+        class="view-image"
+      />
+
+      <div class="view-meta">
+        <div class="view-meta-item">
+          <span class="meta-label">Visibility</span>
+          <span>{{ selectedAnnouncement.visibility }}</span>
+        </div>
+        <div class="view-meta-item" *ngIf="selectedAnnouncement.program">
+          <span class="meta-label">Program</span>
+          <span>{{ selectedAnnouncement.program }}</span>
+        </div>
+        <div class="view-meta-item">
+          <span class="meta-label">Posted</span>
+          <span>{{ formatDate(selectedAnnouncement.createdAt) }}</span>
+        </div>
+        <div class="view-meta-item" *ngIf="selectedAnnouncement.updatedAt">
+          <span class="meta-label">Updated</span>
+          <span>{{ formatDate(selectedAnnouncement.updatedAt) }}</span>
+        </div>
+      </div>
+
+      <div class="view-content">
+        <h4>Content</h4>
+        <p>{{ selectedAnnouncement.content }}</p>
+      </div>
+
+     <div class="view-attachment" *ngIf="selectedAnnouncement.attachmentUrl">
+  <a [href]="selectedAnnouncement.attachmentUrl" target="_blank" rel="noopener" class="attachment-link">
+    <i class="pi pi-file"></i>
+    {{ selectedAnnouncement.attachmentName || 'Download Attachment' }}
+    <i class="pi pi-external-link"></i>
+  </a>
+</div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="secondary-btn" (click)="closeViewModal()">Close</button>
+      <button type="button" class="primary-btn" (click)="openEditFromView()">
+        <i class="pi pi-pencil"></i> Edit
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════ DELETE MODAL -->
+<div class="modal-backdrop" *ngIf="showDeleteModal" (click)="closeDelete()">
+  <div class="confirm-modal" (click)="$event.stopPropagation()">
+    <div class="confirm-icon"><i class="pi pi-trash"></i></div>
     <h3>Delete Announcement</h3>
-    <p>Are you sure you want to delete <strong>{{ announcementToDelete?.title }}</strong>?</p>
-
+    <div *ngIf="announcementToDelete">
+      <p>
+        Are you sure you want to delete
+        <strong>{{ announcementToDelete.title }}</strong>?
+        This action cannot be undone.
+      </p>
+    </div>
     <div class="confirm-actions">
-      <button class="secondary-btn" (click)="closeDeleteModal()">Cancel</button>
-
-      <button class="danger-btn" (click)="confirmDelete()" [disabled]="deleting">
+      <button type="button" class="secondary-btn" (click)="closeDelete()">Cancel</button>
+      <button type="button" class="danger-btn" (click)="confirmDelete()" [disabled]="deleting">
         {{ deleting ? 'Deleting...' : 'Delete' }}
       </button>
     </div>

@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { Subject, filter, takeUntil } from 'rxjs';
+import { Unsubscribe } from 'firebase/firestore';
 
 import { VerificationService } from '../../../services/verification.service';
 import { VerificationRequest } from '../../../models/verification.model';
@@ -42,6 +43,9 @@ interface ActivityPreview {
 })
 export class Dashboard implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+
+  private alumniCountUnsubscribe?: Unsubscribe;
+  private monthlyAlumniCountUnsubscribe?: Unsubscribe;
 
   pendingVerifications = 0;
   totalAlumni = 0;
@@ -125,6 +129,9 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.alumniCountUnsubscribe?.();
+    this.monthlyAlumniCountUnsubscribe?.();
+
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -183,14 +190,17 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   subscribeToRealTimeData(): void {
-    this.usersService.getAlumniCountRealTime((count) => {
+    this.alumniCountUnsubscribe?.();
+    this.monthlyAlumniCountUnsubscribe?.();
+
+    this.alumniCountUnsubscribe = this.usersService.getAlumniCountRealTime((count) => {
       this.zone.run(() => {
         this.totalAlumni = count;
         this.cdr.detectChanges();
       });
     });
 
-    this.usersService.getAlumniCountThisMonthRealTime((count) => {
+    this.monthlyAlumniCountUnsubscribe = this.usersService.getAlumniCountThisMonthRealTime((count) => {
       this.zone.run(() => {
         this.thisMonthAlumni = count;
         this.cdr.detectChanges();

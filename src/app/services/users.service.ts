@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import {
   doc,
   setDoc,
@@ -8,7 +8,8 @@ import {
   query,
   where,
   onSnapshot,
-  updateDoc
+  updateDoc,
+  Unsubscribe
 } from 'firebase/firestore';
 
 import { db } from '../firebase.config';
@@ -20,6 +21,8 @@ import { User } from '../models/user.model';
 export class UsersService {
 
   private usersCollection = collection(db, 'users');
+
+  constructor(private ngZone: NgZone) {}
 
   // ==============================
   // CREATE USER
@@ -58,7 +61,7 @@ export class UsersService {
 
   getAlumniCountRealTime(
     callback: (count: number) => void
-  ): void {
+  ): Unsubscribe {
 
     const alumniQuery = query(
       this.usersCollection,
@@ -66,25 +69,29 @@ export class UsersService {
       where('isVerified', '==', true)
     );
 
-    onSnapshot(
+    return onSnapshot(
       alumniQuery,
       (snapshot) => {
 
-        callback(snapshot.size);
+        this.ngZone.run(() => {
+          callback(snapshot.size);
+        });
 
       },
       (error) => {
 
         console.error('Error getting alumni count:', error);
 
-        callback(0);
+        this.ngZone.run(() => {
+          callback(0);
+        });
       }
     );
   }
 
   getAlumniCountThisMonthRealTime(
     callback: (count: number) => void
-  ): void {
+  ): Unsubscribe {
 
     const alumniQuery = query(
       this.usersCollection,
@@ -92,7 +99,7 @@ export class UsersService {
       where('isVerified', '==', true)
     );
 
-    onSnapshot(
+    return onSnapshot(
       alumniQuery,
       (snapshot) => {
 
@@ -115,14 +122,18 @@ export class UsersService {
 
         });
 
-        callback(filtered.length);
+        this.ngZone.run(() => {
+          callback(filtered.length);
+        });
 
       },
       (error) => {
 
         console.error('Error getting monthly alumni count:', error);
 
-        callback(0);
+        this.ngZone.run(() => {
+          callback(0);
+        });
       }
     );
   }

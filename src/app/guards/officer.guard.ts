@@ -23,6 +23,9 @@ export const officerGuard: CanActivateFn = async () => {
   }
 
   try {
+    // Force refresh token so Firestore recognizes auth immediately
+    await firebaseUser.getIdToken(true);
+
     const userDoc = await usersService.getUserById(firebaseUser.uid);
 
     if (userDoc?.role === 'officer' || userDoc?.role === 'admin') {
@@ -36,6 +39,7 @@ export const officerGuard: CanActivateFn = async () => {
     return router.createUrlTree(['/login']);
   } catch (error) {
     console.error('Officer guard error:', error);
-    return router.createUrlTree(['/login']);
+    // Don't kick to login on Firestore error, stay on current route
+    return router.createUrlTree(['/alumni/dashboard']);
   }
 };

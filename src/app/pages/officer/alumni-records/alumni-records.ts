@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { AuthService } from '../../../services/auth.service';
 import { UsersService } from '../../../services/users.service';
 import { User, EmploymentDetails } from '../../../models/user.model';
 
@@ -53,17 +54,18 @@ export class AlumniRecords implements OnInit {
   loading = true;
   loadError = '';
 
-  // 🔥 MODAL STATE
   selectedAlumni: AlumniRecordView | null = null;
   showProfileModal = false;
 
   constructor(
     private usersService: UsersService,
+    private authService: AuthService,
     private cdr: ChangeDetectorRef,
     private zone: NgZone
   ) {}
 
   async ngOnInit(): Promise<void> {
+    await this.authService.waitForAuthReady();
     await this.loadAlumni();
   }
 
@@ -82,7 +84,6 @@ export class AlumniRecords implements OnInit {
           this.mapUserToView(user)
         );
 
-        // FILTER OPTIONS
         const programs = Array.from(
           new Set(
             this.alumniRecords
@@ -143,9 +144,7 @@ export class AlumniRecords implements OnInit {
         this.selectedStatus === 'All Status' ||
         record.accountStatus === this.selectedStatus;
 
-      return (
-        matchesSearch && matchesProgram && matchesYear && matchesStatus
-      );
+      return matchesSearch && matchesProgram && matchesYear && matchesStatus;
     });
 
     if (triggerDetectChanges) {
@@ -153,18 +152,15 @@ export class AlumniRecords implements OnInit {
     }
   }
 
-  // 🔥 FIX FOR YOUR ERROR
   trackByRecord(index: number, record: AlumniRecordView): string {
     return record.id || `${record.fullName}-${record.email}-${index}`;
   }
 
-  // 🔥 OPEN MODAL
   openProfileModal(record: AlumniRecordView): void {
     this.selectedAlumni = record;
     this.showProfileModal = true;
   }
 
-  // 🔥 CLOSE MODAL
   closeProfileModal(): void {
     this.showProfileModal = false;
     this.selectedAlumni = null;
@@ -192,7 +188,7 @@ export class AlumniRecords implements OnInit {
       employmentStatus: this.normalizeEmploymentStatus(
         user.employmentStatus
       ),
-      employmentDetails: user.employmentDetails, // 🔥 IMPORTANT
+      employmentDetails: user.employmentDetails,
       accountStatus: user.isActive ? 'Active' : 'Inactive',
     };
   }

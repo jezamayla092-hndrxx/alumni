@@ -13,6 +13,7 @@ import { VerificationRequestsComponent } from './pages/officer/verification-requ
 import { AlumniRecords } from './pages/officer/alumni-records/alumni-records';
 import { Events } from './pages/officer/events/events';
 import { Announcements } from './pages/officer/announcements/announcements';
+import { JobPostings } from './pages/officer/job-postings/job-postings';
 
 // Alumni pages
 import { Dashboard as AlumniDashboard } from './pages/alumni/dashboard/dashboard';
@@ -39,6 +40,7 @@ export const routes: Routes = [
       { path: 'alumni-records', component: AlumniRecords },
       { path: 'events', component: Events },
       { path: 'announcements', component: Announcements },
+      { path: 'job-postings', component: JobPostings },
       { path: 'my-profile', component: MyProfile },
     ],
   },

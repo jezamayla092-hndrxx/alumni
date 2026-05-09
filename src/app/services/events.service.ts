@@ -1,4 +1,9 @@
-import { Injectable, inject } from '@angular/core';
+import {
+  Injectable,
+  EnvironmentInjector,
+  inject,
+  runInInjectionContext,
+} from '@angular/core';
 import {
   Firestore,
   collection,
@@ -22,11 +27,14 @@ import { EventRecord } from '../models/events.model';
 @Injectable({ providedIn: 'root' })
 export class EventsService {
   private firestore = inject(Firestore);
+  private injector = inject(EnvironmentInjector);
   private col = collection(this.firestore, 'events');
 
   getEvents(): Observable<EventRecord[]> {
-    const q = query(this.col, orderBy('eventDate', 'asc'));
-    return collectionData(q, { idField: 'id' }) as Observable<EventRecord[]>;
+    return runInInjectionContext(this.injector, () => {
+      const q = query(this.col, orderBy('eventDate', 'asc'));
+      return collectionData(q, { idField: 'id' }) as Observable<EventRecord[]>;
+    });
   }
 
   async addEvent(data: Omit<EventRecord, 'id'>) {
