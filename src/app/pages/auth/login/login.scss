@@ -134,15 +134,62 @@ input[type='password']::-webkit-textfield-decoration-container {
   height: 46px;
   border: none;
   border-radius: 8px;
-  background: linear-gradient(180deg, #7c3aed 0%, #6d28d9 100%);
+  background: #6d28d9;
   color: #ffffff;
   font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 14px 28px rgba(109, 40, 217, 0.24);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: background-color 0.18s ease, box-shadow 0.18s ease;
 }
 
-.login-btn:disabled,
+.login-btn:hover:not(.is-loading) {
+  background: #7c3aed;
+}
+
+.login-btn.is-loading,
+.login-btn.is-loading:hover,
+.login-btn.is-loading:focus,
+.login-btn.is-loading:active {
+  background: #6d28d9 !important;
+  color: #ffffff !important;
+  opacity: 1 !important;
+  filter: none !important;
+  cursor: wait !important;
+  pointer-events: none !important;
+  box-shadow: 0 14px 28px rgba(109, 40, 217, 0.24) !important;
+}
+
+.login-spinner {
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 26px;
+  min-height: 26px;
+  display: block;
+  flex: 0 0 26px;
+  overflow: visible;
+  animation: login-spin 0.75s linear infinite;
+}
+
+.login-spinner-arc {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 3.2;
+  stroke-linecap: round;
+}
+
+@keyframes login-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .toggle-password:disabled,
 .form-field input:disabled {
   cursor: not-allowed;

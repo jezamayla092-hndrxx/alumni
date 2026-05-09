@@ -1,9 +1,10 @@
 <div class="signup-page">
   <section class="form-panel">
     <div class="signup-card">
+
+      <!-- CHANGE 4: subtitle removed, h1 weight handled in SCSS -->
       <div class="signup-header">
         <h1>Create Alumni Account</h1>
-        <p>Fill in your details for alumni verification</p>
       </div>
 
       <div class="form-grid">
@@ -24,8 +25,125 @@
         </div>
         <div class="form-field">
           <input id="suffix" type="text" [(ngModel)]="suffix" placeholder=" " [disabled]="loading" />
-          <label for="suffix">Suffix (Optional)</label>
+          <label for="suffix">Suffix</label>
         </div>
+      </div>
+
+      <div class="form-grid">
+
+        <div class="birth-date-field" (click)="$event.stopPropagation()">
+          <div class="birth-date-control" [class.bd-focused]="calendarOpen">
+            <!-- CHANGE 5: only the icon button opens the calendar -->
+            <button
+              type="button"
+              class="cal-trigger"
+              (click)="toggleCalendar($event)"
+              [disabled]="loading"
+            >
+              <span class="material-symbols-outlined">calendar_month</span>
+            </button>
+            <div class="birth-date-input-wrapper">
+              <!-- CHANGE 5: (click)="openCalendar()" removed — input is typing-only -->
+              <input
+                type="text"
+                [(ngModel)]="birthDateDisplay"
+                placeholder="Birth Date (MM/DD/YYYY)"
+                [disabled]="loading"
+                (input)="onBirthDateInput($event)"
+                maxlength="10"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+
+          <div class="calendar-popup" *ngIf="calendarOpen" (click)="$event.stopPropagation()">
+            <div class="cal-header" *ngIf="!yearMode">
+              <button type="button" class="cal-nav" (click)="prevYear()">
+                <span class="material-symbols-outlined">keyboard_double_arrow_left</span>
+              </button>
+              <button type="button" class="cal-nav" (click)="prevMonth()">
+                <span class="material-symbols-outlined">chevron_left</span>
+              </button>
+              <button type="button" class="cal-title" (click)="toggleYearMode()">
+                {{ calMonthNames[calViewMonth] }} {{ calViewYear }}
+              </button>
+              <button type="button" class="cal-nav" (click)="nextMonth()">
+                <span class="material-symbols-outlined">chevron_right</span>
+              </button>
+              <button type="button" class="cal-nav" (click)="nextYear()">
+                <span class="material-symbols-outlined">keyboard_double_arrow_right</span>
+              </button>
+            </div>
+
+            <div class="cal-header cal-header-year" *ngIf="yearMode">
+              <span class="cal-title-static">Select Year</span>
+              <button type="button" class="cal-nav" (click)="toggleYearMode()">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <ng-container *ngIf="!yearMode">
+              <div class="cal-dow-row">
+                <div class="cal-dow" *ngFor="let d of calDayNames">{{ d }}</div>
+              </div>
+              <div class="cal-days-grid">
+                <button
+                  type="button"
+                  class="cal-day"
+                  *ngFor="let cell of calCells"
+                  [class.other-month]="!cell.thisMonth"
+                  [class.is-today]="cell.isToday"
+                  [class.is-selected]="cell.isSelected"
+                  [class.is-disabled]="cell.isDisabled"
+                  (click)="selectCalDay(cell)"
+                  [disabled]="cell.isDisabled || !cell.thisMonth"
+                >
+                  {{ cell.day }}
+                </button>
+              </div>
+            </ng-container>
+
+            <div class="cal-year-grid" *ngIf="yearMode">
+              <button
+                type="button"
+                class="cal-year-item"
+                *ngFor="let yr of yearList"
+                [class.is-selected]="yr === calViewYear"
+                (click)="pickYear(yr)"
+              >
+                {{ yr }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-field sex-field" (click)="$event.stopPropagation()">
+          <button
+            type="button"
+            class="program-trigger"
+            (click)="toggleSexDropdown($event)"
+            [disabled]="loading"
+            [class.active]="sexDropdownOpen"
+          >
+            <span class="program-text" [class.placeholder]="!sex">
+              {{ sex || 'Select sex' }}
+            </span>
+            <span class="material-symbols-outlined arrow">
+              {{ sexDropdownOpen ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}
+            </span>
+          </button>
+          <div class="program-menu" *ngIf="sexDropdownOpen" (click)="$event.stopPropagation()">
+            <button
+              type="button"
+              class="program-option"
+              *ngFor="let opt of sexOptions"
+              (click)="selectSex(opt)"
+            >
+              {{ opt }}
+            </button>
+          </div>
+        </div>
+
       </div>
 
       <div class="form-field">
@@ -34,53 +152,91 @@
       </div>
 
       <div class="phone-field" (click)="$event.stopPropagation()">
-        <label class="phone-floating-label">Contact Number</label>
-
         <div class="phone-control">
-          <div class="phone-input-wrapper">
-            <input
-              id="phoneNumber"
-              type="tel"
-              [(ngModel)]="phoneNumber"
-              placeholder=" "
-              [disabled]="loading"
-            />
-          </div>
-
           <button
             type="button"
             class="country-trigger"
             (click)="toggleCountryDropdown($event)"
             [disabled]="loading"
           >
+            <span class="fi" [class]="'fi-' + selectedCountry.code"></span>
             <span class="country-code">{{ selectedCountry.dialCode }}</span>
             <span class="material-symbols-outlined country-arrow">
               {{ countryDropdownOpen ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}
             </span>
           </button>
+          <div class="phone-input-wrapper">
+            <input
+              id="phoneNumber"
+              type="tel"
+              [(ngModel)]="phoneNumber"
+              placeholder="Contact Number"
+              [disabled]="loading"
+            />
+          </div>
         </div>
 
         <div class="country-menu" *ngIf="countryDropdownOpen">
-          <button
-            type="button"
-            class="country-option"
-            *ngFor="let country of countries"
-            (click)="selectCountry(country)"
-          >
-            <span class="country-name">{{ country.name }}</span>
-            <span class="country-dial">{{ country.dialCode }}</span>
-          </button>
+          <div class="country-search-wrapper">
+            <span class="material-symbols-outlined search-icon">search</span>
+            <input
+              class="country-search"
+              type="text"
+              [(ngModel)]="countrySearch"
+              placeholder="Search country..."
+              (click)="$event.stopPropagation()"
+            />
+          </div>
+          <div class="country-list">
+            <button
+              type="button"
+              class="country-option"
+              *ngFor="let country of filteredCountries"
+              (click)="selectCountry(country)"
+            >
+              <span class="country-left">
+                <span class="fi" [class]="'fi-' + country.code"></span>
+                <span class="country-name">{{ country.name }}</span>
+              </span>
+              <span class="country-dial">{{ country.dialCode }}</span>
+            </button>
+            <div class="country-empty" *ngIf="filteredCountries.length === 0">
+              No countries found.
+            </div>
+          </div>
         </div>
       </div>
 
       <div class="form-grid">
         <div class="form-field">
           <input id="studentId" type="text" [(ngModel)]="studentId" placeholder=" " [disabled]="loading" />
-          <label for="studentId">Student / University ID</label>
+          <label for="studentId">University ID</label>
         </div>
-        <div class="form-field">
-          <input id="yearGraduated" type="number" [(ngModel)]="yearGraduated" placeholder=" " [disabled]="loading" />
-          <label for="yearGraduated">Year Graduated</label>
+        <div class="form-field year-graduated-field" (click)="$event.stopPropagation()">
+          <button
+            type="button"
+            class="program-trigger"
+            (click)="toggleYearGraduatedDropdown($event)"
+            [disabled]="loading"
+            [class.active]="yearGraduatedDropdownOpen"
+          >
+            <span class="program-text" [class.placeholder]="!yearGraduated">
+              {{ yearGraduated || 'Year Graduated' }}
+            </span>
+            <span class="material-symbols-outlined arrow">
+              {{ yearGraduatedDropdownOpen ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}
+            </span>
+          </button>
+          <div class="program-menu" *ngIf="yearGraduatedDropdownOpen" (click)="$event.stopPropagation()">
+            <button
+              type="button"
+              class="program-option"
+              *ngFor="let yr of yearGraduatedOptions"
+              (click)="selectYearGraduated(yr)"
+            >
+              {{ yr }}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -99,7 +255,6 @@
             {{ programDropdownOpen ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}
           </span>
         </button>
-
         <div class="program-menu" *ngIf="programDropdownOpen" (click)="$event.stopPropagation()">
           <button
             type="button"
@@ -120,16 +275,11 @@
             {{ selectedDocuments.length === 1 ? 'document' : 'documents' }} selected
           </p>
         </div>
-
         <button type="button" class="upload-open-btn" (click)="openUploadModal()" [disabled]="loading">
           <span class="material-symbols-outlined">add</span>
           Upload
         </button>
       </div>
-
-      <p class="upload-note">
-        Optional but recommended for faster alumni verification.
-      </p>
 
       <div class="form-field password-field">
         <input
@@ -140,7 +290,6 @@
           [disabled]="loading"
         />
         <label for="password">Password</label>
-
         <button
           type="button"
           class="toggle-password"
@@ -163,7 +312,6 @@
           [disabled]="loading"
         />
         <label for="confirmPassword">Confirm Password</label>
-
         <button
           type="button"
           class="toggle-password"
@@ -175,6 +323,19 @@
             {{ showConfirmPassword ? 'visibility' : 'visibility_off' }}
           </span>
         </button>
+      </div>
+
+      <div class="consent-field">
+        <input
+          id="dataPrivacyConsent"
+          type="checkbox"
+          [(ngModel)]="dataPrivacyConsent"
+          [disabled]="loading"
+        />
+        <label for="dataPrivacyConsent">
+          I confirm that the information I provided is true and I agree that my data will be used
+          for alumni verification purposes.
+        </label>
       </div>
 
       <button class="signup-btn" (click)="onSignup()" [disabled]="loading">
@@ -191,12 +352,12 @@
 
 <div class="modal-backdrop" *ngIf="uploadModalOpen" (click)="closeUploadModal()">
   <div class="upload-modal" (click)="$event.stopPropagation()">
+
     <div class="modal-header">
       <div>
         <h2>Upload Verification Documents</h2>
         <p>Upload diploma, TOR, certificate, school ID, alumni ID, or other proof.</p>
       </div>
-
       <button type="button" class="modal-close" (click)="closeUploadModal()">
         <span class="material-symbols-outlined">close</span>
       </button>
@@ -214,13 +375,22 @@
       />
     </label>
 
+    <!-- CHANGE 1: compact empty state -->
     <div class="empty-documents" *ngIf="selectedDocuments.length === 0">
-      <span class="material-symbols-outlined">description</span>
+      <span class="material-symbols-outlined">inbox</span>
       <p>No documents selected yet.</p>
     </div>
 
+    <!-- CHANGE 1: section label shown only when files exist -->
+    <p class="uploaded-section-label" *ngIf="selectedDocuments.length > 0">
+      Uploaded Documents
+    </p>
+
+    <!-- CHANGE 1 & 2: redesigned professional file cards -->
     <div class="document-grid" *ngIf="selectedDocuments.length > 0">
       <div class="document-card" *ngFor="let doc of selectedDocuments; let i = index">
+
+        <!-- CHANGE 2: neutral remove button, purple on hover -->
         <button
           type="button"
           class="remove-document"
@@ -228,28 +398,39 @@
           [disabled]="loading"
           aria-label="Remove document"
         >
-          ×
+          <span class="material-symbols-outlined">close</span>
         </button>
 
-        <div class="document-preview image-preview" *ngIf="doc.kind === 'image'">
+        <!-- Image: thumbnail -->
+        <div class="doc-preview" *ngIf="doc.kind === 'image'">
           <img [src]="doc.previewUrl" [alt]="doc.file.name" />
         </div>
 
+        <!-- PDF: icon, click to open -->
         <div
-          class="document-preview pdf-preview"
+          class="doc-preview doc-preview-pdf"
           *ngIf="doc.kind === 'pdf'"
           (click)="openPdf(doc.previewUrl)"
         >
           <span class="material-symbols-outlined">picture_as_pdf</span>
-          <small>Open PDF</small>
         </div>
 
-        <p class="document-name" [title]="doc.file.name">{{ doc.file.name }}</p>
+        <!-- File info -->
+        <div class="doc-info">
+          <p class="doc-name" [title]="doc.file.name">{{ doc.file.name }}</p>
+          <p class="doc-meta">
+            {{ doc.kind === 'pdf' ? 'PDF document' : 'Image file' }}
+            &nbsp;·&nbsp;
+            {{ formatFileSize(doc.file.size) }}
+          </p>
+        </div>
+
       </div>
     </div>
 
     <div class="modal-actions">
       <button type="button" class="done-btn" (click)="closeUploadModal()">Done</button>
     </div>
+
   </div>
 </div>

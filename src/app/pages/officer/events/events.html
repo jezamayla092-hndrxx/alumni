@@ -1,103 +1,295 @@
 <section class="events-page">
-  <div class="header">
+  <div class="page-header">
     <div>
+      <div class="eyebrow">OFFICER PORTAL</div>
       <h1>Events</h1>
-      <p>Manage and organize alumni events.</p>
+      <p>Create and manage alumni activities.</p>
     </div>
 
-    <button class="create-btn" (click)="openCreate()">
-      + New Event
+    <button class="create-btn" type="button" (click)="openCreate()">
+      <span>+</span>
+      Create Event
     </button>
   </div>
 
-  <div class="search">
-    <input
-      type="text"
-      placeholder="Search events..."
-      [(ngModel)]="searchTerm"
-      (ngModelChange)="applyFilters()"
-    />
-  </div>
-
-  <!-- FEATURED -->
-  <div *ngIf="featuredEvent" class="featured">
-    <img [src]="featuredEvent.imageUrl || 'https://picsum.photos/800/300'" />
-
-    <div class="content">
-      <h2>{{ featuredEvent.title }}</h2>
-      <p>{{ featuredEvent.description }}</p>
-
-      <div class="meta">
-        <span>{{ featuredEvent.eventDate }}</span>
-        <span>{{ featuredEvent.startTime }} - {{ featuredEvent.endTime }}</span>
-        <span>{{ featuredEvent.location }}</span>
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-icon purple">
+        <span class="material-symbols-outlined">calendar_month</span>
       </div>
+      <div>
+        <strong>{{ totalEvents }}</strong>
+        <span>Total Events</span>
+      </div>
+    </div>
 
-      <div class="actions">
-        <button (click)="openEdit(featuredEvent)">Edit</button>
-        <button class="danger" (click)="openDelete(featuredEvent)">
-          Delete
-        </button>
+    <div class="summary-card">
+      <div class="summary-icon blue">
+        <span class="material-symbols-outlined">event_upcoming</span>
+      </div>
+      <div>
+        <strong>{{ upcomingCount }}</strong>
+        <span>Upcoming</span>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon green">
+        <span class="material-symbols-outlined">event_available</span>
+      </div>
+      <div>
+        <strong>{{ completedCount }}</strong>
+        <span>Completed</span>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon red">
+        <span class="material-symbols-outlined">event_busy</span>
+      </div>
+      <div>
+        <strong>{{ cancelledCount }}</strong>
+        <span>Cancelled</span>
       </div>
     </div>
   </div>
 
-  <!-- CARDS -->
-  <div class="grid">
-    <div *ngFor="let e of upcomingEvents" class="card">
-      <div class="date">{{ e.eventDate }}</div>
+  <div class="toolbar">
+    <div class="search-field">
+      <span class="material-symbols-outlined">search</span>
+      <input
+        type="text"
+        placeholder="Search events..."
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="applyFilters()"
+      />
+    </div>
 
-      <h3>{{ e.title }}</h3>
-      <p>{{ e.description }}</p>
+    <select [(ngModel)]="statusFilter" (ngModelChange)="applyFilters()">
+      <option value="all">All Statuses</option>
+      <option value="Upcoming">Upcoming</option>
+      <option value="Ongoing">Ongoing</option>
+      <option value="Completed">Completed</option>
+      <option value="Cancelled">Cancelled</option>
+    </select>
 
-      <div class="meta">
-        <span>{{ e.startTime }} - {{ e.endTime }}</span>
-        <span>{{ e.location }}</span>
+    <select [(ngModel)]="typeFilter" (ngModelChange)="applyFilters()">
+      <option value="all">All Types</option>
+      <option *ngFor="let type of eventTypes" [value]="type">{{ type }}</option>
+    </select>
+  </div>
+
+  <div *ngIf="pinnedEvent" class="section-title">
+    <span>Pinned Event</span>
+  </div>
+
+  <div *ngIf="pinnedEvent as event" class="pinned-card" [class.with-image]="eventImageUrl(event)">
+    <div *ngIf="eventImageUrl(event)" class="pinned-image">
+      <img [src]="eventImageUrl(event)" [alt]="eventTitle(event)" />
+    </div>
+
+    <div class="pinned-content">
+      <div class="badge-row">
+        <span class="status-badge" [class]="eventStatus(event).toLowerCase()">
+          {{ eventStatus(event) }}
+        </span>
+        <span class="type-badge">{{ eventType(event) }}</span>
+        <span *ngIf="eventRegistrationRequired(event)" class="registration-badge">
+          Registration Required
+        </span>
       </div>
 
-      <div class="actions">
-        <button (click)="openEdit(e)">Edit</button>
-        <button class="danger" (click)="openDelete(e)">Delete</button>
+      <h2>{{ eventTitle(event) }}</h2>
+      <p>{{ eventDescription(event) }}</p>
+
+      <div class="info-grid">
+        <span>
+          <span class="material-symbols-outlined">calendar_month</span>
+          {{ formatDate(event) }}
+        </span>
+        <span>
+          <span class="material-symbols-outlined">schedule</span>
+          {{ eventStartTime(event) }} - {{ eventEndTime(event) }}
+        </span>
+        <span>
+          <span class="material-symbols-outlined">location_on</span>
+          {{ eventLocation(event) }}
+        </span>
+        <span>
+          <span class="material-symbols-outlined">groups</span>
+          Capacity: {{ eventCapacity(event) || 'No limit' }}
+        </span>
+      </div>
+
+      <div class="pinned-actions">
+        <button type="button" class="primary-action">View Details</button>
+        <button type="button" (click)="openEdit(event)">Edit Event</button>
+        <button type="button">View Registrations</button>
+        <button type="button" class="warning-action" (click)="unpinEvent(event)">Unpin Event</button>
+        <button type="button" class="danger-action" (click)="openDelete(event)">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">
+    <span>All Events</span>
+    <small>{{ allEvents.length }} result{{ allEvents.length === 1 ? '' : 's' }}</small>
+  </div>
+
+  <div *ngIf="loading" class="empty-state">
+    Loading events...
+  </div>
+
+  <div *ngIf="!loading && filteredEvents.length === 0" class="empty-state">
+    No events found.
+  </div>
+
+  <div *ngIf="!loading && allEvents.length > 0" class="event-list">
+    <div *ngFor="let event of allEvents" class="event-row">
+      <div class="date-box">
+        <span>{{ eventMonth(event) }}</span>
+        <strong>{{ eventDay(event) }}</strong>
+        <small>{{ eventYear(event) }}</small>
+      </div>
+
+      <div class="event-main">
+        <div class="event-title-row">
+          <h3>{{ eventTitle(event) }}</h3>
+          <span class="status-badge" [class]="eventStatus(event).toLowerCase()">
+            {{ eventStatus(event) }}
+          </span>
+          <span class="type-badge">{{ eventType(event) }}</span>
+          <span *ngIf="eventRegistrationRequired(event)" class="registration-badge">
+            Registration
+          </span>
+        </div>
+
+        <p>{{ eventDescription(event) }}</p>
+
+        <div class="row-meta">
+          <span>
+            <span class="material-symbols-outlined">schedule</span>
+            {{ eventStartTime(event) }} - {{ eventEndTime(event) }}
+          </span>
+          <span>
+            <span class="material-symbols-outlined">location_on</span>
+            {{ eventLocation(event) }}
+          </span>
+          <span>
+            <span class="material-symbols-outlined">groups</span>
+            {{ eventCapacity(event) || 'No limit' }} slots
+          </span>
+        </div>
+      </div>
+
+      <div class="row-actions">
+        <button type="button" (click)="pinEvent(event)">Pin</button>
+        <button type="button" (click)="openEdit(event)">Edit</button>
+        <button type="button" class="danger-action" (click)="openDelete(event)">Delete</button>
       </div>
     </div>
   </div>
 </section>
 
-<!-- MODAL -->
 <div *ngIf="showModal" class="modal">
   <div class="modal-box">
-    <h2>{{ selectedEvent ? 'Edit Event' : 'New Event' }}</h2>
+    <div class="modal-header">
+      <h2>{{ selectedEvent ? 'Edit Event' : 'Create Event' }}</h2>
+      <button type="button" class="close-btn" (click)="closeModal()">×</button>
+    </div>
 
-    <input placeholder="Title" [(ngModel)]="form.title" />
-    <textarea placeholder="Description" [(ngModel)]="form.description"></textarea>
+    <div class="field">
+      <label>Event Title <span>*</span></label>
+      <input placeholder="Enter event title" [(ngModel)]="form.title" />
+    </div>
 
-    <input type="date" [(ngModel)]="form.eventDate" />
-    <input type="time" [(ngModel)]="form.startTime" />
-    <input type="time" [(ngModel)]="form.endTime" />
-    <input placeholder="Location" [(ngModel)]="form.location" />
+    <div class="field">
+      <label>Description</label>
+      <textarea placeholder="Event description..." [(ngModel)]="form.description"></textarea>
+    </div>
 
-    <label>
+    <div class="form-grid two">
+      <div class="field">
+        <label>Event Type <span>*</span></label>
+        <input placeholder="e.g. Seminar, Homecoming, Job Fair, Reunion" [(ngModel)]="form.eventType" />
+      </div>
+
+      <div class="field">
+        <label>Status <span>*</span></label>
+        <select [(ngModel)]="form.status">
+          <option *ngFor="let status of statusOptions" [value]="status">{{ status }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-grid three">
+      <div class="field">
+        <label>Event Date <span>*</span></label>
+        <input type="date" [(ngModel)]="form.eventDate" />
+      </div>
+
+      <div class="field">
+        <label>Start Time <span>*</span></label>
+        <input type="time" [(ngModel)]="form.startTime" />
+      </div>
+
+      <div class="field">
+        <label>End Time <span>*</span></label>
+        <input type="time" [(ngModel)]="form.endTime" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Venue / Location <span>*</span></label>
+      <input placeholder="e.g. CITC Auditorium" [(ngModel)]="form.location" />
+    </div>
+
+    <div class="form-grid two align-end">
+      <label class="switch-row">
+        <input type="checkbox" [(ngModel)]="form.registrationRequired" />
+        <span></span>
+        Registration Required
+      </label>
+
+      <div class="field">
+        <label>Capacity</label>
+        <input type="number" min="0" placeholder="Max attendees" [(ngModel)]="form.capacity" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Event Image / Poster URL</label>
+      <input placeholder="Optional image URL. You can add this later." [(ngModel)]="form.imageUrl" />
+    </div>
+
+    <label class="checkbox-row">
       <input type="checkbox" [(ngModel)]="form.isFeatured" />
-      Featured Event
+      Pin this event
     </label>
 
     <div class="modal-actions">
-      <button (click)="closeModal()">Cancel</button>
-      <button (click)="save()">
-        {{ saving ? 'Saving...' : 'Save' }}
+      <button type="button" (click)="closeModal()">Cancel</button>
+      <button type="button" class="save-btn" (click)="save()" [disabled]="saving">
+        {{ saving ? 'Saving...' : 'Save Event' }}
       </button>
     </div>
   </div>
 </div>
 
-<!-- DELETE -->
 <div *ngIf="showDeleteModal" class="modal">
   <div class="modal-box small">
-    <p>Delete this event?</p>
+    <div class="modal-header">
+      <h2>Delete Event</h2>
+      <button type="button" class="close-btn" (click)="closeDelete()">×</button>
+    </div>
 
-    <button (click)="closeDelete()">Cancel</button>
-    <button class="danger" (click)="confirmDelete()">
-      {{ deleting ? 'Deleting...' : 'Delete' }}
-    </button>
+    <p class="delete-text">Are you sure you want to delete this event?</p>
+
+    <div class="modal-actions">
+      <button type="button" (click)="closeDelete()">Cancel</button>
+      <button type="button" class="delete-btn" (click)="confirmDelete()" [disabled]="deleting">
+        {{ deleting ? 'Deleting...' : 'Delete' }}
+      </button>
+    </div>
   </div>
 </div>

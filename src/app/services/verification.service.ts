@@ -5,13 +5,14 @@ import {
   collection,
   doc,
   getDoc,
+  getDocs,
   onSnapshot,
-  orderBy,
   query,
   updateDoc,
   where,
   serverTimestamp,
 } from 'firebase/firestore';
+
 import { db } from '../firebase.config';
 import { VerificationRequest } from '../models/verification.model';
 
@@ -21,35 +22,135 @@ import { VerificationRequest } from '../models/verification.model';
 export class VerificationService {
   private verificationCollection = collection(db, 'verification_requests');
 
-  // ==============================
-  // GET LATEST REQUEST BY EMAIL
-  // ==============================
+  private getTimeValue(value: any): number {
+    if (!value) {
+      return 0;
+    }
+
+    if (typeof value?.toDate === 'function') {
+      return value.toDate().getTime();
+    }
+
+    if (value instanceof Date) {
+      return value.getTime();
+    }
+
+    const parsed = new Date(value);
+
+    return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+  }
+
+  private sortLatestFirst(
+    requests: VerificationRequest[]
+  ): VerificationRequest[] {
+    return requests.sort((a, b) => {
+      const dateA = this.getTimeValue(a.submittedAt);
+      const dateB = this.getTimeValue(b.submittedAt);
+
+      return dateB - dateA;
+    });
+  }
+
+  getLatestVerificationRequestByUser(
+    userUid: string,
+    email: string
+  ): Observable<VerificationRequest | null> {
+    return new Observable((observer) => {
+      const normalizedEmail = email.trim().toLowerCase();
+
+      const uidQuery = query(
+        this.verificationCollection,
+        where('userUid', '==', userUid)
+      );
+
+      const unsubscribe = onSnapshot(
+        uidQuery,
+        async (snapshot) => {
+          try {
+            let requests: VerificationRequest[] = snapshot.docs.map(
+              (docSnap) => ({
+                id: docSnap.id,
+                ...(docSnap.data() as Omit<VerificationRequest, 'id'>),
+              })
+            );
+
+            if (!requests.length && normalizedEmail) {
+              const emailQuery = query(
+                this.verificationCollection,
+                where('email', '==', normalizedEmail)
+              );
+
+              const emailSnapshot = await getDocs(emailQuery);
+
+              requests = emailSnapshot.docs.map((docSnap) => ({
+                id: docSnap.id,
+                ...(docSnap.data() as Omit<VerificationRequest, 'id'>),
+              }));
+            }
+
+            if (!requests.length) {
+              observer.next(null);
+              return;
+            }
+
+            const latestRequest = this.sortLatestFirst(requests)[0];
+
+            observer.next(latestRequest);
+          } catch (error) {
+            console.error('Firestore error while loading latest request:', error);
+            observer.error(error);
+          }
+        },
+        (error) => {
+          console.error('Firestore snapshot error latest request:', error);
+          observer.error(error);
+        }
+      );
+
+      return () => unsubscribe();
+    });
+  }
+
   getLatestVerificationRequestByEmail(
     email: string
   ): Observable<VerificationRequest | null> {
     return new Observable((observer) => {
-      const q = query(
+      const normalizedEmail = email.trim().toLowerCase();
+
+      const emailQuery = query(
         this.verificationCollection,
-        where('email', '==', email.trim().toLowerCase()),
-        orderBy('submittedAt', 'desc')
+        where('email', '==', normalizedEmail)
       );
 
       const unsubscribe = onSnapshot(
-        q,
+        emailQuery,
         (snapshot) => {
-          if (!snapshot.empty) {
-            const docSnap = snapshot.docs[0];
-            observer.next({
-              id: docSnap.id,
-              ...(docSnap.data() as Omit<VerificationRequest, 'id'>),
-            });
-          } else {
-            observer.next(null);
+          try {
+            if (!snapshot.empty) {
+              const requests: VerificationRequest[] = snapshot.docs.map(
+                (docSnap) => ({
+                  id: docSnap.id,
+                  ...(docSnap.data() as Omit<VerificationRequest, 'id'>),
+                })
+              );
+
+              const latestRequest = this.sortLatestFirst(requests)[0];
+
+              observer.next(latestRequest);
+            } else {
+              observer.next(null);
+            }
+          } catch (error) {
+            console.error('Firestore error latest request by email:', error);
+            observer.error(error);
           }
         },
         (error) => {
-          console.error('Firestore error (latest request):', error);
-          observer.next(null); // prevents UI crash
+          console.error(
+            'Firestore snapshot error latest request by email:',
+            error
+          );
+          observer.error(error);
         }
       );
 
@@ -57,31 +158,28 @@ export class VerificationService {
     });
   }
 
-  // ==============================
-  // GET ALL REQUESTS (FIXED SAFE)
-  // ==============================
   getAllVerificationRequests(): Observable<VerificationRequest[]> {
     return new Observable((observer) => {
-      const q = query(
-        this.verificationCollection,
-        orderBy('submittedAt', 'desc')
-      );
-
       const unsubscribe = onSnapshot(
-        q,
+        this.verificationCollection,
         (snapshot) => {
-          const requests: VerificationRequest[] = snapshot.docs.map(
-            (docSnap) => ({
-              id: docSnap.id,
-              ...(docSnap.data() as Omit<VerificationRequest, 'id'>),
-            })
-          );
+          try {
+            const requests: VerificationRequest[] = snapshot.docs.map(
+              (docSnap) => ({
+                id: docSnap.id,
+                ...(docSnap.data() as Omit<VerificationRequest, 'id'>),
+              })
+            );
 
-          observer.next(requests);
+            observer.next(this.sortLatestFirst(requests));
+          } catch (error) {
+            console.error('Firestore error all requests:', error);
+            observer.error(error);
+          }
         },
         (error) => {
-          console.error('Firestore error (all requests):', error);
-          observer.next([]); // ✅ prevents blank page
+          console.error('Firestore snapshot error all requests:', error);
+          observer.error(error);
         }
       );
 
@@ -89,9 +187,6 @@ export class VerificationService {
     });
   }
 
-  // ==============================
-  // CREATE REQUEST (FIXED TIMESTAMP)
-  // ==============================
   async createVerificationRequest(data: {
     userUid: string;
     alumniId: string;
@@ -112,13 +207,14 @@ export class VerificationService {
       submittedDocuments: [],
       status: 'pending',
       remarks: '',
-      submittedAt: serverTimestamp(), // ✅ FIXED
+      submittedAt: serverTimestamp(),
       reviewedAt: null,
       reviewedBy: '',
     });
 
     if (data.userUid) {
       const userRef = doc(db, 'users', data.userUid);
+
       await updateDoc(userRef, {
         status: 'pending',
         isVerified: false,
@@ -126,9 +222,6 @@ export class VerificationService {
     }
   }
 
-  // ==============================
-  // UPDATE STATUS (SAFE)
-  // ==============================
   async updateStatus(
     requestId: string,
     status: 'approved' | 'rejected' | 'under_review' | 'pending'
@@ -138,7 +231,7 @@ export class VerificationService {
 
       await updateDoc(requestRef, {
         status,
-        updatedAt: serverTimestamp(), // ✅ FIXED
+        updatedAt: serverTimestamp(),
       });
     } catch (error) {
       console.error('Error updating verification status:', error);
@@ -146,9 +239,6 @@ export class VerificationService {
     }
   }
 
-  // ==============================
-  // MARK UNDER REVIEW
-  // ==============================
   async markAsUnderReview(
     requestId: string,
     reviewedBy: string
@@ -158,7 +248,7 @@ export class VerificationService {
     await updateDoc(requestRef, {
       status: 'under_review',
       reviewedBy,
-      reviewedAt: serverTimestamp(), // ✅ FIXED
+      reviewedAt: serverTimestamp(),
     });
 
     const requestSnap = await getDoc(requestRef);
@@ -168,6 +258,7 @@ export class VerificationService {
 
       if (requestData.userUid) {
         const userRef = doc(db, 'users', requestData.userUid);
+
         await updateDoc(userRef, {
           status: 'under_review',
           isVerified: false,
@@ -176,9 +267,6 @@ export class VerificationService {
     }
   }
 
-  // ==============================
-  // APPROVE
-  // ==============================
   async approveRequest(
     requestId: string,
     reviewedBy: string,
@@ -196,12 +284,13 @@ export class VerificationService {
     await updateDoc(requestRef, {
       status: 'approved',
       reviewedBy,
-      reviewedAt: serverTimestamp(), // ✅ FIXED
+      reviewedAt: serverTimestamp(),
       remarks,
     });
 
     if (requestData.userUid) {
       const userRef = doc(db, 'users', requestData.userUid);
+
       await updateDoc(userRef, {
         status: 'verified',
         isVerified: true,
@@ -210,9 +299,6 @@ export class VerificationService {
     }
   }
 
-  // ==============================
-  // REJECT
-  // ==============================
   async rejectRequest(
     requestId: string,
     reviewedBy: string,
@@ -230,12 +316,13 @@ export class VerificationService {
     await updateDoc(requestRef, {
       status: 'rejected',
       reviewedBy,
-      reviewedAt: serverTimestamp(), // ✅ FIXED
+      reviewedAt: serverTimestamp(),
       remarks,
     });
 
     if (requestData.userUid) {
       const userRef = doc(db, 'users', requestData.userUid);
+
       await updateDoc(userRef, {
         status: 'rejected',
         isVerified: false,

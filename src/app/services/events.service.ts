@@ -10,6 +10,12 @@ import {
   query,
   orderBy,
 } from '@angular/fire/firestore';
+import {
+  getDownloadURL,
+  getStorage,
+  ref,
+  uploadBytes,
+} from 'firebase/storage';
 import { Observable } from 'rxjs';
 import { EventRecord } from '../models/events.model';
 
@@ -33,5 +39,16 @@ export class EventsService {
 
   async deleteEvent(id: string) {
     await deleteDoc(doc(this.firestore, 'events', id));
+  }
+
+  async uploadEventImage(file: File): Promise<string> {
+    const storage = getStorage();
+    const safeFileName = file.name.replace(/\s+/g, '_');
+    const filePath = `event-images/${Date.now()}_${safeFileName}`;
+    const fileRef = ref(storage, filePath);
+
+    await uploadBytes(fileRef, file);
+
+    return getDownloadURL(fileRef);
   }
 }

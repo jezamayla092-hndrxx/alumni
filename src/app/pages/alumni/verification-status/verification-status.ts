@@ -121,25 +121,45 @@ export class VerificationStatus implements OnInit, OnDestroy {
   async loadMyVerificationStatus(): Promise<void> {
     this.loading = true;
     this.errorMessage = '';
+    this.cdr.detectChanges();
 
     try {
       const authUser = await this.authService.getAuthState();
 
-      if (!authUser?.email) {
+      console.log('VERIFICATION AUTH USER:', authUser);
+      console.log('VERIFICATION AUTH UID:', authUser?.uid);
+      console.log('VERIFICATION AUTH EMAIL:', authUser?.email);
+
+      if (!authUser) {
         this.zone.run(() => {
+          this.verification = null;
+          this.loading = false;
+          this.errorMessage = 'No logged-in user found.';
+          this.cdr.detectChanges();
+        });
+
+        return;
+      }
+
+      if (!authUser.email) {
+        this.zone.run(() => {
+          this.verification = null;
           this.loading = false;
           this.errorMessage = 'No logged-in user email found.';
           this.cdr.detectChanges();
         });
+
         return;
       }
 
       this.verificationSub?.unsubscribe();
 
       this.verificationSub = this.verificationService
-        .getLatestVerificationRequestByEmail(authUser.email)
+        .getLatestVerificationRequestByUser(authUser.uid, authUser.email)
         .subscribe({
           next: (request: VerificationRequest | null) => {
+            console.log('VERIFICATION REQUEST FOUND:', request);
+
             this.zone.run(() => {
               this.verification = request;
               this.loading = false;

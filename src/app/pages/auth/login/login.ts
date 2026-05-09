@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -23,10 +23,13 @@ export class Login {
   constructor(
     private authService: AuthService,
     private usersService: UsersService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   async onLogin(): Promise<void> {
+    if (this.loading) return;
+
     const email = this.email.trim().toLowerCase();
     const password = this.password.trim();
 
@@ -48,6 +51,8 @@ export class Login {
       const user = await this.usersService.getUserById(uid);
 
       if (!user) {
+        this.stopLoading();
+
         await Swal.fire({
           icon: 'error',
           title: 'Login Failed',
@@ -59,6 +64,8 @@ export class Login {
       }
 
       if (user.isActive === false) {
+        this.stopLoading();
+
         await Swal.fire({
           icon: 'error',
           title: 'Account Disabled',
@@ -70,6 +77,8 @@ export class Login {
       }
 
       if (user.status === 'pending') {
+        this.stopLoading();
+
         await Swal.fire({
           icon: 'warning',
           title: 'Account Pending',
@@ -81,6 +90,8 @@ export class Login {
       }
 
       if (user.status === 'rejected') {
+        this.stopLoading();
+
         await Swal.fire({
           icon: 'error',
           title: 'Account Rejected',
@@ -113,6 +124,8 @@ export class Login {
           break;
 
         default:
+          this.stopLoading();
+
           await Swal.fire({
             icon: 'error',
             title: 'Login Failed',
@@ -133,11 +146,15 @@ export class Login {
         timerProgressBar: true,
       });
     } catch (error) {
+      this.stopLoading();
+
       await Swal.fire({
         icon: 'error',
         title: 'Login Failed',
         text: 'Invalid email or password.',
       });
+
+      return;
     } finally {
       this.loading = false;
     }
@@ -145,5 +162,10 @@ export class Login {
 
   togglePassword(): void {
     this.showPassword = !this.showPassword;
+  }
+
+  private stopLoading(): void {
+    this.loading = false;
+    this.cdr.detectChanges();
   }
 }

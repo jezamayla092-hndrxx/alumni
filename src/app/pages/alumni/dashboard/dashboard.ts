@@ -22,6 +22,16 @@ interface AlumniDashboardUser extends User {
 
   workLocation?: string;
   jobLocation?: string;
+
+  employmentDetails?: {
+    companyName?: string;
+    dateHired?: string;
+    employmentType?: string;
+    industry?: string;
+    jobTitle?: string;
+    workLocation?: string;
+    updatedAt?: any;
+  };
 }
 
 interface TopCard {
@@ -197,12 +207,17 @@ export class Dashboard implements OnInit {
     try {
       const authUser = await this.authService.getAuthState();
 
+      console.log('AUTH USER:', authUser);
+      console.log('AUTH UID:', authUser?.uid);
+
       if (!authUser) {
         this.errorMessage = 'No logged-in user found.';
         return;
       }
 
       const userDoc = await this.usersService.getUserById(authUser.uid);
+
+      console.log('USER DOC:', userDoc);
 
       if (!userDoc) {
         this.errorMessage = 'Alumni record not found.';
@@ -274,11 +289,13 @@ export class Dashboard implements OnInit {
             ? 'badge-success'
             : 'badge-warning',
         mainValue:
+          this.currentUser.employmentDetails?.jobTitle ||
           this.currentUser.jobTitle ||
           this.currentUser.position ||
           this.currentUser.currentJobTitle ||
           'No employment record yet',
         subtitle:
+          this.currentUser.employmentDetails?.companyName ||
           this.currentUser.company ||
           this.currentUser.companyName ||
           this.currentUser.employer ||
@@ -402,6 +419,9 @@ export class Dashboard implements OnInit {
     if (!this.currentUser) return '';
 
     return [
+      this.currentUser.employmentDetails?.employmentType,
+      this.currentUser.employmentDetails?.workLocation,
+      this.currentUser.employmentDetails?.industry,
       this.currentUser.employmentType,
       this.currentUser.jobType,
       this.currentUser.workLocation,
