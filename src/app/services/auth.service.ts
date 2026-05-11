@@ -18,7 +18,7 @@ import { auth } from '../firebase.config';
   providedIn: 'root',
 })
 export class AuthService {
-  private readonly currentUserSubject = new BehaviorSubject<FirebaseUser | null>(null);
+  private readonly currentUserSubject = new BehaviorSubject<FirebaseUser | null>(auth.currentUser);
   private readonly authReadySubject = new BehaviorSubject<boolean>(false);
 
   readonly currentUser$ = this.currentUserSubject.asObservable();
@@ -35,37 +35,67 @@ export class AuthService {
 
   async waitForAuthReady(): Promise<FirebaseUser | null> {
     if (this.authReadySubject.value) {
-      return this.currentUserSubject.value;
+      return this.currentUserSubject.value || auth.currentUser;
     }
 
     return new Promise((resolve) => {
-      const sub = this.authReady$.subscribe((ready) => {
-        if (ready) {
-          sub.unsubscribe();
-          resolve(this.currentUserSubject.value);
-        }
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        this.zone.run(() => {
+          this.currentUserSubject.next(user);
+          this.authReadySubject.next(true);
+        });
+
+        unsubscribe();
+        resolve(user);
       });
     });
   }
 
   async login(email: string, password: string): Promise<UserCredential> {
     await setPersistence(auth, browserLocalPersistence);
-    return signInWithEmailAndPassword(auth, email, password);
+
+    const credential = await signInWithEmailAndPassword(auth, email, password);
+
+    this.zone.run(() => {
+      this.currentUserSubject.next(credential.user);
+      this.authReadySubject.next(true);
+    });
+
+    return credential;
   }
 
   async signup(email: string, password: string): Promise<UserCredential> {
     await setPersistence(auth, browserLocalPersistence);
-    return createUserWithEmailAndPassword(auth, email, password);
+
+    const credential = await createUserWithEmailAndPassword(auth, email, password);
+
+    this.zone.run(() => {
+      this.currentUserSubject.next(credential.user);
+      this.authReadySubject.next(true);
+    });
+
+    return credential;
   }
 
   async deleteCurrentAuthUser(): Promise<void> {
-    if (auth.currentUser) {
-      await deleteUser(auth.currentUser);
+    const currentUser = auth.currentUser;
+
+    if (currentUser) {
+      await deleteUser(currentUser);
+
+      this.zone.run(() => {
+        this.currentUserSubject.next(null);
+      });
     }
   }
 
   async logout(): Promise<void> {
     await signOut(auth);
+
+    this.zone.run(() => {
+      this.currentUserSubject.next(null);
+      this.authReadySubject.next(true);
+    });
   }
 
   getCurrentUser(): FirebaseUser | null {

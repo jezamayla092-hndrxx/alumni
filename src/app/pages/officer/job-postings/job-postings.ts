@@ -1,6 +1,7 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 
 import {
   JobPosting,
@@ -41,19 +42,16 @@ interface JobForm {
   templateUrl: './job-postings.html',
   styleUrls: ['./job-postings.scss'],
 })
-export class JobPostings implements OnInit {
-  // ─── Data ─────────────────────────────────────────────────────────────────
+export class JobPostings implements OnInit, OnDestroy {
   jobs: JobPosting[] = [];
   filteredJobs: JobPosting[] = [];
 
-  // ─── State ────────────────────────────────────────────────────────────────
   loading = false;
   saving = false;
   deleting = false;
   loadError = '';
   formError = '';
 
-  // ─── Modals ───────────────────────────────────────────────────────────────
   showFormModal = false;
   showViewModal = false;
   showDeleteModal = false;
@@ -62,14 +60,12 @@ export class JobPostings implements OnInit {
   selectedJob: JobPosting | null = null;
   jobToDelete: JobPosting | null = null;
 
-  // ─── Filters ──────────────────────────────────────────────────────────────
   searchTerm = '';
   filterEmploymentType = '';
   filterWorkSetup = '';
   filterStatus = '';
   filterCategory = '';
 
-  // ─── Options ──────────────────────────────────────────────────────────────
   readonly categories = JOB_CATEGORIES;
   readonly employmentTypes = EMPLOYMENT_TYPES;
   readonly workSetups = WORK_SETUPS;
@@ -77,8 +73,9 @@ export class JobPostings implements OnInit {
   readonly jobStatuses = JOB_STATUSES;
   readonly programs = RECOMMENDED_PROGRAMS;
 
-  // ─── Form ─────────────────────────────────────────────────────────────────
   form: JobForm = this.getEmptyForm();
+
+  private jobsSub?: Subscription;
 
   constructor(
     private jobPostingsService: JobPostingsService,
@@ -89,7 +86,10 @@ export class JobPostings implements OnInit {
     this.loadJobs();
   }
 
-  // ─── Summary counts ───────────────────────────────────────────────────────
+  ngOnDestroy(): void {
+    this.jobsSub?.unsubscribe();
+  }
+
   get activeCount(): number {
     return this.jobs.filter((j) => j.status === 'Active').length;
   }
@@ -106,12 +106,13 @@ export class JobPostings implements OnInit {
     return this.jobs.length;
   }
 
-  // ─── Load ─────────────────────────────────────────────────────────────────
   loadJobs(): void {
     this.loading = true;
     this.loadError = '';
 
-    this.jobPostingsService.getJobPostings().subscribe({
+    this.jobsSub?.unsubscribe();
+
+    this.jobsSub = this.jobPostingsService.getJobPostings().subscribe({
       next: (records: JobPosting[]) => {
         this.jobs = records ?? [];
         this.applyFilters();
@@ -129,17 +130,21 @@ export class JobPostings implements OnInit {
     });
   }
 
-  // ─── Filters ──────────────────────────────────────────────────────────────
   applyFilters(): void {
     const term = this.searchTerm.trim().toLowerCase();
 
     this.filteredJobs = this.jobs.filter((job) => {
+      const jobTitle = job.jobTitle?.toLowerCase() ?? '';
+      const companyName = job.companyName?.toLowerCase() ?? '';
+      const location = job.location?.toLowerCase() ?? '';
+      const category = job.category?.toLowerCase() ?? '';
+
       const matchesSearch =
         !term ||
-        job.jobTitle.toLowerCase().includes(term) ||
-        job.companyName.toLowerCase().includes(term) ||
-        job.location.toLowerCase().includes(term) ||
-        job.category.toLowerCase().includes(term);
+        jobTitle.includes(term) ||
+        companyName.includes(term) ||
+        location.includes(term) ||
+        category.includes(term);
 
       const matchesType =
         !this.filterEmploymentType ||
@@ -177,7 +182,6 @@ export class JobPostings implements OnInit {
     );
   }
 
-  // ─── Form Modal ───────────────────────────────────────────────────────────
   openAddModal(): void {
     this.isEditMode = false;
     this.selectedJob = null;
@@ -190,25 +194,27 @@ export class JobPostings implements OnInit {
   openEditModal(job: JobPosting): void {
     this.isEditMode = true;
     this.selectedJob = job;
+
     this.form = {
-      jobTitle: job.jobTitle,
-      companyName: job.companyName,
+      jobTitle: job.jobTitle ?? '',
+      companyName: job.companyName ?? '',
       companyLogo: job.companyLogo ?? '',
-      location: job.location,
-      category: job.category,
-      employmentType: job.employmentType,
-      workSetup: job.workSetup,
+      location: job.location ?? '',
+      category: job.category ?? '',
+      employmentType: job.employmentType ?? '',
+      workSetup: job.workSetup ?? '',
       salaryRange: job.salaryRange ?? '',
-      jobDescription: job.jobDescription,
-      qualifications: job.qualifications,
-      applicationMethod: job.applicationMethod,
+      jobDescription: job.jobDescription ?? '',
+      qualifications: job.qualifications ?? '',
+      applicationMethod: job.applicationMethod ?? '',
       applicationLink: job.applicationLink ?? '',
       contactEmail: job.contactEmail ?? '',
-      deadline: job.deadline,
-      status: job.status,
-      openToAllAlumni: job.openToAllAlumni,
+      deadline: job.deadline ?? '',
+      status: job.status ?? 'Active',
+      openToAllAlumni: job.openToAllAlumni ?? true,
       recommendedPrograms: [...(job.recommendedPrograms ?? [])],
     };
+
     this.formError = '';
     this.showFormModal = true;
     this.cdr.detectChanges();
@@ -224,7 +230,6 @@ export class JobPostings implements OnInit {
     this.cdr.detectChanges();
   }
 
-  // ─── View Modal ───────────────────────────────────────────────────────────
   openViewModal(job: JobPosting): void {
     this.selectedJob = job;
     this.showViewModal = true;
@@ -240,10 +245,12 @@ export class JobPostings implements OnInit {
   openEditFromView(): void {
     const job = this.selectedJob;
     this.closeViewModal();
-    if (job) this.openEditModal(job);
+
+    if (job) {
+      this.openEditModal(job);
+    }
   }
 
-  // ─── Delete Modal ─────────────────────────────────────────────────────────
   openDeleteModal(job: JobPosting): void {
     this.jobToDelete = job;
     this.showDeleteModal = true;
@@ -276,7 +283,6 @@ export class JobPostings implements OnInit {
     }
   }
 
-  // ─── Save / Publish ───────────────────────────────────────────────────────
   async saveAsDraft(): Promise<void> {
     this.form.status = 'Draft';
     await this.submitForm();
@@ -295,6 +301,7 @@ export class JobPostings implements OnInit {
     if (this.saving) return;
 
     this.formError = this.validateForm();
+
     if (this.formError) {
       this.cdr.detectChanges();
       return;
@@ -309,30 +316,30 @@ export class JobPostings implements OnInit {
     const payload: Omit<JobPosting, 'id'> = {
       jobTitle: this.form.jobTitle.trim(),
       companyName: this.form.companyName.trim(),
-      companyLogo: this.form.companyLogo.trim() || undefined,
+      companyLogo: this.form.companyLogo.trim(),
       location: this.form.location.trim(),
       category: this.form.category,
       employmentType: this.form.employmentType,
       workSetup: this.form.workSetup,
-      salaryRange: this.form.salaryRange.trim() || undefined,
+      salaryRange: this.form.salaryRange.trim(),
       jobDescription: this.form.jobDescription.trim(),
       qualifications: this.form.qualifications.trim(),
       applicationMethod: this.form.applicationMethod,
       applicationLink:
         this.form.applicationMethod === 'Application Link'
           ? this.form.applicationLink.trim()
-          : undefined,
+          : '',
       contactEmail:
         this.form.applicationMethod === 'Email'
           ? this.form.contactEmail.trim()
-          : undefined,
+          : '',
       deadline: this.form.deadline,
       status: this.form.status,
       openToAllAlumni: this.form.openToAllAlumni,
       recommendedPrograms: [...this.form.recommendedPrograms],
-      createdAt: this.isEditMode ? (this.selectedJob?.createdAt ?? now) : now,
+      createdAt: this.isEditMode ? this.selectedJob?.createdAt ?? now : now,
       updatedAt: now,
-      postedBy: this.selectedJob?.postedBy ?? undefined,
+      postedBy: this.selectedJob?.postedBy ?? '',
     };
 
     try {
@@ -342,7 +349,11 @@ export class JobPostings implements OnInit {
           updatedAt: now,
         });
       } else {
-        await this.jobPostingsService.addJobPosting({ ...payload, createdAt: now });
+        await this.jobPostingsService.addJobPosting({
+          ...payload,
+          createdAt: now,
+          updatedAt: now,
+        });
       }
 
       this.closeFormModal();
@@ -355,9 +366,9 @@ export class JobPostings implements OnInit {
     }
   }
 
-  // ─── Programs Checkbox ────────────────────────────────────────────────────
   toggleProgram(program: string): void {
     const idx = this.form.recommendedPrograms.indexOf(program);
+
     if (idx >= 0) {
       this.form.recommendedPrograms.splice(idx, 1);
     } else {
@@ -369,7 +380,6 @@ export class JobPostings implements OnInit {
     return this.form.recommendedPrograms.includes(program);
   }
 
-  // ─── Validation ───────────────────────────────────────────────────────────
   private validateForm(): string {
     if (!this.form.jobTitle.trim()) return 'Job title is required.';
     if (!this.form.companyName.trim()) return 'Company name is required.';
@@ -380,25 +390,33 @@ export class JobPostings implements OnInit {
     if (!this.form.jobDescription.trim()) return 'Job description is required.';
     if (!this.form.qualifications.trim()) return 'Qualifications are required.';
     if (!this.form.applicationMethod) return 'Application method is required.';
+
     if (
       this.form.applicationMethod === 'Application Link' &&
       !this.form.applicationLink.trim()
-    )
+    ) {
       return 'Application link is required when method is "Application Link".';
+    }
+
     if (
       this.form.applicationMethod === 'Email' &&
       !this.form.contactEmail.trim()
-    )
+    ) {
       return 'Contact email is required when method is "Email".';
+    }
+
     if (!this.form.deadline) return 'Application deadline is required.';
+
     return '';
   }
 
-  // ─── Helpers ──────────────────────────────────────────────────────────────
   formatDate(dateStr: string): string {
     if (!dateStr) return '—';
-    const d = new Date(dateStr + 'T00:00:00');
+
+    const d = new Date(`${dateStr}T00:00:00`);
+
     if (isNaN(d.getTime())) return dateStr;
+
     return d.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -408,10 +426,16 @@ export class JobPostings implements OnInit {
 
   formatPostedDate(createdAt: any): string {
     if (!createdAt) return '—';
-    const d = new Date(
-      typeof createdAt === 'string' ? createdAt : createdAt?.toDate?.() ?? createdAt
-    );
+
+    const value =
+      typeof createdAt === 'string'
+        ? createdAt
+        : createdAt?.toDate?.() ?? createdAt;
+
+    const d = new Date(value);
+
     if (isNaN(d.getTime())) return '—';
+
     return d.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -421,7 +445,11 @@ export class JobPostings implements OnInit {
 
   isDeadlinePast(deadline: string): boolean {
     if (!deadline) return false;
-    return new Date(deadline + 'T00:00:00') < new Date();
+
+    const deadlineDate = new Date(`${deadline}T23:59:59`);
+    const today = new Date();
+
+    return deadlineDate < today;
   }
 
   trackByJob(index: number, job: JobPosting): string {

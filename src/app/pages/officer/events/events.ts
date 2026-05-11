@@ -1,6 +1,7 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 
 import { EventRecord, EventStatus } from '../../../models/events.model';
 import { EventsService } from '../../../services/events.service';
@@ -14,10 +15,8 @@ type EventForm = Partial<EventRecord> & {
   startTime?: string;
   endTime?: string;
   location?: string;
-  capacity?: number | null;
-  registrationRequired?: boolean;
-  imageUrl?: string;
   isFeatured?: boolean;
+  isArchived?: boolean;
 };
 
 @Component({
@@ -34,6 +33,9 @@ export class Events implements OnInit, OnDestroy {
   loading = false;
   saving = false;
   deleting = false;
+  cancelling = false;
+  archiving = false;
+  restoring = false;
 
   searchTerm = '';
   statusFilter = 'all';
@@ -41,45 +43,68 @@ export class Events implements OnInit, OnDestroy {
 
   showModal = false;
   showDeleteModal = false;
+  showArchive = false;
 
   selectedEvent: EventRecord | null = null;
   eventToDelete: EventRecord | null = null;
 
   form: EventForm = {};
 
-  selectedImageFile: File | null = null;
-  imagePreviewUrl = '';
+  private eventsSubscription?: Subscription;
 
   readonly statusOptions: EventStatus[] = ['Upcoming', 'Ongoing', 'Completed', 'Cancelled'];
 
   constructor(
     private eventsService: EventsService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private zone: NgZone
   ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.loadEvents();
   }
 
-  ngOnDestroy() {
-    this.revokeImagePreview();
+  ngOnDestroy(): void {
+    this.eventsSubscription?.unsubscribe();
   }
 
-  loadEvents() {
-    this.loading = true;
-
-    this.eventsService.getEvents().subscribe((res) => {
-      this.events = res;
-      this.applyFilters();
-      this.loading = false;
+  loadEvents(): void {
+    this.zone.run(() => {
+      this.loading = true;
       this.cdr.detectChanges();
+    });
+
+    this.eventsSubscription?.unsubscribe();
+
+    this.eventsSubscription = this.eventsService.getEvents().subscribe({
+      next: (res) => {
+        this.zone.run(() => {
+          this.events = Array.isArray(res) ? res : [];
+          this.applyFilters(false);
+          this.loading = false;
+          this.cdr.detectChanges();
+        });
+      },
+      error: (error) => {
+        this.zone.run(() => {
+          console.error('Failed to load events:', error);
+          this.events = [];
+          this.filteredEvents = [];
+          this.loading = false;
+          this.cdr.detectChanges();
+        });
+      },
     });
   }
 
-  applyFilters() {
+  applyFilters(triggerDetectChanges = true): void {
     const term = this.searchTerm.trim().toLowerCase();
 
-    this.filteredEvents = this.events.filter((e) => {
+    const baseEvents = this.events.filter((event) =>
+      this.showArchive ? this.eventIsArchived(event) : !this.eventIsArchived(event)
+    );
+
+    this.filteredEvents = baseEvents.filter((e) => {
       const title = this.eventTitle(e).toLowerCase();
       const description = this.eventDescription(e).toLowerCase();
       const location = this.eventLocation(e).toLowerCase();
@@ -104,22 +129,38 @@ export class Events implements OnInit, OnDestroy {
 
       return matchesSearch && matchesStatus && matchesType;
     });
+
+    if (triggerDetectChanges) {
+      this.cdr.detectChanges();
+    }
+  }
+
+  get activeEvents(): EventRecord[] {
+    return this.events.filter((event) => !this.eventIsArchived(event));
+  }
+
+  get archivedEvents(): EventRecord[] {
+    return this.events.filter((event) => this.eventIsArchived(event));
+  }
+
+  get archivedCount(): number {
+    return this.archivedEvents.length;
   }
 
   get totalEvents(): number {
-    return this.events.length;
+    return this.activeEvents.length;
   }
 
   get upcomingCount(): number {
-    return this.events.filter((e) => this.eventStatus(e) === 'Upcoming').length;
+    return this.activeEvents.filter((e) => this.eventStatus(e) === 'Upcoming').length;
   }
 
   get completedCount(): number {
-    return this.events.filter((e) => this.eventStatus(e) === 'Completed').length;
+    return this.activeEvents.filter((e) => this.eventStatus(e) === 'Completed').length;
   }
 
   get cancelledCount(): number {
-    return this.events.filter((e) => this.eventStatus(e) === 'Cancelled').length;
+    return this.activeEvents.filter((e) => this.eventStatus(e) === 'Cancelled').length;
   }
 
   get eventTypes(): string[] {
@@ -131,67 +172,86 @@ export class Events implements OnInit, OnDestroy {
   }
 
   get pinnedEvent(): EventRecord | null {
-    return this.filteredEvents.find((e) => this.eventIsFeatured(e)) || null;
+    if (this.showArchive) {
+      return null;
+    }
+
+    return this.filteredEvents.find((e) => this.eventIsFeatured(e) && !this.eventIsArchived(e)) || null;
   }
 
   get allEvents(): EventRecord[] {
+    if (this.showArchive) {
+      return this.filteredEvents;
+    }
+
     return this.filteredEvents.filter((e) => !this.eventIsFeatured(e));
   }
 
-  openCreate() {
-    this.selectedEvent = null;
-    this.selectedImageFile = null;
-    this.imagePreviewUrl = '';
-    this.form = {
-      title: '',
-      description: '',
-      eventType: '',
-      status: 'Upcoming',
-      eventDate: '',
-      startTime: '',
-      endTime: '',
-      location: '',
-      capacity: null,
-      registrationRequired: false,
-      imageUrl: '',
-      isFeatured: false,
-    };
-    this.showModal = true;
+  toggleArchive(): void {
+    this.zone.run(() => {
+      this.showArchive = !this.showArchive;
+      this.showModal = false;
+      this.showDeleteModal = false;
+      this.selectedEvent = null;
+      this.eventToDelete = null;
+      this.applyFilters(false);
+      this.cdr.detectChanges();
+    });
   }
 
-  openEdit(e: EventRecord) {
-    this.selectedEvent = e;
-    this.selectedImageFile = null;
-    this.imagePreviewUrl = this.eventImageUrl(e);
-    this.form = {
-      ...e,
-      title: this.eventTitle(e),
-      description: this.eventDescription(e),
-      eventType: this.eventType(e) === 'General' ? '' : this.eventType(e),
-      status: this.eventStatus(e),
-      eventDate: this.eventDate(e),
-      startTime: this.eventStartTime(e),
-      endTime: this.eventEndTime(e),
-      location: this.eventLocation(e),
-      capacity: this.eventCapacity(e),
-      registrationRequired: this.eventRegistrationRequired(e),
-      imageUrl: this.eventImageUrl(e),
-      isFeatured: this.eventIsFeatured(e),
-    };
-    this.showModal = true;
+  openCreate(): void {
+    this.zone.run(() => {
+      this.showArchive = false;
+      this.selectedEvent = null;
+      this.form = {
+        title: '',
+        description: '',
+        eventType: '',
+        status: 'Upcoming',
+        eventDate: '',
+        startTime: '',
+        endTime: '',
+        location: '',
+        isFeatured: false,
+        isArchived: false,
+      };
+      this.showDeleteModal = false;
+      this.showModal = true;
+      this.applyFilters(false);
+      this.cdr.detectChanges();
+    });
   }
 
-  closeModal() {
-    this.showModal = false;
-    this.saving = false;
-    this.selectedImageFile = null;
-
-    if (this.imagePreviewUrl.startsWith('blob:')) {
-      this.revokeImagePreview();
-    }
+  openEdit(e: EventRecord): void {
+    this.zone.run(() => {
+      this.selectedEvent = e;
+      this.form = {
+        title: this.eventTitle(e),
+        description: this.eventDescription(e),
+        eventType: this.eventType(e) === 'General' ? '' : this.eventType(e),
+        status: this.eventStatus(e),
+        eventDate: this.eventDate(e),
+        startTime: this.eventStartTime(e),
+        endTime: this.eventEndTime(e),
+        location: this.eventLocation(e),
+        isFeatured: this.eventIsFeatured(e),
+        isArchived: this.eventIsArchived(e),
+      };
+      this.showDeleteModal = false;
+      this.showModal = true;
+      this.cdr.detectChanges();
+    });
   }
 
-  async save() {
+  closeModal(): void {
+    this.zone.run(() => {
+      this.showModal = false;
+      this.saving = false;
+      this.cdr.detectChanges();
+    });
+  }
+
+  async save(): Promise<void> {
     if (this.saving) return;
 
     if (
@@ -212,14 +272,7 @@ export class Events implements OnInit, OnDestroy {
     const now = new Date().toISOString();
 
     try {
-      let imageUrl = this.form.imageUrl?.trim() || '';
-
-      if (this.selectedImageFile) {
-        imageUrl = await this.eventsService.uploadEventImage(this.selectedImageFile);
-      }
-
-      const payload = {
-        ...this.form,
+      const payload: Partial<EventRecord> = {
         title: this.form.title.trim(),
         description: this.form.description?.trim() || '',
         eventType: this.form.eventType.trim(),
@@ -228,10 +281,8 @@ export class Events implements OnInit, OnDestroy {
         startTime: this.form.startTime,
         endTime: this.form.endTime,
         location: this.form.location.trim(),
-        capacity: this.form.capacity ? Number(this.form.capacity) : null,
-        registrationRequired: !!this.form.registrationRequired,
-        imageUrl,
         isFeatured: !!this.form.isFeatured,
+        isArchived: !!this.form.isArchived,
         updatedAt: now,
       };
 
@@ -240,10 +291,19 @@ export class Events implements OnInit, OnDestroy {
       }
 
       if (this.selectedEvent?.id) {
-        await this.eventsService.updateEvent(this.selectedEvent.id, payload as Partial<EventRecord>);
+        await this.eventsService.updateEvent(this.selectedEvent.id, payload);
       } else {
         await this.eventsService.addEvent({
-          ...(payload as EventRecord),
+          title: payload.title || '',
+          description: payload.description || '',
+          eventType: payload.eventType || '',
+          status: payload.status || 'Upcoming',
+          eventDate: payload.eventDate || '',
+          startTime: payload.startTime || '',
+          endTime: payload.endTime || '',
+          location: payload.location || '',
+          isFeatured: payload.isFeatured ?? false,
+          isArchived: payload.isArchived ?? false,
           createdAt: now,
           updatedAt: now,
         });
@@ -251,100 +311,158 @@ export class Events implements OnInit, OnDestroy {
 
       this.closeModal();
     } catch (e) {
-      console.error(e);
-      this.saving = false;
+      console.error('Failed to save event:', e);
+
+      this.zone.run(() => {
+        this.saving = false;
+        this.cdr.detectChanges();
+      });
     }
   }
 
-  openDelete(e: EventRecord) {
-    this.eventToDelete = e;
-    this.showDeleteModal = true;
+  async pinEvent(e: EventRecord): Promise<void> {
+    if (!e.id || this.eventStatus(e) === 'Cancelled' || this.eventIsArchived(e)) return;
+
+    try {
+      await this.unpinCurrentFeatured(e.id);
+      await this.eventsService.updateEvent(e.id, {
+        isFeatured: true,
+        updatedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Failed to pin event:', error);
+    }
   }
 
-  closeDelete() {
-    this.showDeleteModal = false;
-    this.deleting = false;
+  async unpinEvent(e: EventRecord): Promise<void> {
+    if (!e.id) return;
+
+    try {
+      await this.eventsService.updateEvent(e.id, {
+        isFeatured: false,
+        updatedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Failed to unpin event:', error);
+    }
   }
 
-  async confirmDelete() {
-    if (!this.eventToDelete?.id) return;
+  async cancelEvent(e: EventRecord): Promise<void> {
+    if (!e.id || this.eventStatus(e) === 'Cancelled' || this.cancelling) return;
+
+    this.cancelling = true;
+    this.cdr.detectChanges();
+
+    try {
+      await this.eventsService.updateEvent(e.id, {
+        status: 'Cancelled',
+        isFeatured: false,
+        isArchived: false,
+        updatedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Failed to cancel event:', error);
+    } finally {
+      this.zone.run(() => {
+        this.cancelling = false;
+        this.cdr.detectChanges();
+      });
+    }
+  }
+
+  async archiveEvent(e: EventRecord): Promise<void> {
+    if (!e.id || this.archiving) return;
+
+    this.archiving = true;
+    this.cdr.detectChanges();
+
+    try {
+      await this.eventsService.updateEvent(e.id, {
+        isArchived: true,
+        isFeatured: false,
+        updatedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Failed to archive event:', error);
+    } finally {
+      this.zone.run(() => {
+        this.archiving = false;
+        this.cdr.detectChanges();
+      });
+    }
+  }
+
+  async restoreEvent(e: EventRecord): Promise<void> {
+    if (!e.id || this.restoring) return;
+
+    this.restoring = true;
+    this.cdr.detectChanges();
+
+    try {
+      await this.eventsService.updateEvent(e.id, {
+        status: 'Upcoming',
+        isArchived: false,
+        isFeatured: false,
+        updatedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Failed to restore event:', error);
+    } finally {
+      this.zone.run(() => {
+        this.restoring = false;
+        this.cdr.detectChanges();
+      });
+    }
+  }
+
+  openDelete(e: EventRecord): void {
+    this.zone.run(() => {
+      this.eventToDelete = e;
+      this.showModal = false;
+      this.showDeleteModal = true;
+      this.cdr.detectChanges();
+    });
+  }
+
+  closeDelete(): void {
+    this.zone.run(() => {
+      this.showDeleteModal = false;
+      this.deleting = false;
+      this.eventToDelete = null;
+      this.cdr.detectChanges();
+    });
+  }
+
+  async confirmDelete(): Promise<void> {
+    if (!this.eventToDelete?.id || this.deleting) return;
 
     this.deleting = true;
     this.cdr.detectChanges();
 
-    await this.eventsService.deleteEvent(this.eventToDelete.id);
+    try {
+      await this.eventsService.deleteEvent(this.eventToDelete.id);
+      this.closeDelete();
+    } catch (error) {
+      console.error('Failed to delete event:', error);
 
-    this.closeDelete();
-  }
-
-  async pinEvent(e: EventRecord) {
-    if (!e.id) return;
-
-    await this.unpinCurrentFeatured(e.id);
-    await this.eventsService.updateEvent(e.id, {
-      isFeatured: true,
-      updatedAt: new Date().toISOString(),
-    } as Partial<EventRecord>);
-  }
-
-  async unpinEvent(e: EventRecord) {
-    if (!e.id) return;
-
-    await this.eventsService.updateEvent(e.id, {
-      isFeatured: false,
-      updatedAt: new Date().toISOString(),
-    } as Partial<EventRecord>);
-  }
-
-  onImageSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-
-    if (!file) return;
-
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    const maxSize = 5 * 1024 * 1024;
-
-    if (!allowedTypes.includes(file.type)) {
-      input.value = '';
-      return;
+      this.zone.run(() => {
+        this.deleting = false;
+        this.cdr.detectChanges();
+      });
     }
-
-    if (file.size > maxSize) {
-      input.value = '';
-      return;
-    }
-
-    this.revokeImagePreview();
-
-    this.selectedImageFile = file;
-    this.imagePreviewUrl = URL.createObjectURL(file);
-    input.value = '';
   }
 
-  removeImage() {
-    this.selectedImageFile = null;
-    this.form.imageUrl = '';
-    this.revokeImagePreview();
-  }
-
-  private revokeImagePreview() {
-    if (this.imagePreviewUrl.startsWith('blob:')) {
-      URL.revokeObjectURL(this.imagePreviewUrl);
-    }
-
-    this.imagePreviewUrl = '';
-  }
-
-  private async unpinCurrentFeatured(exceptId?: string) {
-    const featured = this.events.filter((event) => this.eventIsFeatured(event) && event.id !== exceptId);
+  private async unpinCurrentFeatured(exceptId?: string): Promise<void> {
+    const featured = this.events.filter(
+      (event) => this.eventIsFeatured(event) && event.id !== exceptId
+    );
 
     for (const event of featured) {
       if (event.id) {
         await this.eventsService.updateEvent(event.id, {
           isFeatured: false,
           updatedAt: new Date().toISOString(),
-        } as Partial<EventRecord>);
+        });
       }
     }
   }
@@ -392,20 +510,12 @@ export class Events implements OnInit, OnDestroy {
     return (e as any).location || '';
   }
 
-  eventCapacity(e: EventRecord): number | null {
-    return (e as any).capacity ?? null;
-  }
-
-  eventRegistrationRequired(e: EventRecord): boolean {
-    return !!(e as any).registrationRequired;
-  }
-
-  eventImageUrl(e: EventRecord): string {
-    return (e as any).imageUrl || '';
-  }
-
   eventIsFeatured(e: EventRecord): boolean {
     return !!(e as any).isFeatured;
+  }
+
+  eventIsArchived(e: EventRecord): boolean {
+    return !!(e as any).isArchived;
   }
 
   eventMonth(e: EventRecord): string {

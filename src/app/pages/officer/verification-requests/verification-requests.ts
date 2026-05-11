@@ -23,6 +23,13 @@ type VerificationFilter =
   | 'approved'
   | 'rejected';
 
+interface VerificationDocumentView {
+  fileName: string;
+  fileType: string;
+  url: string;
+  isImage: boolean;
+}
+
 @Component({
   selector: 'app-verification-requests',
   standalone: true,
@@ -125,7 +132,15 @@ export class VerificationRequestsComponent implements OnInit, OnDestroy {
       request.email,
       request.program,
       request.studentId,
-      request.alumniId,
+      request.contactNumber,
+      request.birthDate,
+      request.sex,
+      request.remarks,
+      this.getUniversityIdLabel(request),
+      this.getAlumniIdLabel(request),
+      this.getContactNumberLabel(request),
+      this.getBirthDateLabel(request),
+      ...this.getVerificationDocuments(request).map((document) => document.fileName),
     ]
       .map((value) => String(value ?? '').toLowerCase())
       .some((value) => value.includes(keyword));
@@ -190,7 +205,7 @@ export class VerificationRequestsComponent implements OnInit, OnDestroy {
     );
   }
 
-  async approveRequest(request: VerificationRequest, event?: Event) {
+  async approveRequest(request: VerificationRequest, event?: Event): Promise<void> {
     event?.preventDefault();
     event?.stopPropagation();
 
@@ -198,7 +213,7 @@ export class VerificationRequestsComponent implements OnInit, OnDestroy {
 
     const confirmed = await this.confirmAction(
       'Approve request?',
-      'This will verify the alumni account.',
+      'This will verify the alumni account and generate an official Alumni ID.',
       'question',
       'Yes, approve'
     );
@@ -213,7 +228,7 @@ export class VerificationRequestsComponent implements OnInit, OnDestroy {
     );
   }
 
-  async rejectRequest(request: VerificationRequest, event?: Event) {
+  async rejectRequest(request: VerificationRequest, event?: Event): Promise<void> {
     event?.preventDefault();
     event?.stopPropagation();
 
@@ -262,7 +277,7 @@ export class VerificationRequestsComponent implements OnInit, OnDestroy {
   }
 
   private async runRequestAction(
-    action: () => Promise<void>,
+    action: () => Promise<string | void>,
     successTitle: string,
     successText: string,
     errorText: string
@@ -271,9 +286,14 @@ export class VerificationRequestsComponent implements OnInit, OnDestroy {
       this.modalBusy = true;
       this.cdr.detectChanges();
 
-      await action();
+      const result = await action();
 
-      await Swal.fire(successTitle, successText, 'success');
+      const finalSuccessText =
+        typeof result === 'string' && result.trim()
+          ? `${successText}\n\nAlumni ID: ${result}`
+          : successText;
+
+      await Swal.fire(successTitle, finalSuccessText, 'success');
     } catch (error) {
       console.error(error);
       await Swal.fire('Error', errorText, 'error');
@@ -290,6 +310,7 @@ export class VerificationRequestsComponent implements OnInit, OnDestroy {
 
   private normalizeStatus(status: any): VerificationRequest['status'] {
     const value = String(status ?? '').toLowerCase().replace(/\s+/g, '_').trim();
+
     switch (value) {
       case 'pending':
       case 'under_review':
@@ -302,41 +323,210 @@ export class VerificationRequestsComponent implements OnInit, OnDestroy {
   }
 
   private getRequestTime(request: VerificationRequest): number {
-    const raw = (request as any).submittedAt || (request as any).updatedAt || (request as any).reviewedAt;
+    const raw =
+      (request as any).submittedAt ||
+      (request as any).updatedAt ||
+      (request as any).reviewedAt;
+
     if (!raw) return 0;
     if (typeof raw === 'number') return raw;
     if (raw?.seconds) return raw.seconds * 1000;
+
     const parsed = new Date(raw).getTime();
     return Number.isNaN(parsed) ? 0 : parsed;
   }
 
+  // ── Footnote helpers ──────────────────────────────────────────
+
+  getFilterTotal(): number {
+    if (this.activeFilter === 'all') return this.verificationRequests.length;
+    return this.verificationRequests.filter(
+      (r) => this.normalizeStatus(r.status) === this.activeFilter
+    ).length;
+  }
+
+  getFilterLabel(): string {
+    switch (this.activeFilter) {
+      case 'all':          return 'total accounts';
+      case 'pending':      return 'pending requests';
+      case 'under_review': return 'under review requests';
+      case 'approved':     return 'approved requests';
+      case 'rejected':     return 'rejected requests';
+      default:             return 'requests';
+    }
+  }
+
+  // ── Display helpers ───────────────────────────────────────────
+
+  getProfileInitials(request: VerificationRequest): string {
+    const fullName = String(request.fullName || '').trim();
+    if (!fullName) return 'A';
+    return fullName.charAt(0).toUpperCase();
+  }
+
+  getUniversityIdLabel(request: VerificationRequest): string {
+    const studentId = request.studentId?.trim();
+
+    if (studentId) return studentId;
+
+    const oldWrongAlumniId = request.alumniId?.trim() || '';
+
+    if (oldWrongAlumniId && !oldWrongAlumniId.startsWith('USTP-VIL-AL-')) {
+      return oldWrongAlumniId;
+    }
+
+    return '—';
+  }
+
+  getAlumniIdLabel(request: VerificationRequest): string {
+    const alumniId = request.alumniId?.trim() || '';
+    if (alumniId.startsWith('USTP-VIL-AL-')) return alumniId;
+    return 'Not assigned yet';
+  }
+
+  getContactNumberLabel(request: VerificationRequest): string {
+    return request.contactNumber?.trim() || '—';
+  }
+
+  getBirthDateLabel(request: VerificationRequest): string {
+    const birthDate = request.birthDate;
+
+    if (!birthDate) return '—';
+
+    if (typeof birthDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
+      const [year, month, day] = birthDate.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
+      return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString();
+    }
+
+    return this.formatDate(birthDate);
+  }
+
+  getSexLabel(request: VerificationRequest): string {
+    return request.sex?.trim() || '—';
+  }
+
+  getRemarksLabel(request: VerificationRequest): string {
+    return request.remarks?.trim() || 'No remarks';
+  }
+
+  getVerificationDocuments(request: VerificationRequest): VerificationDocumentView[] {
+    const documents: VerificationDocumentView[] = [];
+
+    const uploadedDocuments = Array.isArray(request.verificationDocuments)
+      ? request.verificationDocuments
+      : [];
+
+    uploadedDocuments.forEach((document: any, index) => {
+      const url = String(
+        document?.url || document?.secureUrl || document?.downloadUrl || ''
+      ).trim();
+
+      if (!url) return;
+
+      const fileName =
+        String(document?.fileName || document?.name || document?.documentName || '').trim() ||
+        this.getFileNameFromUrl(url) ||
+        `Verification Document ${index + 1}`;
+
+      const fileType =
+        String(document?.fileType || document?.type || document?.mimeType || '').trim() ||
+        this.guessFileTypeFromUrl(url);
+
+      documents.push({ fileName, fileType, url, isImage: this.isImageDocument(fileType, url) });
+    });
+
+    const submittedDocuments = Array.isArray(request.submittedDocuments)
+      ? request.submittedDocuments
+      : [];
+
+    submittedDocuments.forEach((documentUrl, index) => {
+      const url = String(documentUrl || '').trim();
+      if (!url) return;
+      if (documents.some((d) => d.url === url)) return;
+
+      const fileName = this.getFileNameFromUrl(url) || `Submitted Document ${index + 1}`;
+      const fileType = this.guessFileTypeFromUrl(url);
+      documents.push({ fileName, fileType, url, isImage: this.isImageDocument(fileType, url) });
+    });
+
+    const oldDocumentUrl = request.documentUrl?.trim();
+
+    if (oldDocumentUrl && !documents.some((d) => d.url === oldDocumentUrl)) {
+      const fileName =
+        request.documentName?.trim() ||
+        this.getFileNameFromUrl(oldDocumentUrl) ||
+        'Verification Document';
+      const fileType = this.guessFileTypeFromUrl(oldDocumentUrl);
+      documents.push({ fileName, fileType, url: oldDocumentUrl, isImage: this.isImageDocument(fileType, oldDocumentUrl) });
+    }
+
+    return documents;
+  }
+
+  getDocumentTypeLabel(document: VerificationDocumentView): string {
+    if (document.fileType?.startsWith('image/')) return 'Image Document';
+    if (document.fileType) return document.fileType;
+    return 'Document';
+  }
+
+  openDocument(url: string, event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+    if (!url) return;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
+  trackByDocumentUrl(index: number, document: VerificationDocumentView): string {
+    return document.url || index.toString();
+  }
+
+  private getFileNameFromUrl(url: string): string {
+    try {
+      const cleanUrl = url.split('?')[0];
+      const lastPart = cleanUrl.split('/').pop() || '';
+      return decodeURIComponent(lastPart) || '';
+    } catch {
+      return '';
+    }
+  }
+
+  private guessFileTypeFromUrl(url: string): string {
+    const cleanUrl = url.split('?')[0].toLowerCase();
+    if (/\.(jpg|jpeg)$/.test(cleanUrl)) return 'image/jpeg';
+    if (/\.png$/.test(cleanUrl))        return 'image/png';
+    if (/\.webp$/.test(cleanUrl))       return 'image/webp';
+    if (/\.gif$/.test(cleanUrl))        return 'image/gif';
+    if (/\.pdf$/.test(cleanUrl))        return 'application/pdf';
+    return '';
+  }
+
+  private isImageDocument(fileType: string, url: string): boolean {
+    const normalizedType = String(fileType || '').toLowerCase();
+    const normalizedUrl  = String(url || '').split('?')[0].toLowerCase();
+    return (
+      normalizedType.startsWith('image/') ||
+      /\.(jpg|jpeg|png|webp|gif)$/.test(normalizedUrl)
+    );
+  }
+
   getStatusClass(status: string): string {
     switch (this.normalizeStatus(status)) {
-      case 'pending':
-        return 'status-pending';
-      case 'under_review':
-        return 'status-review';
-      case 'approved':
-        return 'status-approved';
-      case 'rejected':
-        return 'status-rejected';
-      default:
-        return 'status-pending';
+      case 'pending':      return 'status-pending';
+      case 'under_review': return 'status-review';
+      case 'approved':     return 'status-approved';
+      case 'rejected':     return 'status-rejected';
+      default:             return 'status-pending';
     }
   }
 
   getStatusLabel(status: string): string {
     switch (this.normalizeStatus(status)) {
-      case 'pending':
-        return 'Pending';
-      case 'under_review':
-        return 'Under Review';
-      case 'approved':
-        return 'Approved';
-      case 'rejected':
-        return 'Rejected';
-      default:
-        return 'Pending';
+      case 'pending':      return 'Pending';
+      case 'under_review': return 'Under Review';
+      case 'approved':     return 'Approved';
+      case 'rejected':     return 'Rejected';
+      default:             return 'Pending';
     }
   }
 

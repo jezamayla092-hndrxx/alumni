@@ -1,40 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined');
 @import "primeicons/primeicons.css";
-@import "flag-icons/sass/flag-icons.scss";
-html,
-body {
-  min-height: 100%;
-  margin: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-}
 
-body {
-  font-family: "Inter", "gg sans", "Noto Sans", "Helvetica Neue",
-    Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background: #ffffff;
-  color: #0f172a;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-button,
-input,
-textarea,
-select {
-  font: inherit;
-}
-
-button {
-  pointer-events: auto !important;
-  cursor: pointer !important;
-}
-
-button:disabled {
-  cursor: not-allowed !important;
-}
+html, body { min-height: 100%; margin: 0; overflow-x: hidden; overflow-y: auto; }
+body { font-family: "Inter", sans-serif; -webkit-font-smoothing: antialiased; background: #ffffff; color: #0f172a; }
+* { box-sizing: border-box; }
+button, input, textarea, select { font: inherit; }
+button { pointer-events: auto !important; cursor: pointer !important; }
+button:disabled { cursor: not-allowed !important; }

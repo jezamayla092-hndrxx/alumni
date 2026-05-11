@@ -1,0 +1,529 @@
+:host {
+  display: block;
+  width: 100%;
+  font-family: 'Inter', 'Segoe UI', Roboto, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.record-details-page {
+  padding: 1rem 1.1rem;
+  background: transparent;
+  min-height: 100%;
+  color: var(--atms-text-main, #1f2937);
+}
+
+/* TOOLBAR */
+.record-toolbar {
+  margin-bottom: 0.75rem;
+}
+
+.back-btn {
+  height: 2.3rem;
+  padding: 0 0.9rem;
+  border: 1px solid #e4e7ec;
+  border-radius: 13px;
+  background: #ffffff;
+  color: #344054;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: none;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.back-btn:hover {
+  background: #f8fafc;
+  border-color: #cfd4dc;
+}
+
+/* HEADER */
+.page-heading {
+  margin-bottom: 0.85rem;
+}
+
+.page-heading h1 {
+  margin: 0 0 0.16rem;
+  font-size: 1.22rem;
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--atms-text-main, #111827);
+  letter-spacing: -0.02em;
+}
+
+.page-heading p {
+  margin: 0;
+  font-size: 0.83rem;
+  line-height: 1.4;
+  color: var(--atms-text-muted, #667085);
+  font-weight: 400;
+}
+
+/* CARD BASE */
+.card {
+  background: #ffffff;
+  border: 1px solid #e4e9f2;
+  border-radius: 18px;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06), 0 2px 10px rgba(16, 24, 40, 0.05);
+}
+
+/* STATES */
+.state-card {
+  padding: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: var(--atms-text-muted, #667085);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.state-card i {
+  color: var(--atms-primary, #7c5cff);
+}
+
+.error-card i {
+  color: #dc2626;
+}
+
+.state-card p {
+  margin: 0;
+}
+
+/* HERO */
+.profile-hero {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.profile-hero-left {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+.avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--atms-primary, #7c5cff);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-copy {
+  min-width: 0;
+}
+
+.hero-copy h2 {
+  margin: 0 0 0.15rem;
+  font-size: 1.08rem;
+  line-height: 1.25;
+  font-weight: 800;
+  color: var(--atms-text-main, #111827);
+}
+
+.hero-copy p {
+  margin: 0;
+  font-size: 0.83rem;
+  line-height: 1.35;
+  color: var(--atms-text-muted, #667085);
+}
+
+.hero-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.alumni-id-chip {
+  min-height: 25px;
+  padding: 0.25rem 0.58rem;
+  border-radius: 999px;
+  background: #f1efff;
+  color: var(--atms-primary, #7c5cff);
+  border: 1px solid #ddd6fe;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* LAYOUT */
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.info-card {
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 0.95rem 1rem 0.82rem;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.card-header h3 {
+  margin: 0 0 0.12rem;
+  font-size: 0.98rem;
+  line-height: 1.3;
+  font-weight: 700;
+  color: var(--atms-text-main, #111827);
+}
+
+.card-header p {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--atms-text-muted, #667085);
+}
+
+/* FIELDS */
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+.field-item {
+  min-width: 0;
+  background: #ffffff;
+  border: 1px solid #e4e9f2;
+  border-radius: 16px;
+  padding: 0.85rem 0.9rem;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06), 0 2px 10px rgba(16, 24, 40, 0.05);
+}
+
+.field-item-full {
+  grid-column: 1 / -1;
+}
+
+.field-item span {
+  display: block;
+  margin-bottom: 0.26rem;
+  font-size: 0.74rem;
+  line-height: 1.3;
+  font-weight: 700;
+  color: var(--atms-text-muted, #667085);
+}
+
+.field-item strong {
+  display: block;
+  font-size: 0.86rem;
+  line-height: 1.35;
+  font-weight: 700;
+  color: var(--atms-text-main, #111827);
+  word-break: break-word;
+}
+
+/* STATUS — plain text, no pills */
+.status-pill {
+  display: inline;
+  font-size: 0.86rem;
+  font-weight: 700;
+  background: none;
+  border: none;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+  white-space: normal;
+}
+
+.status-approved,
+.status-employed {
+  color: #16a34a;
+}
+
+.status-review,
+.status-self-employed {
+  color: #2563eb;
+}
+
+.status-pending {
+  color: #d97706;
+}
+
+.status-rejected,
+.status-unemployed {
+  color: #dc2626;
+}
+
+.status-studies,
+.status-employed-studying {
+  color: var(--atms-primary, #7c5cff);
+}
+
+.status-not-seeking,
+.status-neutral {
+  color: #64748b;
+}
+
+/* SUBSECTIONS */
+.subsection {
+  padding: 0 1rem 1rem;
+}
+
+.subsection h4 {
+  margin: 0 0 0.75rem;
+  padding-top: 0.1rem;
+  font-size: 0.92rem;
+  line-height: 1.3;
+  font-weight: 700;
+  color: var(--atms-text-main, #111827);
+}
+
+.subsection .field-grid {
+  padding: 0;
+}
+
+/* CHIPS */
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.9rem;
+}
+
+.category-chip {
+  min-height: 2.1rem;
+  padding: 0.25rem 0.78rem;
+  border: 1px solid #e4e7ec;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #344054;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: none;
+}
+
+.skills-grid {
+  margin-top: 0.9rem;
+}
+
+/* EMPTY */
+.empty-block {
+  margin: 1rem;
+  border: 1px dashed #d0d5dd;
+  border-radius: 16px;
+  padding: 1.1rem;
+  background: #ffffff;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06), 0 2px 10px rgba(16, 24, 40, 0.05);
+}
+
+.empty-block i {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  background: #f1efff;
+  color: var(--atms-primary, #7c5cff);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.6rem;
+}
+
+.empty-block h4 {
+  margin: 0 0 0.25rem;
+  font-size: 0.92rem;
+  color: var(--atms-text-main, #111827);
+  font-weight: 700;
+}
+
+.empty-block p,
+.empty-mini {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--atms-text-muted, #667085);
+  line-height: 1.4;
+}
+
+/* DARK MODE */
+:host-context(.dark-mode),
+:host-context(.dark-theme),
+:host-context([data-theme='dark']) {
+  .record-details-page {
+    color: #e5e7eb;
+  }
+
+  .page-heading h1,
+  .hero-copy h2,
+  .card-header h3,
+  .field-item strong,
+  .subsection h4,
+  .empty-block h4 {
+    color: #f8fafc;
+  }
+
+  .page-heading p,
+  .hero-copy p,
+  .card-header p,
+  .field-item span,
+  .empty-block p,
+  .empty-mini {
+    color: #94a3b8;
+  }
+
+  .card,
+  .profile-hero,
+  .info-card,
+  .state-card,
+  .field-item,
+  .empty-block {
+    background: #0e1117;
+    border-color: #1a2030;
+    box-shadow: none;
+  }
+
+  .card-header {
+    border-color: #1a2030;
+  }
+
+  .back-btn {
+    background: #0e1117;
+    border-color: #1a2030;
+    color: #cbd5e1;
+  }
+
+  .back-btn:hover {
+    background: #111827;
+    border-color: #334155;
+    color: #ffffff;
+  }
+
+  .alumni-id-chip {
+    background: #1a1730;
+    color: #a78bfa;
+    border-color: #2e2554;
+  }
+
+  .status-approved,
+  .status-employed {
+    color: #4ade80;
+  }
+
+  .status-review,
+  .status-self-employed {
+    color: #60a5fa;
+  }
+
+  .status-pending {
+    color: #fbbf24;
+  }
+
+  .status-rejected,
+  .status-unemployed {
+    color: #f87171;
+  }
+
+  .status-studies,
+  .status-employed-studying {
+    color: #a78bfa;
+  }
+
+  .status-not-seeking,
+  .status-neutral {
+    color: #cbd5e1;
+  }
+
+  .category-chip {
+    background: #0e1117;
+    border-color: #1a2030;
+    color: #cbd5e1;
+  }
+
+  .empty-block {
+    border-color: #334155;
+  }
+
+  .empty-block i {
+    background: #1a1730;
+    color: #a78bfa;
+  }
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .profile-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .hero-meta {
+    justify-content: flex-start;
+  }
+
+  .field-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .field-item-full {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .record-details-page {
+    padding: 0.9rem;
+  }
+
+  .profile-hero {
+    padding: 0.95rem;
+  }
+
+  .profile-hero-left {
+    align-items: flex-start;
+  }
+
+  .avatar {
+    width: 58px;
+    height: 58px;
+  }
+
+  .field-grid {
+    padding: 0.9rem;
+  }
+
+  .subsection {
+    padding: 0 0.9rem 0.9rem;
+  }
+}
+
+button,
+.back-btn {
+  pointer-events: auto !important;
+}

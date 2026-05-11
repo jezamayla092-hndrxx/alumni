@@ -1,113 +1,178 @@
-<section class="verification-page">
+<section class="verification-page" *ngIf="verificationRequest as request">
   <div class="page-heading">
-    <div class="heading-copy">
-      <h1>Verification Status</h1>
-      <p>Track your alumni verification progress and review details.</p>
-    </div>
+    <h1>Verification Status</h1>
+    <p>Track your alumni verification progress and review details.</p>
   </div>
 
-  <div class="status-card status-loading" *ngIf="loading">
-    <h2>Loading verification status...</h2>
-    <p>Please wait while we load your latest verification request.</p>
-  </div>
-
-  <div class="status-card status-error" *ngIf="!loading && errorMessage">
-    <h2>Unable to Load Verification Status</h2>
-    <p>{{ errorMessage }}</p>
-  </div>
-
-  <ng-container *ngIf="!loading && !errorMessage">
-    <div
-      class="status-card"
-      [ngClass]="{
-        'status-approved-card': status === 'approved',
-        'status-pending-card': status === 'pending' || status === 'under_review',
-        'status-rejected-card': status === 'rejected',
-        'status-empty-card': status === 'none'
-      }"
-    >
-      <div class="status-icon">
+  <section
+    class="status-card"
+    [ngClass]="{
+      'status-card--approved': request.status === 'approved',
+      'status-card--review': request.status === 'under_review',
+      'status-card--pending': request.status === 'pending',
+      'status-card--rejected': request.status === 'rejected'
+    }"
+  >
+    <div class="status-card__content">
+      <div
+        class="status-icon"
+        [ngClass]="{
+          'status-icon--approved': request.status === 'approved',
+          'status-icon--review': request.status === 'under_review',
+          'status-icon--pending': request.status === 'pending',
+          'status-icon--rejected': request.status === 'rejected'
+        }"
+      >
         <i
           class="pi"
           [ngClass]="{
-            'pi-check': status === 'approved',
-            'pi-clock': status === 'pending' || status === 'under_review',
-            'pi-times': status === 'rejected',
-            'pi-info-circle': status === 'none'
+            'pi-check': request.status === 'approved',
+            'pi-clock': request.status === 'under_review' || request.status === 'pending',
+            'pi-times': request.status === 'rejected'
           }"
         ></i>
       </div>
 
-      <div class="status-label">{{ statusLabel }}</div>
+      <h2 *ngIf="request.status === 'approved'">You're Verified</h2>
+      <h2 *ngIf="request.status === 'under_review'">Verification Under Review</h2>
+      <h2 *ngIf="request.status === 'pending'">Verification Pending</h2>
+      <h2 *ngIf="request.status === 'rejected'">Verification Rejected</h2>
 
-      <h2>{{ titleText }}</h2>
+      <p *ngIf="request.status === 'approved'">
+        Your alumni status has been successfully verified. You now have an official Alumni ID
+        and full access to alumni services.
+      </p>
 
-      <p>{{ descriptionText }}</p>
+      <p *ngIf="request.status === 'under_review'">
+        Your verification request is currently being reviewed by the assigned officer.
+        Please wait for the approval result.
+      </p>
 
-      <div class="alumni-id" *ngIf="status === 'approved'">
+      <p *ngIf="request.status === 'pending'">
+        Your verification request has been submitted and is waiting to be reviewed.
+      </p>
+
+      <p *ngIf="request.status === 'rejected'">
+        Your verification request was not approved. Please review the remarks below and update
+        your submission if needed.
+      </p>
+
+      <div class="alumni-id-card" *ngIf="request.status === 'approved' && request.alumniId">
         <i class="pi pi-id-card"></i>
-        <span><strong>Alumni ID:</strong> {{ alumniId }}</span>
+        <span class="alumni-id-label">Alumni ID:</span>
+        <strong>{{ request.alumniId }}</strong>
       </div>
     </div>
+  </section>
 
-    <div class="timeline-card" *ngIf="verification">
+  <section class="timeline-card">
+    <div class="section-header">
       <h3>Verification Timeline</h3>
+    </div>
 
-      <div class="timeline">
-        <div class="timeline-item">
-          <div class="dot"></div>
-          <div>
-            <h4>Application Submitted</h4>
-            <span>{{ submittedDate }}</span>
-            <p>
-              Alumni verification request submitted with all required documents.
-            </p>
-          </div>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-marker completed">
+          <i class="pi pi-check"></i>
         </div>
 
-        <div class="timeline-item" *ngIf="status === 'approved' || status === 'rejected'">
-          <div class="dot"></div>
-          <div>
-            <h4>
-              {{ status === 'approved' ? 'Verification Complete' : 'Verification Result' }}
-            </h4>
-            <span>{{ reviewedDate }}</span>
-            <p>
-              {{
-                status === 'approved'
-                  ? 'Alumni status successfully verified and recorded in the system.'
-                  : 'Your verification request has been reviewed and marked as rejected.'
-              }}
-            </p>
-          </div>
+        <div class="timeline-content">
+          <h4>Application Submitted</h4>
+          <span>{{ formatDate(request.submittedAt) }}</span>
+          <p>Alumni verification request submitted with all required documents.</p>
+        </div>
+      </div>
+
+      <div
+        class="timeline-item"
+        *ngIf="
+          request.status === 'under_review' ||
+          request.status === 'approved' ||
+          request.status === 'rejected'
+        "
+      >
+        <div
+          class="timeline-marker"
+          [ngClass]="{
+            completed: request.status === 'under_review' || request.status === 'approved' || request.status === 'rejected'
+          }"
+        >
+          <i class="pi pi-check"></i>
+        </div>
+
+        <div class="timeline-content">
+          <h4 *ngIf="request.status === 'under_review'">Verification In Progress</h4>
+          <h4 *ngIf="request.status === 'approved'">Verification Complete</h4>
+          <h4 *ngIf="request.status === 'rejected'">Verification Reviewed</h4>
+
+          <span>{{ formatDate(request.reviewedAt || request.updatedAt || request.submittedAt) }}</span>
+
+          <p *ngIf="request.status === 'under_review'">
+            Your submitted information and documents are currently being reviewed.
+          </p>
+          <p *ngIf="request.status === 'approved'">
+            Alumni status successfully verified and recorded in the system.
+          </p>
+          <p *ngIf="request.status === 'rejected'">
+            Your verification request has been reviewed and marked as rejected.
+          </p>
+        </div>
+      </div>
+
+      <div class="timeline-item" *ngIf="request.status === 'approved' && request.alumniId">
+        <div class="timeline-marker completed">
+          <i class="pi pi-check"></i>
+        </div>
+
+        <div class="timeline-content">
+          <h4>Alumni ID Issued</h4>
+          <span>{{ formatDate(request.reviewedAt || request.updatedAt || request.submittedAt) }}</span>
+          <p>Your official USTP Villanueva Campus Alumni ID has been generated.</p>
         </div>
       </div>
     </div>
+  </section>
 
-    <div class="details-card" *ngIf="verification">
+  <section class="details-card">
+    <div class="section-header">
       <h3>Verification Details</h3>
+    </div>
 
-      <div class="details-grid">
-        <div>
-          <span>Submitted</span>
-          <strong>{{ submittedDate }}</strong>
-        </div>
+    <div class="details-grid">
+      <div class="detail-item">
+        <span class="detail-label">University ID</span>
+        <strong class="detail-value">{{ request.studentId || '—' }}</strong>
+      </div>
 
-        <div>
-          <span>Reviewed</span>
-          <strong>{{ reviewedDate }}</strong>
-        </div>
+      <div class="detail-item">
+        <span class="detail-label">Alumni ID</span>
+        <strong class="detail-value">{{ request.alumniId || 'Not assigned yet' }}</strong>
+      </div>
 
-        <div>
-          <span>Reviewed By</span>
-          <strong>{{ reviewedBy }}</strong>
-        </div>
+      <div class="detail-item">
+        <span class="detail-label">Campus</span>
+        <strong class="detail-value">{{ request.campus || 'USTP Villanueva Campus' }}</strong>
+      </div>
 
-        <div>
-          <span>Remarks</span>
-          <strong>{{ remarks }}</strong>
-        </div>
+      <div class="detail-item">
+        <span class="detail-label">Submitted</span>
+        <strong class="detail-value">{{ formatDate(request.submittedAt) }}</strong>
+      </div>
+
+      <div class="detail-item">
+        <span class="detail-label">Reviewed</span>
+        <strong class="detail-value">{{ formatDate(request.reviewedAt || request.updatedAt || request.submittedAt) }}</strong>
+      </div>
+
+      <div class="detail-item">
+        <span class="detail-label">Reviewed By</span>
+        <strong class="detail-value">{{ request.reviewedBy || '—' }}</strong>
+      </div>
+
+      <div class="detail-item detail-item--full">
+        <span class="detail-label">Remarks</span>
+        <strong class="detail-value">{{ request.remarks || 'No remarks available.' }}</strong>
       </div>
     </div>
-  </ng-container>
+  </section>
 </section>

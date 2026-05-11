@@ -1,6 +1,26 @@
 <div class="login-page">
+
+  <!-- ATMS Branding -->
+  <div class="login-page-logo">
+    <span class="logo-name">ATMS</span>
+  </div>
+
+  <!-- Floating bubbles -->
+  <div class="login-bubbles">
+    <div class="login-bubble"></div>
+    <div class="login-bubble"></div>
+    <div class="login-bubble"></div>
+    <div class="login-bubble"></div>
+    <div class="login-bubble"></div>
+    <div class="login-bubble"></div>
+  </div>
+
   <section class="form-panel">
+
     <div class="login-card">
+
+      <h1 class="card-title">Sign in to your account</h1>
+
       <div class="form-field">
         <input
           id="email"
@@ -11,7 +31,7 @@
           [disabled]="loading"
           autocomplete="email"
         />
-        <label for="email">Email</label>
+        <label for="email">Email address</label>
       </div>
 
       <div class="form-field password-field">
@@ -55,19 +75,18 @@
           viewBox="0 0 32 32"
           aria-hidden="true"
         >
-          <path
-            class="login-spinner-arc"
-            d="M16 4a12 12 0 0 1 12 12"
-          ></path>
+          <path class="login-spinner-arc" d="M16 4a12 12 0 0 1 12 12"></path>
         </svg>
-
-        <span *ngIf="!loading">Log in</span>
+        <span *ngIf="!loading">Sign in</span>
       </button>
 
       <p class="signup-link">
-        No account yet?
-        <a routerLink="/signup">Sign up</a>
+        Don't have an account?
+        <a routerLink="/signup">Create one</a>
       </p>
+
     </div>
+
   </section>
+
 </div>

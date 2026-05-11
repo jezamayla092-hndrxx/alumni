@@ -1,0 +1,441 @@
+<section class="record-details-page">
+  <div class="record-toolbar">
+    <button type="button" class="back-btn" (click)="goBack()">
+      <i class="pi pi-arrow-left"></i>
+      Back to Alumni Records
+    </button>
+  </div>
+
+  <div class="page-heading">
+    <h1>Alumni Record Details</h1>
+    <p>View complete alumni profile, verification, academic, and post-graduation information.</p>
+  </div>
+
+  <section class="state-card card" *ngIf="loading">
+    <i class="pi pi-spin pi-spinner"></i>
+    <p>Loading alumni record...</p>
+  </section>
+
+  <section class="state-card card error-card" *ngIf="!loading && errorMessage">
+    <i class="pi pi-exclamation-triangle"></i>
+    <p>{{ errorMessage }}</p>
+  </section>
+
+  <ng-container *ngIf="!loading && !errorMessage && profile">
+    <section class="profile-hero card">
+      <div class="profile-hero-left">
+        <div class="avatar">
+          <ng-container *ngIf="getProfilePhotoUrl(); else initialsAvatar">
+            <img [src]="getProfilePhotoUrl()" alt="Profile photo" />
+          </ng-container>
+
+          <ng-template #initialsAvatar>
+            <span>{{ getInitials() }}</span>
+          </ng-template>
+        </div>
+
+        <div class="hero-copy">
+          <h2>{{ getDisplayName() }}</h2>
+          <p>{{ getProgramLabel() }} • Batch {{ getYearGraduatedLabel() }}</p>
+        </div>
+      </div>
+
+      <div class="hero-meta">
+        <span class="status-pill" [ngClass]="getVerificationStatusClass()">
+          {{ getVerificationStatusLabel() }}
+        </span>
+
+        <span class="alumni-id-chip">
+          {{ getAlumniIdLabel() }}
+        </span>
+      </div>
+    </section>
+
+    <section class="details-grid">
+      <article class="card info-card">
+        <div class="card-header">
+          <h3>Personal Information</h3>
+          <p>Basic identity and contact details linked to the alumni profile.</p>
+        </div>
+
+        <div class="field-grid">
+          <div class="field-item">
+            <span>Full Name</span>
+            <strong>{{ getDisplayName() }}</strong>
+          </div>
+
+          <div class="field-item">
+            <span>Email</span>
+            <strong>{{ getEmailLabel() }}</strong>
+          </div>
+
+          <div class="field-item">
+            <span>Contact Number</span>
+            <strong>{{ getContactNumberLabel() }}</strong>
+          </div>
+
+          <div class="field-item">
+            <span>Birth Date</span>
+            <strong>{{ getBirthDateLabel() }}</strong>
+          </div>
+
+          <div class="field-item">
+            <span>Sex</span>
+            <strong>{{ getSexLabel() }}</strong>
+          </div>
+
+          <div class="field-item">
+            <span>Role</span>
+            <strong>{{ getRoleLabel() }}</strong>
+          </div>
+        </div>
+      </article>
+
+      <article class="card info-card">
+        <div class="card-header">
+          <h3>Academic Information</h3>
+          <p>Academic records submitted during alumni registration.</p>
+        </div>
+
+        <div class="field-grid">
+          <div class="field-item">
+            <span>University ID</span>
+            <strong>{{ getUniversityIdLabel() }}</strong>
+          </div>
+
+          <div class="field-item">
+            <span>Alumni ID</span>
+            <strong>{{ getAlumniIdLabel() }}</strong>
+          </div>
+
+          <div class="field-item">
+            <span>Program</span>
+            <strong>{{ getProgramLabel() }}</strong>
+          </div>
+
+          <div class="field-item">
+            <span>Year Graduated</span>
+            <strong>{{ getYearGraduatedLabel() }}</strong>
+          </div>
+
+          <div class="field-item field-item-full">
+            <span>Campus</span>
+            <strong>{{ getCampusLabel() }}</strong>
+          </div>
+        </div>
+      </article>
+
+      <article class="card info-card">
+        <div class="card-header">
+          <h3>Verification Information</h3>
+          <p>Latest alumni verification status and review details.</p>
+        </div>
+
+        <div class="field-grid">
+          <div class="field-item">
+            <span>Status</span>
+            <strong>
+              <span class="status-pill" [ngClass]="getVerificationStatusClass()">
+                {{ getVerificationStatusLabel() }}
+              </span>
+            </strong>
+          </div>
+
+          <div class="field-item">
+            <span>Submitted</span>
+            <strong>{{ getSubmittedDateLabel() }}</strong>
+          </div>
+
+          <div class="field-item">
+            <span>Reviewed</span>
+            <strong>{{ getReviewedDateLabel() }}</strong>
+          </div>
+
+          <div class="field-item">
+            <span>Alumni ID Issued</span>
+            <strong>{{ getIssuedDateLabel() }}</strong>
+          </div>
+
+          <div class="field-item">
+            <span>Reviewed By</span>
+            <strong>{{ getReviewerLabel() }}</strong>
+          </div>
+
+          <div class="field-item field-item-full">
+            <span>Remarks</span>
+            <strong>{{ getRemarksLabel() }}</strong>
+          </div>
+        </div>
+      </article>
+
+      <article class="card info-card">
+        <div class="card-header">
+          <h3>Post-Graduation Information</h3>
+          <p>Employment, studies, career status, and professional update records.</p>
+        </div>
+
+        <ng-container *ngIf="employmentStatus; else noEmploymentRecord">
+          <div class="field-grid">
+            <div class="field-item">
+              <span>Current Status</span>
+              <strong>
+                <span class="status-pill" [ngClass]="getPostGraduationStatusClass()">
+                  {{ getPostGraduationStatusLabel() }}
+                </span>
+              </strong>
+            </div>
+
+            <div class="field-item">
+              <span>Job Opportunity Preference</span>
+              <strong>{{ getEmploymentValue('jobOpportunityPreference') }}</strong>
+            </div>
+
+            <div class="field-item">
+              <span>Course Relevance</span>
+              <strong>{{ getEmploymentValue('courseRelevance') }}</strong>
+            </div>
+
+            <div class="field-item">
+              <span>Last Updated</span>
+              <strong>{{ getEmploymentDateTime('lastUpdated') }}</strong>
+            </div>
+
+            <div class="field-item field-item-full">
+              <span>Career Summary</span>
+              <strong>{{ getEmploymentValue('careerSummary') }}</strong>
+            </div>
+          </div>
+
+          <div class="subsection" *ngIf="isEmployedOrEmployedStudying()">
+            <h4>Employment Details</h4>
+
+            <div class="field-grid">
+              <div class="field-item">
+                <span>Company / Employer</span>
+                <strong>{{ getEmploymentValue('companyName') }}</strong>
+              </div>
+
+              <div class="field-item">
+                <span>Job Position</span>
+                <strong>{{ getEmploymentValue('jobPosition') }}</strong>
+              </div>
+
+              <div class="field-item">
+                <span>Industry</span>
+                <strong>{{ getEmploymentValue('industry') }}</strong>
+              </div>
+
+              <div class="field-item">
+                <span>Employment Type</span>
+                <strong>{{ getEmploymentValue('employmentType') }}</strong>
+              </div>
+
+              <div class="field-item">
+                <span>Work Location</span>
+                <strong>{{ getEmploymentValue('workLocation') }}</strong>
+              </div>
+
+              <div class="field-item">
+                <span>Date Hired</span>
+                <strong>{{ getEmploymentDate('dateHired') }}</strong>
+              </div>
+
+              <div class="field-item">
+                <span>Career Level</span>
+                <strong>{{ getEmploymentValue('careerLevel') }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="subsection" *ngIf="isSelfEmployed()">
+            <h4>Business Details</h4>
+
+            <div class="field-grid">
+              <div class="field-item">
+                <span>Business / Organization</span>
+                <strong>{{ getEmploymentValue('businessName') }}</strong>
+              </div>
+
+              <div class="field-item">
+                <span>Business Role</span>
+                <strong>{{ getEmploymentValue('businessRole') }}</strong>
+              </div>
+
+              <div class="field-item">
+                <span>Industry / Business Field</span>
+                <strong>{{ getEmploymentValue('industry') }}</strong>
+              </div>
+
+              <div class="field-item">
+                <span>Business Location</span>
+                <strong>{{ getEmploymentValue('businessLocation') }}</strong>
+              </div>
+
+              <div class="field-item">
+                <span>Date Started</span>
+                <strong>{{ getEmploymentDate('dateStarted') }}</strong>
+              </div>
+
+              <div class="field-item">
+                <span>Career Level</span>
+                <strong>{{ getEmploymentValue('careerLevel') }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="subsection" *ngIf="isFurtherStudiesOrEmployedStudying()">
+            <h4>Study Details</h4>
+
+            <div class="field-grid">
+              <div class="field-item">
+                <span>School / Institution</span>
+                <strong>{{ getEmploymentValue('institutionName') }}</strong>
+              </div>
+
+              <div class="field-item">
+                <span>Program / Course Taking</span>
+                <strong>{{ getEmploymentValue('programTaking') }}</strong>
+              </div>
+
+              <div class="field-item">
+                <span>Study Level</span>
+                <strong>{{ getEmploymentValue('studyLevel') }}</strong>
+              </div>
+
+              <div class="field-item">
+                <span>Study Status</span>
+                <strong>{{ getEmploymentValue('studyStatus') }}</strong>
+              </div>
+
+              <div class="field-item">
+                <span>Field of Study</span>
+                <strong>{{ getEmploymentValue('fieldOfStudy') }}</strong>
+              </div>
+
+              <div class="field-item">
+                <span>Start Year</span>
+                <strong>{{ getEmploymentValue('startYear') }}</strong>
+              </div>
+
+              <div class="field-item">
+                <span>Expected Completion Year</span>
+                <strong>{{ getEmploymentValue('expectedCompletionYear') }}</strong>
+              </div>
+
+              <div class="field-item">
+                <span>Study Course Relevance</span>
+                <strong>{{ getEmploymentValue('studyCourseRelevance') }}</strong>
+              </div>
+
+              <div class="field-item field-item-full">
+                <span>Study Notes</span>
+                <strong>{{ getEmploymentValue('studyNotes') }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="subsection" *ngIf="isUnemployed()">
+            <h4>Unemployment Details</h4>
+
+            <div class="field-grid">
+              <div class="field-item">
+                <span>Looking for Work</span>
+                <strong>{{ getEmploymentValue('lookingForWork') }}</strong>
+              </div>
+
+              <div class="field-item">
+                <span>Preferred Industry</span>
+                <strong>{{ getEmploymentValue('preferredIndustry') }}</strong>
+              </div>
+
+              <div class="field-item">
+                <span>Preferred Work Type</span>
+                <strong>{{ getEmploymentValue('preferredWorkType') }}</strong>
+              </div>
+
+              <div class="field-item">
+                <span>Preferred Work Location</span>
+                <strong>{{ getEmploymentValue('preferredWorkLocation') }}</strong>
+              </div>
+
+              <div class="field-item">
+                <span>Previous Job Position</span>
+                <strong>{{ getEmploymentValue('previousJobPosition') }}</strong>
+              </div>
+
+              <div class="field-item">
+                <span>Previous Company</span>
+                <strong>{{ getEmploymentValue('previousCompany') }}</strong>
+              </div>
+
+              <div class="field-item field-item-full">
+                <span>Skills / Strengths</span>
+                <strong>{{ getEmploymentValue('unemployedSkills') }}</strong>
+              </div>
+
+              <div class="field-item field-item-full">
+                <span>Additional Notes</span>
+                <strong>{{ getEmploymentValue('unemployedNotes') }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="subsection" *ngIf="isNotSeeking()">
+            <h4>Current Activity</h4>
+
+            <div class="field-grid">
+              <div class="field-item">
+                <span>Current Activity</span>
+                <strong>{{ getEmploymentValue('currentActivity') }}</strong>
+              </div>
+
+              <div class="field-item field-item-full">
+                <span>Career Plans</span>
+                <strong>{{ getEmploymentValue('careerPlans') }}</strong>
+              </div>
+
+              <div class="field-item field-item-full">
+                <span>Additional Notes</span>
+                <strong>{{ getEmploymentValue('notSeekingNotes') }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="subsection">
+            <h4>Skills and Career Categories</h4>
+
+            <div class="chip-list" *ngIf="hasCareerCategories(); else noCareerCategories">
+              <span class="category-chip" *ngFor="let category of getCareerCategories()">
+                {{ category }}
+              </span>
+            </div>
+
+            <ng-template #noCareerCategories>
+              <div class="empty-mini">No career categories selected.</div>
+            </ng-template>
+
+            <div class="field-grid skills-grid">
+              <div class="field-item field-item-full">
+                <span>Specific Skills Used</span>
+                <strong>{{ getEmploymentValue('specificSkills') }}</strong>
+              </div>
+
+              <div class="field-item field-item-full">
+                <span>Additional Career Notes</span>
+                <strong>{{ getEmploymentValue('additionalNotes') }}</strong>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+
+        <ng-template #noEmploymentRecord>
+          <div class="empty-block">
+            <i class="pi pi-briefcase"></i>
+            <h4>No post-graduation information yet</h4>
+            <p>This alumni has not submitted employment or post-graduation details.</p>
+          </div>
+        </ng-template>
+      </article>
+    </section>
+  </ng-container>
+</section>

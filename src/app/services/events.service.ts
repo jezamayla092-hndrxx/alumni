@@ -1,62 +1,102 @@
-import {
-  Injectable,
-  EnvironmentInjector,
-  inject,
-  runInInjectionContext,
-} from '@angular/core';
-import {
-  Firestore,
-  collection,
-  collectionData,
-  addDoc,
-  doc,
-  updateDoc,
-  deleteDoc,
-  query,
-  orderBy,
-} from '@angular/fire/firestore';
-import {
-  getDownloadURL,
-  getStorage,
-  ref,
-  uploadBytes,
-} from 'firebase/storage';
+import { Injectable, NgZone } from '@angular/core';
 import { Observable } from 'rxjs';
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  orderBy,
+  query,
+  updateDoc,
+} from 'firebase/firestore';
+
+import { db } from '../firebase.config';
 import { EventRecord } from '../models/events.model';
 
 @Injectable({ providedIn: 'root' })
 export class EventsService {
-  private firestore = inject(Firestore);
-  private injector = inject(EnvironmentInjector);
-  private col = collection(this.firestore, 'events');
+  private col = collection(db, 'events');
+
+  constructor(private ngZone: NgZone) {}
 
   getEvents(): Observable<EventRecord[]> {
-    return runInInjectionContext(this.injector, () => {
-      const q = query(this.col, orderBy('eventDate', 'asc'));
-      return collectionData(q, { idField: 'id' }) as Observable<EventRecord[]>;
+    return new Observable((observer) => {
+      const eventsQuery = query(this.col, orderBy('eventDate', 'asc'));
+
+      const unsubscribe = onSnapshot(
+        eventsQuery,
+        (snapshot) => {
+          const events = snapshot.docs.map((docItem) => ({
+            id: docItem.id,
+            ...(docItem.data() as Omit<EventRecord, 'id'>),
+          })) as EventRecord[];
+
+          this.ngZone.run(() => {
+            observer.next(events);
+          });
+        },
+        (error) => {
+          this.ngZone.run(() => {
+            observer.error(error);
+          });
+        }
+      );
+
+      return () => unsubscribe();
     });
   }
 
-  async addEvent(data: Omit<EventRecord, 'id'>) {
-    await addDoc(this.col, data);
+  async addEvent(data: Omit<EventRecord, 'id'>): Promise<void> {
+    const now = new Date().toISOString();
+
+    const payload = this.removeUndefinedFields({
+      title: data.title,
+      description: data.description || '',
+      eventDate: data.eventDate,
+      startTime: data.startTime,
+      endTime: data.endTime,
+      location: data.location,
+      eventType: data.eventType,
+      status: data.status,
+      imageUrl: data.imageUrl || '',
+      isFeatured: data.isFeatured ?? false,
+      isArchived: data.isArchived ?? false,
+      createdAt: data.createdAt || now,
+      updatedAt: data.updatedAt || now,
+    });
+
+    await addDoc(this.col, payload);
   }
 
-  async updateEvent(id: string, data: Partial<EventRecord>) {
-    await updateDoc(doc(this.firestore, 'events', id), data);
+  async updateEvent(id: string, data: Partial<EventRecord>): Promise<void> {
+    if (!id) return;
+
+    const payload = this.removeUndefinedFields({
+      ...data,
+      updatedAt: data.updatedAt || new Date().toISOString(),
+    });
+
+    delete payload.id;
+
+    await updateDoc(doc(db, 'events', id), payload);
   }
 
-  async deleteEvent(id: string) {
-    await deleteDoc(doc(this.firestore, 'events', id));
+  async deleteEvent(id: string): Promise<void> {
+    if (!id) return;
+
+    await deleteDoc(doc(db, 'events', id));
   }
 
-  async uploadEventImage(file: File): Promise<string> {
-    const storage = getStorage();
-    const safeFileName = file.name.replace(/\s+/g, '_');
-    const filePath = `event-images/${Date.now()}_${safeFileName}`;
-    const fileRef = ref(storage, filePath);
+  private removeUndefinedFields<T extends Record<string, any>>(data: T): T {
+    const cleaned: Record<string, any> = {};
 
-    await uploadBytes(fileRef, file);
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined) {
+        cleaned[key] = value;
+      }
+    });
 
-    return getDownloadURL(fileRef);
+    return cleaned as T;
   }
 }

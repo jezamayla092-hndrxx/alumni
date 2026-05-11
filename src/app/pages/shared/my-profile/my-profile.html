@@ -4,40 +4,6 @@
       <h1>My Profile</h1>
       <p>View and manage your account information.</p>
     </div>
-
-    <div class="page-actions" *ngIf="!loading">
-      <button
-        *ngIf="!isEditing"
-        type="button"
-        class="action-btn primary-btn"
-        (click)="toggleEdit()"
-      >
-        <i class="pi pi-pencil"></i>
-        Edit Profile
-      </button>
-
-      <ng-container *ngIf="isEditing">
-        <button
-          type="button"
-          class="action-btn secondary-btn"
-          (click)="cancelEdit()"
-          [disabled]="saving"
-        >
-          <i class="pi pi-times"></i>
-          Cancel
-        </button>
-
-        <button
-          type="button"
-          class="action-btn primary-btn"
-          (click)="saveProfile()"
-          [disabled]="saving"
-        >
-          <i class="pi pi-check"></i>
-          {{ saving ? 'Saving...' : 'Save Changes' }}
-        </button>
-      </ng-container>
-    </div>
   </div>
 
   <div class="feedback error" *ngIf="errorMessage">
@@ -49,61 +15,177 @@
   </div>
 
   <ng-container *ngIf="!loading">
-    <section class="profile-hero card">
-      <div class="profile-hero-left">
-        <div class="avatar">
-          <ng-container *ngIf="profile.photoUrl; else initialsAvatar">
-            <img [src]="profile.photoUrl" alt="Profile photo" />
-          </ng-container>
+    <section
+      class="profile-hero card"
+      [ngClass]="{
+        'staff-profile-hero': isStaffOrAdmin
+      }"
+    >
+      <div class="profile-hero-content">
+        <div class="profile-hero-left">
+          <div class="avatar-wrap">
+            <div class="avatar">
+              <ng-container *ngIf="visibleProfilePhoto; else initialsAvatar">
+                <img [src]="visibleProfilePhoto" alt="Profile photo" />
+              </ng-container>
 
-          <ng-template #initialsAvatar>
-            <span>{{ displayInitials }}</span>
-          </ng-template>
+              <ng-template #initialsAvatar>
+                <span>{{ displayInitials }}</span>
+              </ng-template>
+            </div>
+
+            <input
+              #profilePhotoInput
+              type="file"
+              class="photo-input"
+              accept="image/jpeg,image/png,image/webp"
+              (change)="onProfilePhotoSelected($event)"
+            />
+
+            <button
+              *ngIf="isEditing"
+              type="button"
+              class="photo-edit-btn"
+              (click)="profilePhotoInput.click()"
+              [disabled]="saving"
+              aria-label="Change profile photo"
+            >
+              <i class="pi pi-camera"></i>
+            </button>
+          </div>
+
+          <div class="hero-copy">
+            <div class="hero-name-block">
+              <h2>{{ displayName }}</h2>
+
+              <p
+                class="hero-role"
+                [ngClass]="{
+                  'role-officer': profile.role === 'officer',
+                  'role-admin': profile.role === 'admin',
+                  'role-alumni': profile.role === 'alumni'
+                }"
+              >
+                {{ displayRole }}
+              </p>
+            </div>
+
+            <div class="profile-completion-box" *ngIf="isAlumni">
+              <div class="profile-completion-header">
+                <span>Profile Completion</span>
+                <strong>{{ profileCompletionPercent }}%</strong>
+              </div>
+
+              <div class="profile-completion-bar">
+                <div
+                  class="profile-completion-fill"
+                  [style.width.%]="profileCompletionPercent"
+                ></div>
+              </div>
+
+              <p *ngIf="!hasProfilePhoto">
+                Add a profile photo to improve your profile completion.
+              </p>
+
+              <p *ngIf="hasProfilePhoto && !hasAddress">
+                Add your address to complete your profile.
+              </p>
+
+              <p class="complete" *ngIf="hasProfilePhoto && hasAddress">
+                Your profile is complete.
+              </p>
+            </div>
+
+            <p class="photo-error" *ngIf="profilePhotoError">
+              {{ profilePhotoError }}
+            </p>
+          </div>
         </div>
 
-        <div class="hero-copy">
-          <h2>{{ displayName }}</h2>
-          <p>{{ displayRole }}</p>
+        <div class="hero-actions">
+          <button
+            *ngIf="!isEditing"
+            type="button"
+            class="action-btn primary-btn"
+            (click)="toggleEdit()"
+          >
+            <i class="pi pi-pencil"></i>
+            Edit Profile
+          </button>
 
-          <div class="hero-badges">
-            <span
-              class="status-pill"
-              [ngClass]="{
-                active: profile.isActive,
-                inactive: !profile.isActive
-              }"
+          <ng-container *ngIf="isEditing">
+            <button
+              *ngIf="visibleProfilePhoto"
+              type="button"
+              class="action-btn danger-btn"
+              (click)="removeProfilePhoto()"
+              [disabled]="saving"
             >
-              {{ accountStatusLabel }}
-            </span>
+              <i class="pi pi-trash"></i>
+              Remove Photo
+            </button>
 
-            <span
-              class="status-pill"
-              [ngClass]="{
-                verified: profile.status === 'verified',
-                pending: profile.status === 'pending',
-                rejected: profile.status === 'rejected'
-              }"
+            <button
+              type="button"
+              class="action-btn secondary-btn"
+              (click)="cancelEdit()"
+              [disabled]="saving"
             >
-              {{ verificationStatusLabel }}
-            </span>
-          </div>
+              <i class="pi pi-times"></i>
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              class="action-btn primary-btn"
+              (click)="saveProfile()"
+              [disabled]="saving"
+            >
+              <i class="pi pi-check"></i>
+              {{ saving ? 'Saving...' : 'Save Changes' }}
+            </button>
+          </ng-container>
         </div>
       </div>
     </section>
 
-    <section class="profile-grid">
-      <article class="card info-card">
+    <section
+      class="profile-grid"
+      [ngClass]="{
+        'staff-profile-grid': isStaffOrAdmin
+      }"
+    >
+      <article
+        class="card info-card"
+        [ngClass]="{
+          'staff-info-card': isStaffOrAdmin
+        }"
+      >
         <div class="card-header">
           <h3>Basic Information</h3>
-          <p>Main details linked to your officer account.</p>
+          <p>Main profile details linked to your account.</p>
         </div>
 
-        <div class="form-grid">
+        <div
+          class="form-grid"
+          [ngClass]="{
+            'staff-form-grid': isStaffOrAdmin
+          }"
+        >
           <div class="form-field">
             <label>First Name</label>
             <input
               type="text"
               [(ngModel)]="profile.firstName"
+              [disabled]="!isEditing"
+            />
+          </div>
+
+          <div class="form-field">
+            <label>Middle Initial</label>
+            <input
+              type="text"
+              [(ngModel)]="profile.middleName"
               [disabled]="!isEditing"
             />
           </div>
@@ -117,32 +199,98 @@
             />
           </div>
 
-          <div class="form-field form-field-full">
-            <label>Full Name</label>
-            <input type="text" [value]="displayName" disabled />
+          <div class="form-field" *ngIf="isAlumni">
+            <label>Suffix</label>
+            <input
+              type="text"
+              [(ngModel)]="profile.suffix"
+              [disabled]="!isEditing"
+              placeholder="Jr., Sr., III"
+            />
           </div>
 
-          <div class="form-field form-field-full">
+          <div class="form-field" *ngIf="isAlumni">
+            <label>Birth Date</label>
+            <input
+              type="date"
+              [(ngModel)]="profile.birthDate"
+              [disabled]="!isEditing"
+            />
+          </div>
+
+          <div class="form-field" *ngIf="isAlumni">
+            <label>Sex</label>
+            <select [(ngModel)]="profile.sex" [disabled]="!isEditing">
+              <option value="">Select sex</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+
+          <div class="form-field" *ngIf="isStaffOrAdmin">
+            <label>Contact Number</label>
+            <input
+              type="text"
+              [(ngModel)]="profile.contactNumber"
+              [disabled]="!isEditing"
+              placeholder="Enter contact number"
+            />
+          </div>
+
+          <div class="form-field" *ngIf="isStaffOrAdmin">
             <label>Email</label>
             <input type="email" [(ngModel)]="profile.email" disabled />
           </div>
 
-          <div class="form-field">
+          <div class="form-field" *ngIf="isStaffOrAdmin">
             <label>Role</label>
-            <input type="text" [value]="displayRole" disabled />
+            <input
+              type="text"
+              [value]="displayRole"
+              disabled
+              [ngClass]="{
+                'role-officer-input': profile.role === 'officer',
+                'role-admin-input': profile.role === 'admin',
+                'role-alumni-input': profile.role === 'alumni'
+              }"
+            />
           </div>
 
-          <div class="form-field">
-            <label>UID</label>
-            <input type="text" [value]="profile.id || ''" disabled />
+          <div class="form-field" *ngIf="isAdmin">
+            <label>Account Status</label>
+            <input type="text" [value]="accountStatusLabel" disabled />
           </div>
         </div>
       </article>
 
-      <article class="card info-card">
+      <article class="card info-card" *ngIf="isAlumni">
+        <div class="card-header">
+          <h3>Academic Information</h3>
+          <p>School records submitted during account registration.</p>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-field">
+            <label>University ID</label>
+            <input type="text" [(ngModel)]="profile.studentId" disabled />
+          </div>
+
+          <div class="form-field">
+            <label>Year Graduated</label>
+            <input type="text" [value]="profile.yearGraduated || ''" disabled />
+          </div>
+
+          <div class="form-field form-field-full">
+            <label>Program</label>
+            <input type="text" [(ngModel)]="profile.program" disabled />
+          </div>
+        </div>
+      </article>
+
+      <article class="card info-card" *ngIf="isAlumni">
         <div class="card-header">
           <h3>Contact Information</h3>
-          <p>Editable profile details for your account record.</p>
+          <p>Contact details linked to your account record.</p>
         </div>
 
         <div class="form-grid">
@@ -157,34 +305,29 @@
           </div>
 
           <div class="form-field">
-            <label>Profile Photo URL</label>
-            <input
-              type="text"
-              [(ngModel)]="profile.photoUrl"
-              [disabled]="!isEditing"
-              placeholder="Paste image URL"
-            />
+            <label>Email</label>
+            <input type="email" [(ngModel)]="profile.email" disabled />
           </div>
 
           <div class="form-field form-field-full">
             <label>Address</label>
             <textarea
-              rows="4"
               [(ngModel)]="profile.address"
               [disabled]="!isEditing"
-              placeholder="Enter address"
+              placeholder="Enter complete address"
+              rows="3"
             ></textarea>
           </div>
         </div>
       </article>
 
-      <article class="card info-card">
+      <article class="card info-card" *ngIf="isAlumni">
         <div class="card-header">
           <h3>Account Overview</h3>
           <p>System-managed information for your account.</p>
         </div>
 
-        <div class="overview-grid">
+        <div class="overview-grid compact-overview">
           <div class="overview-item">
             <span class="overview-label">Account Status</span>
             <span
@@ -203,9 +346,10 @@
             <span
               class="status-pill"
               [ngClass]="{
-                verified: profile.status === 'verified',
-                pending: profile.status === 'pending',
-                rejected: profile.status === 'rejected'
+                verified: profile.verificationStatus === 'verified' || profile.status === 'verified',
+                pending: profile.verificationStatus === 'pending' || profile.status === 'pending',
+                'under-review': profile.verificationStatus === 'under_review' || profile.status === 'under_review',
+                rejected: profile.verificationStatus === 'rejected' || profile.status === 'rejected'
               }"
             >
               {{ verificationStatusLabel }}
@@ -213,15 +357,88 @@
           </div>
 
           <div class="overview-item">
-            <span class="overview-label">Registered Email</span>
-            <strong>{{ profile.email }}</strong>
+            <span class="overview-label">Role</span>
+            <strong
+              [ngClass]="{
+                'role-officer': profile.role === 'officer',
+                'role-admin': profile.role === 'admin',
+                'role-alumni': profile.role === 'alumni'
+              }"
+            >
+              {{ displayRole }}
+            </strong>
           </div>
 
           <div class="overview-item">
-            <span class="overview-label">Role</span>
-            <strong>{{ displayRole }}</strong>
+            <span class="overview-label">Documents</span>
+            <strong>{{ profile.verificationDocuments?.length || 0 }} submitted</strong>
+          </div>
+
+          <div class="overview-item overview-completion">
+            <span class="overview-label">Profile Completion</span>
+            <strong>{{ profileCompletionPercent }}%</strong>
+
+            <div class="mini-completion-track">
+              <div
+                class="mini-completion-fill"
+                [style.width.%]="profileCompletionPercent"
+              ></div>
+            </div>
           </div>
         </div>
+      </article>
+
+      <article class="card info-card documents-card" *ngIf="isAlumni">
+        <div class="card-header">
+          <h3>Verification Documents</h3>
+          <p>Documents submitted during alumni account registration.</p>
+        </div>
+
+        <div
+          class="documents-list"
+          *ngIf="hasVerificationDocuments; else noVerificationDocuments"
+        >
+          <div
+            class="document-item"
+            *ngFor="let verificationDocument of profile.verificationDocuments || []"
+          >
+            <div class="document-icon">
+              <i
+                class="pi"
+                [ngClass]="{
+                  'pi-file-pdf': verificationDocument.fileType === 'application/pdf',
+                  'pi-image': verificationDocument.fileType !== 'application/pdf'
+                }"
+              ></i>
+            </div>
+
+            <div class="document-meta">
+              <strong class="document-name">
+                {{ verificationDocument.fileName || 'Verification Document' }}
+              </strong>
+
+              <span class="document-type">
+                {{ verificationDocument.fileType || 'Uploaded file' }}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              class="document-link"
+              (click)="openVerificationDocument(verificationDocument.url)"
+            >
+              <i class="pi pi-external-link"></i>
+              View
+            </button>
+          </div>
+        </div>
+
+        <ng-template #noVerificationDocuments>
+          <div class="empty-state">
+            <i class="pi pi-file"></i>
+            <p>No verification documents found.</p>
+          </div>
+        </ng-template>
       </article>
     </section>
   </ng-container>

@@ -23,7 +23,7 @@
         </div>
       </div>
 
-      <nav class="sidebar-nav" aria-label="Officer navigation">
+      <nav class="sidebar-nav" aria-label="Main navigation">
         <a
           *ngFor="let item of navItems"
           class="nav-item"
@@ -86,14 +86,6 @@
             <i class="pi" [ngClass]="darkMode ? 'pi-sun' : 'pi-moon'"></i>
           </button>
 
-          <button
-            class="topbar-icon-btn notification-btn"
-            type="button"
-            aria-label="Notifications"
-          >
-            <i class="pi pi-bell"></i>
-          </button>
-
           <div class="topbar-user">
             <div
               class="topbar-avatar"
@@ -102,7 +94,13 @@
               tabindex="0"
               aria-label="Open user menu"
             >
-              {{ currentUserInitial }}
+              <ng-container *ngIf="currentUserPhotoUrl; else avatarInitial">
+                <img [src]="currentUserPhotoUrl" alt="Profile photo" />
+              </ng-container>
+
+              <ng-template #avatarInitial>
+                {{ currentUserInitial }}
+              </ng-template>
             </div>
 
             <div class="user-dropdown" *ngIf="userMenuOpen">
@@ -114,11 +112,6 @@
               <button type="button" class="dropdown-item" (click)="goToProfile()">
                 <i class="pi pi-user"></i>
                 <span>My Profile</span>
-              </button>
-
-              <button type="button" class="dropdown-item" (click)="goToSettings()">
-                <i class="pi pi-cog"></i>
-                <span>Settings</span>
               </button>
 
               <div class="dropdown-divider"></div>

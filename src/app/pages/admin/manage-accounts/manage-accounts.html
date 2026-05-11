@@ -1,0 +1,507 @@
+<section class="manage-accounts-page">
+
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">ADMIN PORTAL</span>
+      <h1>Manage Accounts</h1>
+      <p>View, search, and manage system accounts for administrators, officers, and alumni.</p>
+    </div>
+
+    <button type="button" class="refresh-btn" (click)="loadUsers()" [disabled]="loading">
+      <i class="pi" [ngClass]="loading ? 'pi-spin pi-spinner' : 'pi-refresh'"></i>
+      <span>{{ loading ? 'Refreshing...' : 'Refresh' }}</span>
+    </button>
+  </div>
+
+  <div class="alert-card" *ngIf="loadError">
+    <i class="pi pi-exclamation-triangle"></i>
+    <span>{{ loadError }}</span>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-icon icon-primary">
+        <i class="pi pi-users"></i>
+      </div>
+      <div class="summary-copy">
+        <span>Total Accounts</span>
+        <strong>{{ totalAccounts }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon icon-admin">
+        <i class="pi pi-shield"></i>
+      </div>
+      <div class="summary-copy">
+        <span>Admins</span>
+        <strong>{{ adminCount }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon icon-officer">
+        <i class="pi pi-id-card"></i>
+      </div>
+      <div class="summary-copy">
+        <span>Officers</span>
+        <strong>{{ officerCount }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon icon-alumni">
+        <i class="pi pi-graduation-cap"></i>
+      </div>
+      <div class="summary-copy">
+        <span>Alumni</span>
+        <strong>{{ alumniCount }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon icon-green">
+        <i class="pi pi-check-circle"></i>
+      </div>
+      <div class="summary-copy">
+        <span>Active</span>
+        <strong>{{ activeCount }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon icon-red">
+        <i class="pi pi-ban"></i>
+      </div>
+      <div class="summary-copy">
+        <span>Disabled</span>
+        <strong>{{ disabledCount }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <section class="accounts-container">
+
+    <div class="filters-card">
+      <div class="filters-row">
+
+        <div class="search-field">
+          <i class="pi pi-search"></i>
+          <input
+            type="text"
+            placeholder="Search by name, email, student ID, alumni ID, program..."
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="applyFilters()"
+          />
+        </div>
+
+        <div class="select-field">
+          <select [(ngModel)]="filterRole" (change)="applyFilters()">
+            <option value="">All Roles</option>
+            <option value="admin">Admin</option>
+            <option value="officer">Officer</option>
+            <option value="alumni">Alumni</option>
+          </select>
+          <i class="pi pi-angle-down"></i>
+        </div>
+
+        <div class="select-field">
+          <select [(ngModel)]="filterAccountStatus" (change)="applyFilters()">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="disabled">Disabled</option>
+          </select>
+          <i class="pi pi-angle-down"></i>
+        </div>
+
+        <div class="select-field">
+          <select [(ngModel)]="filterVerificationStatus" (change)="applyFilters()">
+            <option *ngFor="let option of verificationOptions" [value]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+          <i class="pi pi-angle-down"></i>
+        </div>
+
+        <button
+          *ngIf="hasActiveFilters"
+          type="button"
+          class="clear-btn"
+          (click)="clearFilters()"
+        >
+          <i class="pi pi-times"></i>
+          Clear
+        </button>
+
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Account</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Program</th>
+              <th>Verification</th>
+              <th>Account Status</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngIf="loading">
+              <td colspan="8" class="empty-state">
+                <i class="pi pi-spin pi-spinner"></i>
+                Loading user accounts...
+              </td>
+            </tr>
+
+            <tr *ngIf="!loading && !loadError && filteredUsers.length === 0">
+              <td colspan="8" class="empty-state">
+                <i class="pi pi-users"></i>
+                <span *ngIf="hasActiveFilters">No accounts match your filters.</span>
+                <span *ngIf="!hasActiveFilters">No user accounts found.</span>
+              </td>
+            </tr>
+
+            <tr
+              *ngFor="let user of filteredUsers; trackBy: trackByUser"
+              [class.disabled-row]="user.isActive === false"
+            >
+              <td>
+                <div class="account-cell">
+                  <div class="avatar">
+                    <ng-container *ngIf="user.photoUrl; else fallbackInitial">
+                      <img [src]="user.photoUrl" alt="Profile photo" />
+                    </ng-container>
+
+                    <ng-template #fallbackInitial>
+                      {{ getUserInitial(user) }}
+                    </ng-template>
+                  </div>
+
+                  <div class="account-copy">
+                    <strong>{{ getAccountName(user) }}</strong>
+
+                    <span *ngIf="getPrimaryIdentifier(user)">
+                      {{ getPrimaryIdentifier(user) }}
+                    </span>
+                  </div>
+                </div>
+              </td>
+
+              <td class="email-cell">{{ user.email || '—' }}</td>
+
+              <td>
+                <span class="role-pill" [ngClass]="getRoleClass(user.role)">
+                  {{ getRoleLabel(user.role) }}
+                </span>
+              </td>
+
+              <td class="program-cell">
+                {{ user.program || '—' }}
+              </td>
+
+              <td>
+                <span class="verify-pill" [ngClass]="getVerificationClass(user)">
+                  {{ getVerificationStatusLabel(user) }}
+                </span>
+              </td>
+
+              <td>
+                <span
+                  class="status-pill"
+                  [class.status-active]="user.isActive !== false"
+                  [class.status-disabled]="user.isActive === false"
+                >
+                  {{ getAccountStatusLabel(user) }}
+                </span>
+              </td>
+
+              <td class="date-cell">
+                {{ formatDate(user.createdAt) }}
+              </td>
+
+              <td>
+                <div class="actions-cell">
+                  <button
+                    type="button"
+                    class="action-icon view"
+                    title="View Details"
+                    (click)="openView(user)"
+                  >
+                    <i class="pi pi-eye"></i>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="action-icon role"
+                    title="Change Role"
+                    (click)="openRoleModal(user)"
+                  >
+                    <i class="pi pi-user-edit"></i>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="action-icon status"
+                    [class.danger]="user.isActive !== false"
+                    [class.success]="user.isActive === false"
+                    [title]="user.isActive === false ? 'Activate Account' : 'Disable Account'"
+                    (click)="openStatusModal(user)"
+                  >
+                    <i
+                      class="pi"
+                      [ngClass]="user.isActive === false ? 'pi-check-circle' : 'pi-ban'"
+                    ></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <p class="table-footnote">
+      Showing {{ filteredUsers.length }} of {{ users.length }} account{{ users.length === 1 ? '' : 's' }}
+    </p>
+
+  </section>
+
+</section>
+
+
+<!-- VIEW MODAL -->
+<div class="modal-backdrop" *ngIf="showViewModal" (click)="closeView()">
+  <div class="modal view-modal" (click)="$event.stopPropagation()" *ngIf="selectedUser">
+
+    <div class="modal-header">
+      <div class="modal-title-block">
+        <h2>Account Details</h2>
+        <p>Review the selected user's profile and account information.</p>
+      </div>
+
+      <button type="button" class="close-btn" (click)="closeView()">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="profile-summary">
+        <div class="profile-avatar">
+          <ng-container *ngIf="selectedUser.photoUrl; else selectedInitial">
+            <img [src]="selectedUser.photoUrl" alt="Profile photo" />
+          </ng-container>
+
+          <ng-template #selectedInitial>
+            {{ getUserInitial(selectedUser) }}
+          </ng-template>
+        </div>
+
+        <div>
+          <h3>{{ getAccountName(selectedUser) }}</h3>
+          <p>{{ selectedUser.email || 'No email available' }}</p>
+
+          <div class="profile-pills">
+            <span class="role-pill" [ngClass]="getRoleClass(selectedUser.role)">
+              {{ getRoleLabel(selectedUser.role) }}
+            </span>
+
+            <span
+              class="status-pill"
+              [class.status-active]="selectedUser.isActive !== false"
+              [class.status-disabled]="selectedUser.isActive === false"
+            >
+              {{ getAccountStatusLabel(selectedUser) }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="details-grid">
+        <div class="detail-item">
+          <span>Full Name</span>
+          <strong>{{ getAccountName(selectedUser) }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Email</span>
+          <strong>{{ selectedUser.email || '—' }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Role</span>
+          <strong>{{ getRoleLabel(selectedUser.role) }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Account Status</span>
+          <strong>{{ getAccountStatusLabel(selectedUser) }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Verification</span>
+          <strong>{{ getVerificationStatusLabel(selectedUser) }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Primary ID</span>
+          <strong>{{ getPrimaryIdentifier(selectedUser) || '—' }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Student ID</span>
+          <strong>{{ selectedUser.studentId || '—' }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Alumni ID</span>
+          <strong>{{ selectedUser.alumniId || '—' }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Program</span>
+          <strong>{{ selectedUser.program || '—' }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Year Graduated</span>
+          <strong>{{ selectedUser.yearGraduated || '—' }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Contact Number</span>
+          <strong>{{ selectedUser.contactNumber || '—' }}</strong>
+        </div>
+
+        <div class="detail-item full">
+          <span>Address</span>
+          <strong>{{ selectedUser.address || '—' }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Created</span>
+          <strong>{{ formatDate(selectedUser.createdAt) }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Updated</span>
+          <strong>{{ formatDate(selectedUser.updatedAt) }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="secondary-btn" (click)="closeView()">Close</button>
+
+      <button type="button" class="primary-btn" (click)="closeView(); openRoleModal(selectedUser)">
+        <i class="pi pi-user-edit"></i>
+        Change Role
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- CHANGE ROLE MODAL -->
+<div class="modal-backdrop" *ngIf="showRoleModal" (click)="closeRoleModal()">
+  <div class="modal confirm-modal" (click)="$event.stopPropagation()" *ngIf="roleTargetUser">
+
+    <div class="confirm-icon role-icon">
+      <i class="pi pi-user-edit"></i>
+    </div>
+
+    <h3>Change User Role</h3>
+
+    <p>
+      Update the role for <strong>{{ getAccountName(roleTargetUser) }}</strong>.
+      This controls what modules the user can access.
+    </p>
+
+    <div class="role-select-block">
+      <label>Role</label>
+
+      <div class="select-wrap">
+        <select [(ngModel)]="selectedRole">
+          <option *ngFor="let role of roleOptions" [value]="role.value">
+            {{ role.label }}
+          </option>
+        </select>
+
+        <i class="pi pi-angle-down"></i>
+      </div>
+    </div>
+
+    <div class="action-error" *ngIf="actionError">
+      <i class="pi pi-exclamation-triangle"></i>
+      {{ actionError }}
+    </div>
+
+    <div class="confirm-actions">
+      <button type="button" class="secondary-btn" (click)="closeRoleModal()">
+        Cancel
+      </button>
+
+      <button type="button" class="primary-btn" (click)="confirmRoleChange()" [disabled]="saving">
+        {{ saving ? 'Saving...' : 'Save Role' }}
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- STATUS MODAL -->
+<div class="modal-backdrop" *ngIf="showStatusModal" (click)="closeStatusModal()">
+  <div class="modal confirm-modal" (click)="$event.stopPropagation()" *ngIf="statusTargetUser">
+
+    <div
+      class="confirm-icon"
+      [class.disable-icon]="statusTargetUser.isActive !== false"
+      [class.activate-icon]="statusTargetUser.isActive === false"
+    >
+      <i
+        class="pi"
+        [ngClass]="statusTargetUser.isActive === false ? 'pi-check-circle' : 'pi-ban'"
+      ></i>
+    </div>
+
+    <h3>{{ getStatusActionText(statusTargetUser) }}</h3>
+
+    <p>
+      Are you sure you want to
+      <strong>{{ statusTargetUser.isActive === false ? 'activate' : 'disable' }}</strong>
+      <strong>{{ getAccountName(statusTargetUser) }}</strong>?
+      {{ getStatusActionDescription(statusTargetUser) }}
+    </p>
+
+    <div class="action-error" *ngIf="actionError">
+      <i class="pi pi-exclamation-triangle"></i>
+      {{ actionError }}
+    </div>
+
+    <div class="confirm-actions">
+      <button type="button" class="secondary-btn" (click)="closeStatusModal()">
+        Cancel
+      </button>
+
+      <button
+        type="button"
+        class="primary-btn"
+        [class.danger-btn]="statusTargetUser.isActive !== false"
+        [class.success-btn]="statusTargetUser.isActive === false"
+        (click)="confirmStatusChange()"
+        [disabled]="saving"
+      >
+        {{ saving ? 'Saving...' : getStatusActionText(statusTargetUser) }}
+      </button>
+    </div>
+
+  </div>
+</div>

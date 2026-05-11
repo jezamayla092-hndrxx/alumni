@@ -1,34 +1,19 @@
+import { Component, OnInit, OnDestroy, NgZone, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-  ChangeDetectorRef,
-  Component,
-  NgZone,
-  OnInit,
-} from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
 import { AuthService } from '../../../services/auth.service';
 import { UsersService } from '../../../services/users.service';
-import { User, EmploymentDetails } from '../../../models/user.model';
-
-type DisplayEmploymentStatus =
-  | 'Employed'
-  | 'Self-Employed'
-  | 'Unemployed'
-  | 'Further Studies'
-  | 'N/A';
-
-type AccountStatus = 'Active' | 'Inactive';
+import { User } from '../../../models/user.model';
 
 interface AlumniRecordView {
   id?: string;
   fullName: string;
   email: string;
+  alumniId: string;
   program: string;
   yearGraduated: string;
-  employmentStatus: DisplayEmploymentStatus;
-  employmentDetails?: EmploymentDetails;
-  accountStatus: AccountStatus;
 }
 
 @Component({
@@ -38,15 +23,15 @@ interface AlumniRecordView {
   templateUrl: './alumni-records.html',
   styleUrls: ['./alumni-records.scss'],
 })
-export class AlumniRecords implements OnInit {
+export class AlumniRecords implements OnInit, OnDestroy {
+  private destroyed = false;
+
   searchTerm = '';
   selectedProgram = 'All Programs';
   selectedYear = 'All Years';
-  selectedStatus = 'All Status';
 
   programOptions: string[] = ['All Programs'];
   yearOptions: string[] = ['All Years'];
-  statusOptions: string[] = ['All Status', 'Active', 'Inactive'];
 
   alumniRecords: AlumniRecordView[] = [];
   filteredAlumniRecords: AlumniRecordView[] = [];
@@ -54,68 +39,113 @@ export class AlumniRecords implements OnInit {
   loading = true;
   loadError = '';
 
-  selectedAlumni: AlumniRecordView | null = null;
-  showProfileModal = false;
-
   constructor(
     private usersService: UsersService,
     private authService: AuthService,
+    private router: Router,
     private cdr: ChangeDetectorRef,
     private zone: NgZone
   ) {}
 
   async ngOnInit(): Promise<void> {
-    await this.authService.waitForAuthReady();
-    await this.loadAlumni();
-  }
-
-  async loadAlumni(): Promise<void> {
     this.zone.run(() => {
       this.loading = true;
       this.loadError = '';
       this.cdr.detectChanges();
     });
 
+    const authUser = await this.authService.waitForAuthReady();
+
+    if (this.destroyed) return;
+
+    if (!authUser) {
+      this.zone.run(() => {
+        if (this.destroyed) return;
+
+        this.loading = false;
+        this.loadError = 'Your login session is not ready. Please log in again.';
+        this.alumniRecords = [];
+        this.filteredAlumniRecords = [];
+        this.cdr.detectChanges();
+      });
+
+      return;
+    }
+
+    await this.loadAlumni();
+  }
+
+  ngOnDestroy(): void {
+    this.destroyed = true;
+  }
+
+  async loadAlumni(): Promise<void> {
+    this.zone.run(() => {
+      if (this.destroyed) return;
+
+      this.loading = true;
+      this.loadError = '';
+      this.cdr.detectChanges();
+    });
+
     try {
+      const authUser = await this.authService.waitForAuthReady();
+
+      if (this.destroyed) return;
+
+      if (!authUser) {
+        throw new Error('No authenticated user found before loading alumni records.');
+      }
+
       const alumniUsers = await this.usersService.getAlumniUsers();
 
+      if (this.destroyed) return;
+
       this.zone.run(() => {
-        this.alumniRecords = alumniUsers.map((user) =>
-          this.mapUserToView(user)
-        );
+        if (this.destroyed) return;
+
+        this.alumniRecords = alumniUsers
+          .map((user) => this.mapUserToView(user))
+          .sort((a, b) => a.fullName.localeCompare(b.fullName));
 
         const programs = Array.from(
           new Set(
             this.alumniRecords
-              .map((r) => r.program)
-              .filter((p) => p !== 'N/A')
+              .map((record) => record.program)
+              .filter((program) => program !== 'N/A')
           )
-        );
+        ).sort();
 
         this.programOptions = ['All Programs', ...programs];
 
         const years = Array.from(
           new Set(
             this.alumniRecords
-              .map((r) => r.yearGraduated)
-              .filter((y) => y !== 'N/A')
+              .map((record) => record.yearGraduated)
+              .filter((year) => year !== 'N/A')
           )
-        );
+        ).sort((a, b) => Number(b) - Number(a));
 
         this.yearOptions = ['All Years', ...years];
 
         this.applyFilters(false);
+        this.cdr.detectChanges();
       });
     } catch (error) {
       console.error('Failed to load alumni records:', error);
 
       this.zone.run(() => {
+        if (this.destroyed) return;
+
         this.loadError = 'Failed to load alumni records.';
         this.alumniRecords = [];
         this.filteredAlumniRecords = [];
+        this.cdr.detectChanges();
       });
     } finally {
       this.zone.run(() => {
+        if (this.destroyed) return;
+
         this.loading = false;
         this.cdr.detectChanges();
       });
@@ -129,8 +159,10 @@ export class AlumniRecords implements OnInit {
       const matchesSearch =
         !search ||
         record.fullName.toLowerCase().includes(search) ||
+        record.email.toLowerCase().includes(search) ||
+        record.alumniId.toLowerCase().includes(search) ||
         record.program.toLowerCase().includes(search) ||
-        record.email.toLowerCase().includes(search);
+        record.yearGraduated.toLowerCase().includes(search);
 
       const matchesProgram =
         this.selectedProgram === 'All Programs' ||
@@ -140,11 +172,7 @@ export class AlumniRecords implements OnInit {
         this.selectedYear === 'All Years' ||
         record.yearGraduated === this.selectedYear;
 
-      const matchesStatus =
-        this.selectedStatus === 'All Status' ||
-        record.accountStatus === this.selectedStatus;
-
-      return matchesSearch && matchesProgram && matchesYear && matchesStatus;
+      return matchesSearch && matchesProgram && matchesYear;
     });
 
     if (triggerDetectChanges) {
@@ -156,23 +184,25 @@ export class AlumniRecords implements OnInit {
     return record.id || `${record.fullName}-${record.email}-${index}`;
   }
 
-  openProfileModal(record: AlumniRecordView): void {
-    this.selectedAlumni = record;
-    this.showProfileModal = true;
-  }
+  viewRecord(record: AlumniRecordView): void {
+    if (!record.id) return;
 
-  closeProfileModal(): void {
-    this.showProfileModal = false;
-    this.selectedAlumni = null;
+    this.router.navigate(['/officer/alumni-records', record.id]);
   }
 
   private mapUserToView(user: User): AlumniRecordView {
     const firstName = user.firstName?.trim() ?? '';
+    const middleName = user.middleName?.trim() ?? '';
     const lastName = user.lastName?.trim() ?? '';
+    const suffix = user.suffix?.trim() ?? '';
     const fallbackFullName = user.fullName?.trim() ?? '';
 
+    const middleInitial = middleName
+      ? `${middleName.charAt(0).toUpperCase()}.`
+      : '';
+
     const fullName =
-      `${firstName} ${lastName}`.trim() ||
+      [firstName, middleInitial, lastName, suffix].filter(Boolean).join(' ').trim() ||
       fallbackFullName ||
       user.email ||
       'Unnamed Alumni';
@@ -181,30 +211,19 @@ export class AlumniRecords implements OnInit {
       id: user.id,
       fullName,
       email: user.email ?? '',
+      alumniId: this.getAlumniIdLabel(user),
       program: user.program ?? 'N/A',
-      yearGraduated: user.yearGraduated
-        ? String(user.yearGraduated)
-        : 'N/A',
-      employmentStatus: this.normalizeEmploymentStatus(
-        user.employmentStatus
-      ),
-      employmentDetails: user.employmentDetails,
-      accountStatus: user.isActive ? 'Active' : 'Inactive',
+      yearGraduated: user.yearGraduated ? String(user.yearGraduated) : 'N/A',
     };
   }
 
-  private normalizeEmploymentStatus(
-    value: User['employmentStatus']
-  ): DisplayEmploymentStatus {
-    if (
-      value === 'Employed' ||
-      value === 'Self-Employed' ||
-      value === 'Unemployed' ||
-      value === 'Further Studies'
-    ) {
-      return value;
+  private getAlumniIdLabel(user: User): string {
+    const alumniId = String((user as any).alumniId || '').trim();
+
+    if (alumniId) {
+      return alumniId;
     }
 
-    return 'N/A';
+    return 'Not assigned';
   }
 }

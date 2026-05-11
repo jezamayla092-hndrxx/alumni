@@ -1,0 +1,220 @@
+<section class="admin-dashboard-page">
+
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">ADMIN PORTAL</span>
+      <h1>Admin Dashboard</h1>
+      <p>Monitor accounts, user access, and overall system activity.</p>
+    </div>
+
+    <button type="button" class="refresh-btn" (click)="loadDashboardData()" [disabled]="loading">
+      <i class="pi" [ngClass]="loading ? 'pi-spin pi-spinner' : 'pi-refresh'"></i>
+      <span>{{ loading ? 'Refreshing...' : 'Refresh' }}</span>
+    </button>
+  </div>
+
+  <div class="alert-card" *ngIf="loadError">
+    <i class="pi pi-exclamation-triangle"></i>
+    <span>{{ loadError }}</span>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-icon icon-primary">
+        <i class="pi pi-users"></i>
+      </div>
+      <div class="summary-copy">
+        <span>Total Accounts</span>
+        <strong>{{ totalAccounts }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon icon-admin">
+        <i class="pi pi-shield"></i>
+      </div>
+      <div class="summary-copy">
+        <span>Admins</span>
+        <strong>{{ adminCount }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon icon-officer">
+        <i class="pi pi-id-card"></i>
+      </div>
+      <div class="summary-copy">
+        <span>Officers</span>
+        <strong>{{ officerCount }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon icon-alumni">
+        <i class="pi pi-graduation-cap"></i>
+      </div>
+      <div class="summary-copy">
+        <span>Alumni</span>
+        <strong>{{ alumniCount }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon icon-green">
+        <i class="pi pi-check-circle"></i>
+      </div>
+      <div class="summary-copy">
+        <span>Verified Alumni</span>
+        <strong>{{ verifiedAlumniCount }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon icon-amber">
+        <i class="pi pi-clock"></i>
+      </div>
+      <div class="summary-copy">
+        <span>Pending Alumni</span>
+        <strong>{{ pendingAlumniCount }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon icon-blue">
+        <i class="pi pi-user-plus"></i>
+      </div>
+      <div class="summary-copy">
+        <span>Active Accounts</span>
+        <strong>{{ activeAccountsCount }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon icon-red">
+        <i class="pi pi-ban"></i>
+      </div>
+      <div class="summary-copy">
+        <span>Disabled Accounts</span>
+        <strong>{{ disabledCount }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-grid">
+
+    <section class="panel-card recent-panel">
+      <div class="panel-header">
+        <div>
+          <h2>Recent Accounts</h2>
+          <p>Latest users added to the system.</p>
+        </div>
+
+        <a routerLink="/admin/manage-accounts" class="panel-link">
+          View all
+          <i class="pi pi-arrow-right"></i>
+        </a>
+      </div>
+
+      <div class="table-wrap" *ngIf="recentUsers.length > 0; else noRecentUsers">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let user of recentUsers; trackBy: trackByUser">
+              <td>
+                <div class="user-cell">
+                  <div class="avatar">
+                    {{ getAccountName(user).charAt(0).toUpperCase() }}
+                  </div>
+                  <div>
+                    <strong>{{ getAccountName(user) }}</strong>
+                    <span *ngIf="user.program">{{ user.program }}</span>
+                  </div>
+                </div>
+              </td>
+
+              <td class="muted">{{ user.email || '—' }}</td>
+
+              <td>
+                <span
+                  class="role-pill"
+                  [ngClass]="{
+                    'role-admin': user.role === 'admin',
+                    'role-officer': user.role === 'officer',
+                    'role-alumni': user.role === 'alumni'
+                  }"
+                >
+                  {{ getRoleLabel(user.role) }}
+                </span>
+              </td>
+
+              <td>
+                <span
+                  class="status-pill"
+                  [ngClass]="{
+                    'status-active': getStatusLabel(user) === 'Active' || getStatusLabel(user) === 'Verified',
+                    'status-pending': getStatusLabel(user) === 'Pending' || getStatusLabel(user) === 'Under Review',
+                    'status-rejected': getStatusLabel(user) === 'Rejected',
+                    'status-disabled': getStatusLabel(user) === 'Disabled'
+                  }"
+                >
+                  {{ getStatusLabel(user) }}
+                </span>
+              </td>
+
+              <td class="muted">{{ formatDate(user.createdAt) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ng-template #noRecentUsers>
+        <div class="empty-state">
+          <i class="pi pi-users"></i>
+          <p>No accounts found yet.</p>
+        </div>
+      </ng-template>
+    </section>
+
+    <section class="panel-card quick-panel">
+      <div class="panel-header">
+        <div>
+          <h2>Admin Actions</h2>
+          <p>Quick access to important admin modules.</p>
+        </div>
+      </div>
+
+      <div class="quick-actions">
+        <a routerLink="/admin/manage-accounts" class="quick-action">
+          <div class="quick-icon">
+            <i class="pi pi-users"></i>
+          </div>
+          <div>
+            <strong>Manage Accounts</strong>
+            <span>View users, roles, and account status.</span>
+          </div>
+        </a>
+
+        <a routerLink="/admin/reports" class="quick-action">
+          <div class="quick-icon">
+            <i class="pi pi-chart-bar"></i>
+          </div>
+          <div>
+            <strong>Reports</strong>
+            <span>Review summaries and system records.</span>
+          </div>
+        </a>
+      </div>
+    </section>
+
+  </div>
+
+</section>

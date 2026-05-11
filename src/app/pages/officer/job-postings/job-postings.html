@@ -6,6 +6,7 @@
       <h1>Job Postings</h1>
       <p>Create, manage, and monitor job postings for alumni.</p>
     </div>
+
     <button type="button" class="create-btn" (click)="openAddModal()">
       <i class="pi pi-plus"></i>
       <span>Add Job Posting</span>
@@ -15,28 +16,39 @@
   <!-- SUMMARY CARDS -->
   <div class="summary-grid">
     <div class="summary-card">
-      <div class="summary-icon icon-green"><i class="pi pi-check-circle"></i></div>
+      <div class="summary-icon icon-green">
+        <i class="pi pi-check-circle"></i>
+      </div>
       <div class="summary-copy">
         <strong>{{ activeCount }}</strong>
         <span>Active Jobs</span>
       </div>
     </div>
+
     <div class="summary-card">
-      <div class="summary-icon icon-amber"><i class="pi pi-file-edit"></i></div>
+      <div class="summary-icon icon-amber">
+        <i class="pi pi-file-edit"></i>
+      </div>
       <div class="summary-copy">
         <strong>{{ draftCount }}</strong>
         <span>Drafts</span>
       </div>
     </div>
+
     <div class="summary-card">
-      <div class="summary-icon icon-gray"><i class="pi pi-ban"></i></div>
+      <div class="summary-icon icon-gray">
+        <i class="pi pi-ban"></i>
+      </div>
       <div class="summary-copy">
         <strong>{{ closedCount }}</strong>
         <span>Closed</span>
       </div>
     </div>
+
     <div class="summary-card">
-      <div class="summary-icon icon-gold"><i class="pi pi-briefcase"></i></div>
+      <div class="summary-icon icon-gold">
+        <i class="pi pi-briefcase"></i>
+      </div>
       <div class="summary-copy">
         <strong>{{ totalCount }}</strong>
         <span>Total Jobs</span>
@@ -44,168 +56,243 @@
     </div>
   </div>
 
-  <!-- FILTERS -->
-  <section class="filters-card">
-    <div class="filters-row">
-      <div class="search-field">
-        <i class="pi pi-search"></i>
-        <input
-          type="text"
-          placeholder="Search by title, company, location, or category..."
-          [(ngModel)]="searchTerm"
-          (ngModelChange)="applyFilters()"
-        />
+  <!-- JOB LIST CONTAINER -->
+  <section class="jobs-list-container">
+
+    <!-- FILTERS -->
+    <section class="filters-card">
+      <div class="filters-row">
+
+        <div class="search-field">
+          <i class="pi pi-search"></i>
+          <input
+            type="text"
+            placeholder="Search by title, company, location, or category..."
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="applyFilters()"
+          />
+        </div>
+
+        <div class="select-field">
+          <select [(ngModel)]="filterEmploymentType" (change)="applyFilters()">
+            <option value="">All Types</option>
+            <option *ngFor="let t of employmentTypes" [value]="t">{{ t }}</option>
+          </select>
+          <i class="pi pi-angle-down"></i>
+        </div>
+
+        <div class="select-field">
+          <select [(ngModel)]="filterWorkSetup" (change)="applyFilters()">
+            <option value="">All Setups</option>
+            <option *ngFor="let s of workSetups" [value]="s">{{ s }}</option>
+          </select>
+          <i class="pi pi-angle-down"></i>
+        </div>
+
+        <div class="select-field">
+          <select [(ngModel)]="filterStatus" (change)="applyFilters()">
+            <option value="">All Status</option>
+            <option *ngFor="let s of jobStatuses" [value]="s">{{ s }}</option>
+          </select>
+          <i class="pi pi-angle-down"></i>
+        </div>
+
+        <div class="select-field">
+          <select [(ngModel)]="filterCategory" (change)="applyFilters()">
+            <option value="">All Categories</option>
+            <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+          </select>
+          <i class="pi pi-angle-down"></i>
+        </div>
+
+        <button
+          *ngIf="hasActiveFilters"
+          type="button"
+          class="clear-btn"
+          (click)="clearFilters()"
+        >
+          <i class="pi pi-times"></i>
+          Clear
+        </button>
+
       </div>
+    </section>
 
-      <div class="select-field">
-        <select [(ngModel)]="filterEmploymentType" (change)="applyFilters()">
-          <option value="">All Types</option>
-          <option *ngFor="let t of employmentTypes" [value]="t">{{ t }}</option>
-        </select>
-        <i class="pi pi-angle-down"></i>
-      </div>
+    <!-- TABLE -->
+    <section class="table-card">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>JOB TITLE</th>
+              <th>COMPANY</th>
+              <th>LOCATION</th>
+              <th>CATEGORY</th>
+              <th>TYPE</th>
+              <th>SETUP</th>
+              <th>DEADLINE</th>
+              <th>STATUS</th>
+              <th>POSTED</th>
+              <th>ACTIONS</th>
+            </tr>
+          </thead>
 
-      <div class="select-field">
-        <select [(ngModel)]="filterWorkSetup" (change)="applyFilters()">
-          <option value="">All Setups</option>
-          <option *ngFor="let s of workSetups" [value]="s">{{ s }}</option>
-        </select>
-        <i class="pi pi-angle-down"></i>
-      </div>
+          <tbody>
 
-      <div class="select-field">
-        <select [(ngModel)]="filterStatus" (change)="applyFilters()">
-          <option value="">All Status</option>
-          <option *ngFor="let s of jobStatuses" [value]="s">{{ s }}</option>
-        </select>
-        <i class="pi pi-angle-down"></i>
-      </div>
+            <!-- Loading -->
+            <tr *ngIf="loading">
+              <td colspan="10" class="empty-state">
+                <i class="pi pi-spin pi-spinner"></i>
+                Loading job postings...
+              </td>
+            </tr>
 
-      <div class="select-field">
-        <select [(ngModel)]="filterCategory" (change)="applyFilters()">
-          <option value="">All Categories</option>
-          <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
-        </select>
-        <i class="pi pi-angle-down"></i>
-      </div>
+            <!-- Error -->
+            <tr *ngIf="!loading && loadError">
+              <td colspan="10" class="empty-state error-state">
+                <i class="pi pi-exclamation-circle"></i>
+                {{ loadError }}
+              </td>
+            </tr>
 
-      <button *ngIf="hasActiveFilters" type="button" class="clear-btn" (click)="clearFilters()">
-        <i class="pi pi-times"></i> Clear
-      </button>
-    </div>
-  </section>
+            <!-- Data Rows -->
+            <tr
+              *ngFor="let job of filteredJobs; trackBy: trackByJob"
+              class="table-row"
+            >
+              <td class="title-cell">
+                <div class="job-title-main">{{ job.jobTitle }}</div>
 
-  <!-- TABLE -->
-  <section class="table-card">
-    <div class="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>JOB TITLE</th>
-            <th>COMPANY</th>
-            <th>LOCATION</th>
-            <th>CATEGORY</th>
-            <th>TYPE</th>
-            <th>SETUP</th>
-            <th>DEADLINE</th>
-            <th>STATUS</th>
-            <th>POSTED</th>
-            <th>ACTIONS</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngIf="loading">
-            <td colspan="10" class="empty-state">
-              <i class="pi pi-spin pi-spinner"></i> Loading job postings...
-            </td>
-          </tr>
+                <div class="job-tags">
+                  <span class="tag tag-all" *ngIf="job.openToAllAlumni">
+                    Open to All
+                  </span>
 
-          <tr *ngIf="!loading && loadError">
-            <td colspan="10" class="empty-state error-state">
-              <i class="pi pi-exclamation-circle"></i> {{ loadError }}
-            </td>
-          </tr>
+                  <span class="tag tag-prog" *ngIf="(job.recommendedPrograms?.length || 0) > 0">
+                    {{ job.recommendedPrograms?.length || 0 }}
+                    Program{{ (job.recommendedPrograms?.length || 0) > 1 ? 's' : '' }}
+                  </span>
+                </div>
+              </td>
 
-          <tr *ngFor="let job of filteredJobs; trackBy: trackByJob" class="table-row">
-            <td class="title-cell">
-              <div class="job-title-main">{{ job.jobTitle }}</div>
-              <div class="job-tags">
-                <span class="tag tag-all" *ngIf="job.openToAllAlumni">Open to All</span>
-                <span class="tag tag-prog" *ngIf="job.recommendedPrograms.length">
-                  {{ job.recommendedPrograms.length }} Program{{ job.recommendedPrograms.length > 1 ? 's' : '' }}
+              <td class="company-cell">
+                {{ job.companyName }}
+              </td>
+
+              <td class="location-cell">
+                <i class="pi pi-map-marker loc-icon"></i>
+                {{ job.location }}
+              </td>
+
+              <td class="category-cell">
+                {{ job.category }}
+              </td>
+
+              <td>
+                <span class="type-pill">{{ job.employmentType }}</span>
+              </td>
+
+              <td>
+                <span class="setup-pill">{{ job.workSetup }}</span>
+              </td>
+
+              <td
+                class="deadline-cell"
+                [class.past-deadline]="isDeadlinePast(job.deadline)"
+              >
+                {{ formatDate(job.deadline) }}
+              </td>
+
+              <td>
+                <span
+                  class="status-pill"
+                  [ngClass]="{
+                    'status-active': job.status === 'Active',
+                    'status-draft': job.status === 'Draft',
+                    'status-closed': job.status === 'Closed'
+                  }"
+                >
+                  {{ job.status }}
                 </span>
-              </div>
-            </td>
+              </td>
 
-            <td class="company-cell">{{ job.companyName }}</td>
+              <td class="posted-cell">
+                {{ formatPostedDate(job.createdAt) }}
+              </td>
 
-            <td class="location-cell">
-              <i class="pi pi-map-marker loc-icon"></i>{{ job.location }}
-            </td>
+              <td>
+                <div class="actions-cell">
+                  <button
+                    type="button"
+                    class="action-icon view"
+                    title="View"
+                    (click)="openViewModal(job)"
+                  >
+                    <i class="pi pi-eye"></i>
+                  </button>
 
-            <td class="category-cell">{{ job.category }}</td>
+                  <button
+                    type="button"
+                    class="action-icon edit"
+                    title="Edit"
+                    (click)="openEditModal(job)"
+                  >
+                    <i class="pi pi-pencil"></i>
+                  </button>
 
-            <td><span class="type-pill">{{ job.employmentType }}</span></td>
+                  <button
+                    type="button"
+                    class="action-icon delete"
+                    title="Delete"
+                    (click)="openDeleteModal(job)"
+                  >
+                    <i class="pi pi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
 
-            <td><span class="setup-pill">{{ job.workSetup }}</span></td>
+            <!-- Empty State -->
+            <tr *ngIf="!loading && !loadError && filteredJobs.length === 0">
+              <td colspan="10" class="empty-state">
+                <i class="pi pi-briefcase"></i>
 
-            <td class="deadline-cell" [class.past-deadline]="isDeadlinePast(job.deadline)">
-              {{ formatDate(job.deadline) }}
-            </td>
+                <span *ngIf="hasActiveFilters">
+                  No job postings match your filters.
+                </span>
 
-            <td>
-              <span class="status-pill" [ngClass]="{
-                'status-active': job.status === 'Active',
-                'status-draft':  job.status === 'Draft',
-                'status-closed': job.status === 'Closed'
-              }">{{ job.status }}</span>
-            </td>
+                <span *ngIf="!hasActiveFilters">
+                  No job postings yet. Click <strong>Add Job Posting</strong> to get started.
+                </span>
+              </td>
+            </tr>
 
-            <td class="posted-cell">{{ formatPostedDate(job.createdAt) }}</td>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
-            <td>
-              <div class="actions-cell">
-                <button type="button" class="action-icon view" title="View" (click)="openViewModal(job)">
-                  <i class="pi pi-eye"></i>
-                </button>
-                <button type="button" class="action-icon edit" title="Edit" (click)="openEditModal(job)">
-                  <i class="pi pi-pencil"></i>
-                </button>
-                <button type="button" class="action-icon delete" title="Delete" (click)="openDeleteModal(job)">
-                  <i class="pi pi-trash"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
+    <p class="table-footnote">
+      Showing {{ filteredJobs.length }} of {{ jobs.length }} job {{ jobs.length === 1 ? 'posting' : 'postings' }}
+    </p>
 
-          <tr *ngIf="!loading && !loadError && filteredJobs.length === 0">
-            <td colspan="10" class="empty-state">
-              <i class="pi pi-briefcase"></i>
-              <span *ngIf="hasActiveFilters">No job postings match your filters.</span>
-              <span *ngIf="!hasActiveFilters">No job postings yet. Click <strong>Add Job Posting</strong> to get started.</span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
   </section>
-
-  <p class="table-footnote">
-    Showing {{ filteredJobs.length }} of {{ jobs.length }} job {{ jobs.length === 1 ? 'posting' : 'postings' }}
-  </p>
 
 </section>
 
 
-<!-- ══════════════════════════════ ADD / EDIT MODAL -->
+<!-- ADD / EDIT MODAL -->
 <div class="modal-backdrop" *ngIf="showFormModal" (click)="closeFormModal()">
   <div class="modal form-modal" (click)="$event.stopPropagation()">
 
     <div class="modal-header">
       <div class="modal-header-copy">
         <h2>{{ isEditMode ? 'Edit Job Posting' : 'Add Job Posting' }}</h2>
-        <p>{{ isEditMode ? 'Update the details of this job posting.' : 'Fill in the details to create a new job posting for alumni.' }}</p>
+        <p>
+          {{ isEditMode ? 'Update the details of this job posting.' : 'Fill in the details to create a new job posting for alumni.' }}
+        </p>
       </div>
+
       <button type="button" class="close-btn" (click)="closeFormModal()">
         <i class="pi pi-times"></i>
       </button>
@@ -213,22 +300,42 @@
 
     <div class="modal-body">
 
-      <!-- Basic Info -->
+      <!-- Basic Information -->
       <div class="form-section">
-        <div class="form-section-label"><i class="pi pi-info-circle"></i> Basic Information</div>
+        <div class="form-section-label">
+          <i class="pi pi-info-circle"></i>
+          Basic Information
+        </div>
+
         <div class="form-grid two-col">
+
           <div class="field">
             <label>Job Title <span class="req">*</span></label>
-            <input type="text" [(ngModel)]="form.jobTitle" placeholder="e.g. Software Engineer" />
+            <input
+              type="text"
+              [(ngModel)]="form.jobTitle"
+              placeholder="e.g. Software Engineer"
+            />
           </div>
+
           <div class="field">
             <label>Company Name <span class="req">*</span></label>
-            <input type="text" [(ngModel)]="form.companyName" placeholder="e.g. Acme Corporation" />
+            <input
+              type="text"
+              [(ngModel)]="form.companyName"
+              placeholder="e.g. Acme Corporation"
+            />
           </div>
+
           <div class="field">
             <label>Location <span class="req">*</span></label>
-            <input type="text" [(ngModel)]="form.location" placeholder="e.g. Cagayan de Oro City" />
+            <input
+              type="text"
+              [(ngModel)]="form.location"
+              placeholder="e.g. Cagayan de Oro City"
+            />
           </div>
+
           <div class="field">
             <label>Category / Industry <span class="req">*</span></label>
             <div class="select-wrap">
@@ -239,6 +346,7 @@
               <i class="pi pi-angle-down"></i>
             </div>
           </div>
+
           <div class="field">
             <label>Employment Type <span class="req">*</span></label>
             <div class="select-wrap">
@@ -249,6 +357,7 @@
               <i class="pi pi-angle-down"></i>
             </div>
           </div>
+
           <div class="field">
             <label>Work Setup <span class="req">*</span></label>
             <div class="select-wrap">
@@ -259,32 +368,58 @@
               <i class="pi pi-angle-down"></i>
             </div>
           </div>
+
           <div class="field full">
             <label>Salary Range <span class="optional">(Optional)</span></label>
-            <input type="text" [(ngModel)]="form.salaryRange" placeholder="e.g. ₱20,000 – ₱35,000 / month" />
+            <input
+              type="text"
+              [(ngModel)]="form.salaryRange"
+              placeholder="e.g. ₱20,000 – ₱35,000 / month"
+            />
           </div>
+
         </div>
       </div>
 
       <!-- Job Details -->
       <div class="form-section">
-        <div class="form-section-label"><i class="pi pi-align-left"></i> Job Details</div>
+        <div class="form-section-label">
+          <i class="pi pi-align-left"></i>
+          Job Details
+        </div>
+
         <div class="form-grid one-col">
+
           <div class="field">
             <label>Job Description <span class="req">*</span></label>
-            <textarea [(ngModel)]="form.jobDescription" placeholder="Describe the role, responsibilities, and what the company does..." rows="5"></textarea>
+            <textarea
+              [(ngModel)]="form.jobDescription"
+              placeholder="Describe the role, responsibilities, and what the company does..."
+              rows="5"
+            ></textarea>
           </div>
+
           <div class="field">
             <label>Qualifications <span class="req">*</span></label>
-            <textarea [(ngModel)]="form.qualifications" placeholder="List required skills, education, and experience..." rows="4"></textarea>
+            <textarea
+              [(ngModel)]="form.qualifications"
+              placeholder="List required skills, education, and experience..."
+              rows="4"
+            ></textarea>
           </div>
+
         </div>
       </div>
 
-      <!-- Application -->
+      <!-- Application Details -->
       <div class="form-section">
-        <div class="form-section-label"><i class="pi pi-send"></i> Application Details</div>
+        <div class="form-section-label">
+          <i class="pi pi-send"></i>
+          Application Details
+        </div>
+
         <div class="form-grid two-col">
+
           <div class="field">
             <label>Application Method <span class="req">*</span></label>
             <div class="select-wrap">
@@ -298,12 +433,20 @@
 
           <div class="field" *ngIf="form.applicationMethod === 'Application Link'">
             <label>Application Link <span class="req">*</span></label>
-            <input type="url" [(ngModel)]="form.applicationLink" placeholder="https://..." />
+            <input
+              type="url"
+              [(ngModel)]="form.applicationLink"
+              placeholder="https://..."
+            />
           </div>
 
           <div class="field" *ngIf="form.applicationMethod === 'Email'">
             <label>Contact Email <span class="req">*</span></label>
-            <input type="email" [(ngModel)]="form.contactEmail" placeholder="hr@company.com" />
+            <input
+              type="email"
+              [(ngModel)]="form.contactEmail"
+              placeholder="hr@company.com"
+            />
           </div>
 
           <div class="field" *ngIf="form.applicationMethod === 'Walk-in'">
@@ -327,12 +470,17 @@
               <i class="pi pi-angle-down"></i>
             </div>
           </div>
+
         </div>
       </div>
 
       <!-- Alumni Targeting -->
       <div class="form-section">
-        <div class="form-section-label"><i class="pi pi-users"></i> Alumni Targeting</div>
+        <div class="form-section-label">
+          <i class="pi pi-users"></i>
+          Alumni Targeting
+        </div>
+
         <div class="targeting-grid">
 
           <label class="checkbox-row open-all-row">
@@ -340,9 +488,12 @@
               <input type="checkbox" [(ngModel)]="form.openToAllAlumni" />
               <i class="pi pi-check"></i>
             </div>
+
             <div class="checkbox-copy">
               <span class="checkbox-label">Open to All Alumni</span>
-              <span class="checkbox-hint">This job is available to all alumni regardless of program.</span>
+              <span class="checkbox-hint">
+                This job is available to all alumni regardless of program.
+              </span>
             </div>
           </label>
 
@@ -351,15 +502,22 @@
               Recommended For
               <span class="optional-tag">Optional</span>
             </div>
+
             <p class="programs-hint">
               Optionally tag specific programs this role suits best. This does not restrict alumni from applying.
             </p>
+
             <div class="programs-list">
               <label class="checkbox-row" *ngFor="let prog of programs">
                 <div class="custom-checkbox" [class.checked]="isProgramSelected(prog)">
-                  <input type="checkbox" [checked]="isProgramSelected(prog)" (change)="toggleProgram(prog)" />
+                  <input
+                    type="checkbox"
+                    [checked]="isProgramSelected(prog)"
+                    (change)="toggleProgram(prog)"
+                  />
                   <i class="pi pi-check"></i>
                 </div>
+
                 <div class="checkbox-copy">
                   <span class="checkbox-label">{{ prog }}</span>
                 </div>
@@ -370,32 +528,54 @@
         </div>
       </div>
 
-      <!-- Error -->
       <div class="form-error" *ngIf="formError">
-        <i class="pi pi-exclamation-triangle"></i> {{ formError }}
+        <i class="pi pi-exclamation-triangle"></i>
+        {{ formError }}
       </div>
 
     </div>
 
     <div class="modal-footer">
-      <button type="button" class="secondary-btn" (click)="closeFormModal()">Cancel</button>
+      <button type="button" class="secondary-btn" (click)="closeFormModal()">
+        Cancel
+      </button>
+
       <div class="modal-footer-right">
+
         <ng-container *ngIf="!isEditMode">
-          <button type="button" class="draft-btn" (click)="saveAsDraft()" [disabled]="saving">
+          <button
+            type="button"
+            class="draft-btn"
+            (click)="saveAsDraft()"
+            [disabled]="saving"
+          >
             <i class="pi pi-file-edit"></i>
             {{ saving && form.status === 'Draft' ? 'Saving...' : 'Save as Draft' }}
           </button>
-          <button type="button" class="publish-btn" (click)="publishJob()" [disabled]="saving">
+
+          <button
+            type="button"
+            class="publish-btn"
+            (click)="publishJob()"
+            [disabled]="saving"
+          >
             <i class="pi pi-send"></i>
             {{ saving && form.status === 'Active' ? 'Publishing...' : 'Publish Job' }}
           </button>
         </ng-container>
+
         <ng-container *ngIf="isEditMode">
-          <button type="button" class="publish-btn" (click)="updateJob()" [disabled]="saving">
+          <button
+            type="button"
+            class="publish-btn"
+            (click)="updateJob()"
+            [disabled]="saving"
+          >
             <i class="pi pi-check"></i>
             {{ saving ? 'Updating...' : 'Update Job' }}
           </button>
         </ng-container>
+
       </div>
     </div>
 
@@ -403,7 +583,7 @@
 </div>
 
 
-<!-- ══════════════════════════════ VIEW MODAL -->
+<!-- VIEW MODAL -->
 <div class="modal-backdrop" *ngIf="showViewModal" (click)="closeViewModal()">
   <div class="modal view-modal" (click)="$event.stopPropagation()">
 
@@ -411,16 +591,25 @@
       <div class="modal-header-copy">
         <div class="view-title-row">
           <h2>{{ selectedJob.jobTitle }}</h2>
-          <span class="status-pill" [ngClass]="{
-            'status-active': selectedJob.status === 'Active',
-            'status-draft':  selectedJob.status === 'Draft',
-            'status-closed': selectedJob.status === 'Closed'
-          }">{{ selectedJob.status }}</span>
+
+          <span
+            class="status-pill"
+            [ngClass]="{
+              'status-active': selectedJob.status === 'Active',
+              'status-draft': selectedJob.status === 'Draft',
+              'status-closed': selectedJob.status === 'Closed'
+            }"
+          >
+            {{ selectedJob.status }}
+          </span>
         </div>
+
         <p class="view-company">
-          <i class="pi pi-building"></i> {{ selectedJob.companyName }}
+          <i class="pi pi-building"></i>
+          {{ selectedJob.companyName }}
         </p>
       </div>
+
       <button type="button" class="close-btn" (click)="closeViewModal()">
         <i class="pi pi-times"></i>
       </button>
@@ -429,13 +618,34 @@
     <div class="modal-body view-body" *ngIf="selectedJob">
 
       <div class="view-meta-row">
-        <div class="meta-item"><i class="pi pi-map-marker"></i><span>{{ selectedJob.location }}</span></div>
-        <div class="meta-item"><i class="pi pi-tag"></i><span>{{ selectedJob.category }}</span></div>
-        <div class="meta-item"><i class="pi pi-clock"></i><span>{{ selectedJob.employmentType }}</span></div>
-        <div class="meta-item"><i class="pi pi-desktop"></i><span>{{ selectedJob.workSetup }}</span></div>
-        <div class="meta-item" *ngIf="selectedJob.salaryRange"><i class="pi pi-wallet"></i><span>{{ selectedJob.salaryRange }}</span></div>
+        <div class="meta-item">
+          <i class="pi pi-map-marker"></i>
+          <span>{{ selectedJob.location }}</span>
+        </div>
+
+        <div class="meta-item">
+          <i class="pi pi-tag"></i>
+          <span>{{ selectedJob.category }}</span>
+        </div>
+
+        <div class="meta-item">
+          <i class="pi pi-clock"></i>
+          <span>{{ selectedJob.employmentType }}</span>
+        </div>
+
+        <div class="meta-item">
+          <i class="pi pi-desktop"></i>
+          <span>{{ selectedJob.workSetup }}</span>
+        </div>
+
+        <div class="meta-item" *ngIf="selectedJob.salaryRange">
+          <i class="pi pi-wallet"></i>
+          <span>{{ selectedJob.salaryRange }}</span>
+        </div>
+
         <div class="meta-item" [class.deadline-past]="isDeadlinePast(selectedJob.deadline)">
-          <i class="pi pi-calendar"></i><span>Deadline: {{ formatDate(selectedJob.deadline) }}</span>
+          <i class="pi pi-calendar"></i>
+          <span>Deadline: {{ formatDate(selectedJob.deadline) }}</span>
         </div>
       </div>
 
@@ -451,54 +661,88 @@
 
       <div class="view-section">
         <h4 class="view-section-title">How to Apply</h4>
+
         <div class="view-apply-block">
           <div class="apply-method">
             <span class="apply-label">Method:</span>
             <span class="type-pill">{{ selectedJob.applicationMethod }}</span>
           </div>
+
           <div class="apply-link" *ngIf="selectedJob.applicationLink">
             <span class="apply-label">Apply at:</span>
-            <a [href]="selectedJob.applicationLink" target="_blank" rel="noopener" class="apply-url">
-              {{ selectedJob.applicationLink }} <i class="pi pi-external-link"></i>
+            <a
+              [href]="selectedJob.applicationLink"
+              target="_blank"
+              rel="noopener"
+              class="apply-url"
+            >
+              {{ selectedJob.applicationLink }}
+              <i class="pi pi-external-link"></i>
             </a>
           </div>
+
           <div class="apply-email" *ngIf="selectedJob.contactEmail">
             <span class="apply-label">Email:</span>
-            <a [href]="'mailto:' + selectedJob.contactEmail" class="apply-url">{{ selectedJob.contactEmail }}</a>
+            <a [href]="'mailto:' + selectedJob.contactEmail" class="apply-url">
+              {{ selectedJob.contactEmail }}
+            </a>
           </div>
         </div>
       </div>
 
       <div class="view-section">
         <h4 class="view-section-title">Alumni Targeting</h4>
+
         <div class="view-targeting">
+
           <div class="targeting-item" *ngIf="selectedJob.openToAllAlumni">
             <i class="pi pi-check-circle open-all-icon"></i>
             <span>Open to All Alumni</span>
           </div>
-          <div class="targeting-programs" *ngIf="selectedJob.recommendedPrograms.length">
+
+          <div
+            class="targeting-programs"
+            *ngIf="(selectedJob.recommendedPrograms?.length || 0) > 0"
+          >
             <div class="targeting-programs-label">Recommended For:</div>
+
             <div class="program-tags">
-              <span class="prog-tag" *ngFor="let prog of selectedJob.recommendedPrograms">{{ prog }}</span>
+              <span
+                class="prog-tag"
+                *ngFor="let prog of selectedJob.recommendedPrograms || []"
+              >
+                {{ prog }}
+              </span>
             </div>
           </div>
-          <div class="targeting-none" *ngIf="!selectedJob.openToAllAlumni && !selectedJob.recommendedPrograms.length">
+
+          <div
+            class="targeting-none"
+            *ngIf="!selectedJob.openToAllAlumni && (selectedJob.recommendedPrograms?.length || 0) === 0"
+          >
             No specific targeting set.
           </div>
+
         </div>
       </div>
 
       <div class="view-posted-info">
         <span>Posted: {{ formatPostedDate(selectedJob.createdAt) }}</span>
-        <span *ngIf="selectedJob.updatedAt">· Updated: {{ formatPostedDate(selectedJob.updatedAt) }}</span>
+        <span *ngIf="selectedJob.updatedAt">
+          · Updated: {{ formatPostedDate(selectedJob.updatedAt) }}
+        </span>
       </div>
 
     </div>
 
     <div class="modal-footer">
-      <button type="button" class="secondary-btn" (click)="closeViewModal()">Close</button>
+      <button type="button" class="secondary-btn" (click)="closeViewModal()">
+        Close
+      </button>
+
       <button type="button" class="publish-btn" (click)="openEditFromView()">
-        <i class="pi pi-pencil"></i> Edit Posting
+        <i class="pi pi-pencil"></i>
+        Edit Posting
       </button>
     </div>
 
@@ -506,22 +750,38 @@
 </div>
 
 
-<!-- ══════════════════════════════ DELETE MODAL -->
+<!-- DELETE MODAL -->
 <div class="modal-backdrop" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
   <div class="confirm-modal" (click)="$event.stopPropagation()">
-    <div class="confirm-icon"><i class="pi pi-trash"></i></div>
+
+    <div class="confirm-icon">
+      <i class="pi pi-trash"></i>
+    </div>
+
     <h3>Delete Job Posting</h3>
+
     <div *ngIf="jobToDelete">
       <p>
         Are you sure you want to delete <strong>{{ jobToDelete.jobTitle }}</strong> at
-        <strong>{{ jobToDelete.companyName }}</strong>?<br />This action cannot be undone.
+        <strong>{{ jobToDelete.companyName }}</strong>?<br />
+        This action cannot be undone.
       </p>
     </div>
+
     <div class="confirm-actions">
-      <button type="button" class="secondary-btn" (click)="closeDeleteModal()">Cancel</button>
-      <button type="button" class="danger-btn" (click)="confirmDelete()" [disabled]="deleting">
+      <button type="button" class="secondary-btn" (click)="closeDeleteModal()">
+        Cancel
+      </button>
+
+      <button
+        type="button"
+        class="danger-btn"
+        (click)="confirmDelete()"
+        [disabled]="deleting"
+      >
         {{ deleting ? 'Deleting...' : 'Delete' }}
       </button>
     </div>
+
   </div>
 </div>

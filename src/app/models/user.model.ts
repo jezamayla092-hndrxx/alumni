@@ -36,6 +36,12 @@ export interface EmploymentDetails {
   updatedAt?: any;
 }
 
+export interface VerificationDocument {
+  fileName: string;
+  fileType: string;
+  url: string;
+}
+
 export interface User {
   id?: string;
   email: string;
@@ -43,19 +49,36 @@ export interface User {
 
   fullName?: string;
   firstName?: string;
+  middleName?: string;
   lastName?: string;
+  suffix?: string;
+
   studentId?: string;
+  alumniId?: string;
+  alumniIdIssuedAt?: any;
+  alumniIdIssuedYear?: number;
+  alumniIdSequence?: number;
+  campus?: string;
+
   program?: string;
   yearGraduated?: number;
+  birthDate?: string;
+  sex?: string;
 
   status?: UserVerificationStatus;
+  verificationStatus?: UserVerificationStatus;
   isVerified?: boolean;
   isActive?: boolean;
   createdAt?: any;
+  updatedAt?: any;
 
   contactNumber?: string;
+  contactCountry?: string;
+  contactDialCode?: string;
   address?: string;
   photoUrl?: string;
+
+  verificationDocuments?: VerificationDocument[];
 
   employmentStatus?: EmploymentStatus;
   employmentDetails?: EmploymentDetails;

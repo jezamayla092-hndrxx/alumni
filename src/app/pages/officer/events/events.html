@@ -6,8 +6,8 @@
       <p>Create and manage alumni activities.</p>
     </div>
 
-    <button class="create-btn" type="button" (click)="openCreate()">
-      <span>+</span>
+    <button class="create-btn" type="button" (click)="openCreate()" *ngIf="!showArchive">
+      <i class="pi pi-plus"></i>
       Create Event
     </button>
   </div>
@@ -15,7 +15,7 @@
   <div class="summary-grid">
     <div class="summary-card">
       <div class="summary-icon purple">
-        <span class="material-symbols-outlined">calendar_month</span>
+        <i class="pi pi-calendar"></i>
       </div>
       <div>
         <strong>{{ totalEvents }}</strong>
@@ -25,7 +25,7 @@
 
     <div class="summary-card">
       <div class="summary-icon blue">
-        <span class="material-symbols-outlined">event_upcoming</span>
+        <i class="pi pi-clock"></i>
       </div>
       <div>
         <strong>{{ upcomingCount }}</strong>
@@ -35,7 +35,7 @@
 
     <div class="summary-card">
       <div class="summary-icon green">
-        <span class="material-symbols-outlined">event_available</span>
+        <i class="pi pi-check-circle"></i>
       </div>
       <div>
         <strong>{{ completedCount }}</strong>
@@ -45,7 +45,7 @@
 
     <div class="summary-card">
       <div class="summary-icon red">
-        <span class="material-symbols-outlined">event_busy</span>
+        <i class="pi pi-ban"></i>
       </div>
       <div>
         <strong>{{ cancelledCount }}</strong>
@@ -56,10 +56,10 @@
 
   <div class="toolbar">
     <div class="search-field">
-      <span class="material-symbols-outlined">search</span>
+      <i class="pi pi-search"></i>
       <input
         type="text"
-        placeholder="Search events..."
+        [placeholder]="showArchive ? 'Search archived events...' : 'Search events...'"
         [(ngModel)]="searchTerm"
         (ngModelChange)="applyFilters()"
       />
@@ -77,26 +77,30 @@
       <option value="all">All Types</option>
       <option *ngFor="let type of eventTypes" [value]="type">{{ type }}</option>
     </select>
+
+    <button
+      type="button"
+      class="archive-toggle"
+      [class.active]="showArchive"
+      (click)="toggleArchive()"
+    >
+      <i class="pi" [ngClass]="showArchive ? 'pi-arrow-left' : 'pi-inbox'"></i>
+      {{ showArchive ? 'Back to Events' : 'Archive' }}
+      <span *ngIf="!showArchive">({{ archivedCount }})</span>
+    </button>
   </div>
 
-  <div *ngIf="pinnedEvent" class="section-title">
+  <div *ngIf="!showArchive && pinnedEvent" class="section-title">
     <span>Pinned Event</span>
   </div>
 
-  <div *ngIf="pinnedEvent as event" class="pinned-card" [class.with-image]="eventImageUrl(event)">
-    <div *ngIf="eventImageUrl(event)" class="pinned-image">
-      <img [src]="eventImageUrl(event)" [alt]="eventTitle(event)" />
-    </div>
-
+  <div *ngIf="!showArchive && pinnedEvent as event" class="pinned-card">
     <div class="pinned-content">
       <div class="badge-row">
         <span class="status-badge" [class]="eventStatus(event).toLowerCase()">
           {{ eventStatus(event) }}
         </span>
         <span class="type-badge">{{ eventType(event) }}</span>
-        <span *ngIf="eventRegistrationRequired(event)" class="registration-badge">
-          Registration Required
-        </span>
       </div>
 
       <h2>{{ eventTitle(event) }}</h2>
@@ -104,35 +108,65 @@
 
       <div class="info-grid">
         <span>
-          <span class="material-symbols-outlined">calendar_month</span>
+          <i class="pi pi-calendar"></i>
           {{ formatDate(event) }}
         </span>
         <span>
-          <span class="material-symbols-outlined">schedule</span>
+          <i class="pi pi-clock"></i>
           {{ eventStartTime(event) }} - {{ eventEndTime(event) }}
         </span>
         <span>
-          <span class="material-symbols-outlined">location_on</span>
+          <i class="pi pi-map-marker"></i>
           {{ eventLocation(event) }}
-        </span>
-        <span>
-          <span class="material-symbols-outlined">groups</span>
-          Capacity: {{ eventCapacity(event) || 'No limit' }}
         </span>
       </div>
 
       <div class="pinned-actions">
-        <button type="button" class="primary-action">View Details</button>
-        <button type="button" (click)="openEdit(event)">Edit Event</button>
-        <button type="button">View Registrations</button>
-        <button type="button" class="warning-action" (click)="unpinEvent(event)">Unpin Event</button>
-        <button type="button" class="danger-action" (click)="openDelete(event)">Delete</button>
+        <button
+          type="button"
+          class="action-btn primary-action"
+          title="View Details"
+          aria-label="View Details"
+        >
+          <i class="pi pi-eye"></i>
+        </button>
+
+        <button
+          type="button"
+          class="action-btn"
+          title="Edit Event"
+          aria-label="Edit Event"
+          (click)="openEdit(event)"
+        >
+          <i class="pi pi-pencil"></i>
+        </button>
+
+        <button
+          type="button"
+          class="action-btn warning-action"
+          title="Unpin Event"
+          aria-label="Unpin Event"
+          (click)="unpinEvent(event)"
+        >
+          <i class="pi pi-times-circle"></i>
+        </button>
+
+        <button
+          type="button"
+          class="action-btn cancel-action"
+          title="Cancel Event"
+          aria-label="Cancel Event"
+          (click)="cancelEvent(event)"
+          [disabled]="eventStatus(event) === 'Cancelled'"
+        >
+          <i class="pi pi-ban"></i>
+        </button>
       </div>
     </div>
   </div>
 
   <div class="section-title">
-    <span>All Events</span>
+    <span>{{ showArchive ? 'Archived Events' : 'All Events' }}</span>
     <small>{{ allEvents.length }} result{{ allEvents.length === 1 ? '' : 's' }}</small>
   </div>
 
@@ -141,11 +175,16 @@
   </div>
 
   <div *ngIf="!loading && filteredEvents.length === 0" class="empty-state">
-    No events found.
+    {{ showArchive ? 'No archived events found.' : 'No events found.' }}
   </div>
 
   <div *ngIf="!loading && allEvents.length > 0" class="event-list">
-    <div *ngFor="let event of allEvents" class="event-row">
+    <div
+      *ngFor="let event of allEvents"
+      class="event-row"
+      [class.cancelled-row]="eventStatus(event) === 'Cancelled'"
+      [class.archived-row]="showArchive"
+    >
       <div class="date-box">
         <span>{{ eventMonth(event) }}</span>
         <strong>{{ eventDay(event) }}</strong>
@@ -159,8 +198,8 @@
             {{ eventStatus(event) }}
           </span>
           <span class="type-badge">{{ eventType(event) }}</span>
-          <span *ngIf="eventRegistrationRequired(event)" class="registration-badge">
-            Registration
+          <span *ngIf="showArchive" class="archive-badge">
+            Archived
           </span>
         </div>
 
@@ -168,24 +207,94 @@
 
         <div class="row-meta">
           <span>
-            <span class="material-symbols-outlined">schedule</span>
+            <i class="pi pi-clock"></i>
             {{ eventStartTime(event) }} - {{ eventEndTime(event) }}
           </span>
           <span>
-            <span class="material-symbols-outlined">location_on</span>
+            <i class="pi pi-map-marker"></i>
             {{ eventLocation(event) }}
-          </span>
-          <span>
-            <span class="material-symbols-outlined">groups</span>
-            {{ eventCapacity(event) || 'No limit' }} slots
           </span>
         </div>
       </div>
 
       <div class="row-actions">
-        <button type="button" (click)="pinEvent(event)">Pin</button>
-        <button type="button" (click)="openEdit(event)">Edit</button>
-        <button type="button" class="danger-action" (click)="openDelete(event)">Delete</button>
+        <ng-container *ngIf="showArchive; else activeEventActions">
+          <button
+            type="button"
+            class="action-btn restore-action"
+            title="Restore Event"
+            aria-label="Restore Event"
+            (click)="restoreEvent(event)"
+          >
+            <i class="pi pi-refresh"></i>
+          </button>
+
+          <button
+            type="button"
+            class="action-btn delete-action"
+            title="Delete Event"
+            aria-label="Delete Event"
+            (click)="openDelete(event)"
+          >
+            <i class="pi pi-trash"></i>
+          </button>
+        </ng-container>
+
+        <ng-template #activeEventActions>
+          <ng-container *ngIf="eventStatus(event) === 'Cancelled'; else normalEventActions">
+            <button
+              type="button"
+              class="action-btn restore-action"
+              title="Restore Event"
+              aria-label="Restore Event"
+              (click)="restoreEvent(event)"
+            >
+              <i class="pi pi-refresh"></i>
+            </button>
+
+            <button
+              type="button"
+              class="action-btn archive-action"
+              title="Archive Event"
+              aria-label="Archive Event"
+              (click)="archiveEvent(event)"
+            >
+              <i class="pi pi-inbox"></i>
+            </button>
+          </ng-container>
+
+          <ng-template #normalEventActions>
+            <button
+              type="button"
+              class="action-btn"
+              title="Pin Event"
+              aria-label="Pin Event"
+              (click)="pinEvent(event)"
+            >
+              <i class="pi pi-bookmark"></i>
+            </button>
+
+            <button
+              type="button"
+              class="action-btn"
+              title="Edit Event"
+              aria-label="Edit Event"
+              (click)="openEdit(event)"
+            >
+              <i class="pi pi-pencil"></i>
+            </button>
+
+            <button
+              type="button"
+              class="action-btn cancel-action"
+              title="Cancel Event"
+              aria-label="Cancel Event"
+              (click)="cancelEvent(event)"
+            >
+              <i class="pi pi-ban"></i>
+            </button>
+          </ng-template>
+        </ng-template>
       </div>
     </div>
   </div>
@@ -198,74 +307,63 @@
       <button type="button" class="close-btn" (click)="closeModal()">×</button>
     </div>
 
-    <div class="field">
-      <label>Event Title <span>*</span></label>
-      <input placeholder="Enter event title" [(ngModel)]="form.title" />
-    </div>
-
-    <div class="field">
-      <label>Description</label>
-      <textarea placeholder="Event description..." [(ngModel)]="form.description"></textarea>
-    </div>
-
-    <div class="form-grid two">
+    <div class="modal-body">
       <div class="field">
-        <label>Event Type <span>*</span></label>
-        <input placeholder="e.g. Seminar, Homecoming, Job Fair, Reunion" [(ngModel)]="form.eventType" />
+        <label>Event Title <span>*</span></label>
+        <input placeholder="Enter event title" [(ngModel)]="form.title" />
       </div>
 
       <div class="field">
-        <label>Status <span>*</span></label>
-        <select [(ngModel)]="form.status">
-          <option *ngFor="let status of statusOptions" [value]="status">{{ status }}</option>
-        </select>
+        <label>Description</label>
+        <textarea placeholder="Event description..." [(ngModel)]="form.description"></textarea>
       </div>
-    </div>
 
-    <div class="form-grid three">
+      <div class="form-grid two">
+        <div class="field">
+          <label>Event Type <span>*</span></label>
+          <input
+            placeholder="e.g. Seminar, Homecoming, Job Fair, Reunion"
+            [(ngModel)]="form.eventType"
+          />
+        </div>
+
+        <div class="field">
+          <label>Status <span>*</span></label>
+          <select [(ngModel)]="form.status">
+            <option *ngFor="let status of statusOptions" [value]="status">
+              {{ status }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-grid three">
+        <div class="field">
+          <label>Event Date <span>*</span></label>
+          <input type="date" [(ngModel)]="form.eventDate" />
+        </div>
+
+        <div class="field">
+          <label>Start Time <span>*</span></label>
+          <input type="time" [(ngModel)]="form.startTime" />
+        </div>
+
+        <div class="field">
+          <label>End Time <span>*</span></label>
+          <input type="time" [(ngModel)]="form.endTime" />
+        </div>
+      </div>
+
       <div class="field">
-        <label>Event Date <span>*</span></label>
-        <input type="date" [(ngModel)]="form.eventDate" />
+        <label>Venue / Location <span>*</span></label>
+        <input placeholder="e.g. CITC Auditorium" [(ngModel)]="form.location" />
       </div>
 
-      <div class="field">
-        <label>Start Time <span>*</span></label>
-        <input type="time" [(ngModel)]="form.startTime" />
-      </div>
-
-      <div class="field">
-        <label>End Time <span>*</span></label>
-        <input type="time" [(ngModel)]="form.endTime" />
-      </div>
-    </div>
-
-    <div class="field">
-      <label>Venue / Location <span>*</span></label>
-      <input placeholder="e.g. CITC Auditorium" [(ngModel)]="form.location" />
-    </div>
-
-    <div class="form-grid two align-end">
-      <label class="switch-row">
-        <input type="checkbox" [(ngModel)]="form.registrationRequired" />
-        <span></span>
-        Registration Required
+      <label class="checkbox-row">
+        <input type="checkbox" [(ngModel)]="form.isFeatured" />
+        Pin this event
       </label>
-
-      <div class="field">
-        <label>Capacity</label>
-        <input type="number" min="0" placeholder="Max attendees" [(ngModel)]="form.capacity" />
-      </div>
     </div>
-
-    <div class="field">
-      <label>Event Image / Poster URL</label>
-      <input placeholder="Optional image URL. You can add this later." [(ngModel)]="form.imageUrl" />
-    </div>
-
-    <label class="checkbox-row">
-      <input type="checkbox" [(ngModel)]="form.isFeatured" />
-      Pin this event
-    </label>
 
     <div class="modal-actions">
       <button type="button" (click)="closeModal()">Cancel</button>
@@ -279,11 +377,15 @@
 <div *ngIf="showDeleteModal" class="modal">
   <div class="modal-box small">
     <div class="modal-header">
-      <h2>Delete Event</h2>
+      <h2>Delete Archived Event</h2>
       <button type="button" class="close-btn" (click)="closeDelete()">×</button>
     </div>
 
-    <p class="delete-text">Are you sure you want to delete this event?</p>
+    <div class="modal-body">
+      <p class="delete-text">
+        Are you sure you want to permanently delete this archived event? This action cannot be undone.
+      </p>
+    </div>
 
     <div class="modal-actions">
       <button type="button" (click)="closeDelete()">Cancel</button>

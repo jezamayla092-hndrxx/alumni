@@ -19,11 +19,10 @@ export interface EventRecord {
   eventType: string;
   status: EventStatus;
 
-  capacity?: number | null;
-  registrationRequired?: boolean;
-
   imageUrl?: string;
+
   isFeatured?: boolean;
+  isArchived?: boolean;
 
   createdAt?: string;
   updatedAt?: string;

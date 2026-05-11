@@ -1,4 +1,4 @@
-import { Component, OnInit, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
@@ -29,7 +29,10 @@ import {
   templateUrl: './employment-status.html',
   styleUrls: ['./employment-status.scss'],
 })
-export class EmploymentStatusComponent implements OnInit {
+export class EmploymentStatusComponent implements OnInit, OnDestroy {
+  // FIX: destroy flag to cancel in-flight async work
+  private destroyed = false;
+
   form: EmploymentStatusData      = createEmptyEmploymentStatus();
   savedForm: EmploymentStatusData = createEmptyEmploymentStatus();
 
@@ -50,7 +53,6 @@ export class EmploymentStatusComponent implements OnInit {
   readonly careerCategories       = CAREER_CATEGORIES;
   readonly preferredWorkTypeOpts  = PREFERRED_WORK_TYPE_OPTIONS;
 
-  // ── ADDED: NgZone injected ───────────────────────────────────────
   constructor(
     private employmentStatusService: EmploymentStatusService,
     private ngZone: NgZone,
@@ -60,15 +62,26 @@ export class EmploymentStatusComponent implements OnInit {
     await this.loadData();
   }
 
-  // ── FIXED: wait for Firebase auth state before fetching ──────────
+  // FIX: set destroyed flag on component teardown
+  ngOnDestroy(): void {
+    this.destroyed = true;
+  }
+
   private loadData(): Promise<void> {
     return new Promise((resolve) => {
       const auth        = getAuth();
       const unsubscribe = onAuthStateChanged(auth, async (user) => {
         unsubscribe(); // listen once, then stop
 
+        // FIX: bail out immediately if destroyed before the callback fired
+        if (this.destroyed) {
+          resolve();
+          return;
+        }
+
         if (!user) {
           this.ngZone.run(() => {
+            if (this.destroyed) { resolve(); return; }
             this.loading = false;
             resolve();
           });
@@ -77,15 +90,21 @@ export class EmploymentStatusComponent implements OnInit {
 
         try {
           const data = await this.employmentStatusService.getByUid(user.uid);
+
+          // FIX: bail out if destroyed while awaiting Firestore
+          if (this.destroyed) { resolve(); return; }
+
           if (data) {
             this.form      = { ...createEmptyEmploymentStatus(), ...data };
             this.savedForm = { ...this.form, careerCategories: [...(this.form.careerCategories ?? [])] };
           }
         } catch (err) {
+          // FIX: bail out if destroyed before logging/updating state
+          if (this.destroyed) { resolve(); return; }
           console.error('Failed to load employment status:', err);
         } finally {
-          // ngZone.run() ensures Angular's change detection sees the update
           this.ngZone.run(() => {
+            if (this.destroyed) { resolve(); return; }
             this.loading = false;
             resolve();
           });
@@ -94,7 +113,7 @@ export class EmploymentStatusComponent implements OnInit {
     });
   }
 
-  // ── Status state helpers (unchanged) ────────────────────────────
+  // ── Status state helpers ─────────────────────────────────────────
   get isEmployed(): boolean            { return this.form.status === 'Employed'; }
   get isSelfEmployed(): boolean        { return this.form.status === 'Self-employed'; }
   get isUnemployed(): boolean          { return this.form.status === 'Unemployed'; }

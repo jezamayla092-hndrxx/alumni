@@ -49,10 +49,6 @@ export interface Announcement {
   program?: string;
   status: AnnouncementStatus;
   isPinned: boolean;
-  imageUrl?: string;
-  attachmentUrl?: string;
-  attachmentName?: string;
-  attachmentType?: string;
   createdBy?: string;
   createdAt: string;
   updatedAt?: string;

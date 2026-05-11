@@ -126,14 +126,6 @@
           </ng-container>
           <span class="dot">·</span>
           <span><i class="pi pi-calendar"></i> {{ formatDate(item.createdAt) }}</span>
-          <ng-container *ngIf="item.imageUrl">
-            <span class="dot">·</span>
-            <span><i class="pi pi-image"></i> Image</span>
-          </ng-container>
-          <ng-container *ngIf="item.attachmentUrl">
-            <span class="dot">·</span>
-            <span><i class="pi pi-paperclip"></i> {{ item.attachmentName || 'Attachment' }}</span>
-          </ng-container>
         </div>
       </div>
 
@@ -147,10 +139,13 @@
         <button
           type="button"
           class="action-btn pin-btn"
+          [class.pin-active]="item.isPinned"
           [title]="item.isPinned ? 'Unpin' : 'Pin'"
+          [disabled]="isPinToggling(item)"
           (click)="togglePin(item)"
         >
-          <i class="pi pi-thumbtack" [class.pin-active]="item.isPinned"></i>
+          <i class="pi pi-spin pi-spinner" *ngIf="isPinToggling(item)"></i>
+          <i class="pi pi-thumbtack" *ngIf="!isPinToggling(item)"></i>
         </button>
         <button
           type="button"
@@ -253,80 +248,14 @@
           </div>
         </div>
 
-        <label class="checkbox-row pin-row">
+        <div class="pin-row" (click)="form.isPinned = !form.isPinned">
           <div class="custom-checkbox" [class.checked]="form.isPinned">
-            <input type="checkbox" [(ngModel)]="form.isPinned" />
             <i class="pi pi-check"></i>
           </div>
           <div class="checkbox-copy">
             <span class="checkbox-label">Pin Announcement</span>
             <span class="checkbox-hint">Pinned announcements are highlighted with a purple left border.</span>
           </div>
-        </label>
-      </div>
-
-      <!-- Image -->
-      <div class="form-section">
-        <div class="form-section-label">
-          <i class="pi pi-image"></i> Image
-          <span class="optional-label">(Optional)</span>
-        </div>
-
-        <div class="image-preview-block" *ngIf="currentImageUrl">
-          <img [src]="currentImageUrl" alt="Announcement image preview" class="image-preview" />
-          <div class="image-actions">
-            <label class="file-label-btn">
-              <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onImageSelected($event)" hidden />
-              <i class="pi pi-refresh"></i> Change Image
-            </label>
-            <button type="button" class="remove-file-btn" (click)="removeImage()">
-              <i class="pi pi-trash"></i> Remove
-            </button>
-          </div>
-        </div>
-
-        <div class="file-upload-zone" *ngIf="!currentImageUrl">
-          <i class="pi pi-cloud-upload"></i>
-          <p>Upload an image for this announcement</p>
-          <span>JPG, PNG, WEBP · Max 5MB</span>
-          <label class="file-label-btn primary-file-btn">
-            <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onImageSelected($event)" hidden />
-            <i class="pi pi-upload"></i> Choose Image
-          </label>
-        </div>
-      </div>
-
-      <!-- Attachment -->
-      <div class="form-section">
-        <div class="form-section-label">
-          <i class="pi pi-paperclip"></i> Attachment
-          <span class="optional-label">(Optional)</span>
-        </div>
-
-        <div class="attachment-block" *ngIf="currentAttachmentName">
-          <div class="attachment-info">
-            <i class="pi pi-file"></i>
-            <span>{{ currentAttachmentName }}</span>
-          </div>
-          <div class="image-actions">
-            <label class="file-label-btn">
-              <input type="file" accept=".pdf,.doc,.docx,image/jpeg,image/png" (change)="onAttachmentSelected($event)" hidden />
-              <i class="pi pi-refresh"></i> Change
-            </label>
-            <button type="button" class="remove-file-btn" (click)="removeAttachment()">
-              <i class="pi pi-trash"></i> Remove
-            </button>
-          </div>
-        </div>
-
-        <div class="file-upload-zone" *ngIf="!currentAttachmentName">
-          <i class="pi pi-cloud-upload"></i>
-          <p>Attach a file to this announcement</p>
-          <span>PDF, DOC, DOCX, JPG, PNG · Max 10MB</span>
-          <label class="file-label-btn primary-file-btn">
-            <input type="file" accept=".pdf,.doc,.docx,image/jpeg,image/png" (change)="onAttachmentSelected($event)" hidden />
-            <i class="pi pi-upload"></i> Choose File
-          </label>
         </div>
       </div>
 
@@ -373,14 +302,7 @@
       </button>
     </div>
 
-    <div class="modal-body view-body" *ngIf="selectedAnnouncement">
-
-      <img
-        *ngIf="selectedAnnouncement.imageUrl"
-        [src]="selectedAnnouncement.imageUrl"
-        alt="Announcement image"
-        class="view-image"
-      />
+    <div class="modal-body" *ngIf="selectedAnnouncement">
 
       <div class="view-meta">
         <div class="view-meta-item">
@@ -406,13 +328,6 @@
         <p>{{ selectedAnnouncement.content }}</p>
       </div>
 
-     <div class="view-attachment" *ngIf="selectedAnnouncement.attachmentUrl">
-  <a [href]="selectedAnnouncement.attachmentUrl" target="_blank" rel="noopener" class="attachment-link">
-    <i class="pi pi-file"></i>
-    {{ selectedAnnouncement.attachmentName || 'Download Attachment' }}
-    <i class="pi pi-external-link"></i>
-  </a>
-</div>
     </div>
 
     <div class="modal-footer">

@@ -6,6 +6,7 @@ import {
   OnDestroy,
   OnInit,
 } from '@angular/core';
+import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 
 import { AuthService } from '../../../services/auth.service';
@@ -20,202 +21,183 @@ import { VerificationRequest } from '../../../models/verification.model';
   styleUrls: ['./verification-status.scss'],
 })
 export class VerificationStatus implements OnInit, OnDestroy {
+  verificationRequest: VerificationRequest | null = null;
+
   loading = true;
   errorMessage = '';
 
-  verification: VerificationRequest | null = null;
-
-  private verificationSub?: Subscription;
+  private requestSub?: Subscription;
 
   constructor(
     private authService: AuthService,
     private verificationService: VerificationService,
-    private cdr: ChangeDetectorRef,
-    private zone: NgZone
+    private router: Router,
+    private zone: NgZone,
+    private cdr: ChangeDetectorRef
   ) {}
 
   async ngOnInit(): Promise<void> {
-    await this.loadMyVerificationStatus();
+    const user = await this.authService.waitForAuthReady();
+
+    if (!user) {
+      await this.router.navigate(['/login']);
+      return;
+    }
+
+    this.loadVerificationStatus(user.uid, user.email || '');
   }
 
   ngOnDestroy(): void {
-    this.verificationSub?.unsubscribe();
+    this.requestSub?.unsubscribe();
   }
 
-  get hasVerification(): boolean {
-    return !!this.verification;
-  }
-
-  get status(): 'pending' | 'under_review' | 'approved' | 'rejected' | 'none' {
-    return this.verification?.status ?? 'none';
-  }
-
-  get statusLabel(): string {
-    switch (this.status) {
-      case 'approved':
-        return 'Approved';
-      case 'rejected':
-        return 'Rejected';
-      case 'under_review':
-        return 'Under Review';
-      case 'pending':
-        return 'Pending';
-      default:
-        return 'No Request Yet';
-    }
-  }
-
-  get titleText(): string {
-    switch (this.status) {
-      case 'approved':
-        return "You're Verified";
-      case 'rejected':
-        return 'Verification Rejected';
-      case 'under_review':
-        return 'Verification In Progress';
-      case 'pending':
-        return 'Request Submitted';
-      default:
-        return 'No Verification Request Found';
-    }
-  }
-
-  get descriptionText(): string {
-    switch (this.status) {
-      case 'approved':
-        return 'Your alumni status has been successfully verified. You now have full access to all alumni services and benefits.';
-      case 'rejected':
-        return (
-          this.verification?.remarks?.trim() ||
-          'Your verification request was reviewed but could not be approved.'
-        );
-      case 'under_review':
-        return 'Your submitted verification request is currently being reviewed by the Alumni Affairs Office.';
-      case 'pending':
-        return 'Your verification request has been submitted successfully and is waiting for review.';
-      default:
-        return 'We could not find any verification request linked to your account yet.';
-    }
-  }
-
-  get alumniId(): string {
-    return this.verification?.alumniId?.trim() || 'Not assigned yet';
-  }
-
-  get submittedDate(): string {
-    return this.formatDate(this.verification?.submittedAt);
-  }
-
-  get reviewedDate(): string {
-    return this.formatDate(this.verification?.reviewedAt);
-  }
-
-  get reviewedBy(): string {
-    return this.verification?.reviewedBy?.trim() || 'Alumni Office';
-  }
-
-  get remarks(): string {
-    return this.verification?.remarks?.trim() || 'No remarks available.';
-  }
-
-  async loadMyVerificationStatus(): Promise<void> {
+  private loadVerificationStatus(userUid: string, email: string): void {
     this.loading = true;
     this.errorMessage = '';
-    this.cdr.detectChanges();
+    this.requestSub?.unsubscribe();
 
-    try {
-      const authUser = await this.authService.getAuthState();
+    this.requestSub = this.verificationService
+      .getLatestVerificationRequestByUser(userUid, email)
+      .subscribe({
+        next: (request) => {
+          this.zone.run(() => {
+            this.verificationRequest = request
+              ? {
+                  ...request,
+                  status: this.normalizeStatus(request.status),
+                }
+              : null;
 
-      console.log('VERIFICATION AUTH USER:', authUser);
-      console.log('VERIFICATION AUTH UID:', authUser?.uid);
-      console.log('VERIFICATION AUTH EMAIL:', authUser?.email);
-
-      if (!authUser) {
-        this.zone.run(() => {
-          this.verification = null;
-          this.loading = false;
-          this.errorMessage = 'No logged-in user found.';
-          this.cdr.detectChanges();
-        });
-
-        return;
-      }
-
-      if (!authUser.email) {
-        this.zone.run(() => {
-          this.verification = null;
-          this.loading = false;
-          this.errorMessage = 'No logged-in user email found.';
-          this.cdr.detectChanges();
-        });
-
-        return;
-      }
-
-      this.verificationSub?.unsubscribe();
-
-      this.verificationSub = this.verificationService
-        .getLatestVerificationRequestByUser(authUser.uid, authUser.email)
-        .subscribe({
-          next: (request: VerificationRequest | null) => {
-            console.log('VERIFICATION REQUEST FOUND:', request);
-
-            this.zone.run(() => {
-              this.verification = request;
-              this.loading = false;
-              this.errorMessage = '';
-              this.cdr.detectChanges();
-            });
-          },
-          error: (error: unknown) => {
+            this.loading = false;
+            this.cdr.detectChanges();
+          });
+        },
+        error: (error) => {
+          this.zone.run(() => {
             console.error('Failed to load verification status:', error);
 
-            this.zone.run(() => {
-              this.verification = null;
-              this.errorMessage =
-                'Failed to load your verification status. Please try again.';
-              this.loading = false;
-              this.cdr.detectChanges();
-            });
-          },
-        });
-    } catch (error: unknown) {
-      console.error('Failed to initialize verification status:', error);
+            this.verificationRequest = null;
+            this.loading = false;
+            this.errorMessage = 'Unable to load verification status. Please try again later.';
 
-      this.zone.run(() => {
-        this.verification = null;
-        this.errorMessage =
-          'Failed to load your verification status. Please try again.';
-        this.loading = false;
-        this.cdr.detectChanges();
+            this.cdr.detectChanges();
+          });
+        },
       });
+  }
+
+  private normalizeStatus(status: any): VerificationRequest['status'] {
+    const value = String(status ?? '').toLowerCase().replace(/\s+/g, '_').trim();
+
+    switch (value) {
+      case 'approved':
+      case 'verified':
+        return 'approved';
+
+      case 'under_review':
+      case 'underreview':
+      case 'review':
+        return 'under_review';
+
+      case 'rejected':
+      case 'declined':
+        return 'rejected';
+
+      case 'pending':
+      default:
+        return 'pending';
     }
   }
 
-  private formatDate(value: any): string {
+  getStatusLabel(status: any): string {
+    switch (this.normalizeStatus(status)) {
+      case 'approved':
+        return 'Approved';
+
+      case 'under_review':
+        return 'Under Review';
+
+      case 'rejected':
+        return 'Rejected';
+
+      case 'pending':
+      default:
+        return 'Pending';
+    }
+  }
+
+  getStatusClass(status: any): string {
+    switch (this.normalizeStatus(status)) {
+      case 'approved':
+        return 'status-approved';
+
+      case 'under_review':
+        return 'status-review';
+
+      case 'rejected':
+        return 'status-rejected';
+
+      case 'pending':
+      default:
+        return 'status-pending';
+    }
+  }
+
+  getSubmittedDateLabel(request: VerificationRequest): string {
+    return this.formatDate(request.submittedAt);
+  }
+
+  getReviewedDateLabel(request: VerificationRequest): string {
+    return this.formatDate(request.reviewedAt || request.updatedAt);
+  }
+
+  getIssuedDateLabel(request: VerificationRequest): string {
+    return this.formatDate(request.alumniIdIssuedAt || request.reviewedAt || request.updatedAt);
+  }
+
+  getReviewerLabel(request: VerificationRequest): string {
+    return request.reviewedBy?.trim() || '—';
+  }
+
+  getRemarksLabel(request: VerificationRequest): string {
+    return request.remarks?.trim() || 'No remarks available.';
+  }
+
+  getUniversityIdLabel(request: VerificationRequest): string {
+    return request.studentId?.trim() || '—';
+  }
+
+  getAlumniIdLabel(request: VerificationRequest): string {
+    return request.alumniId?.trim() || 'Not assigned yet';
+  }
+
+  getCampusLabel(request: VerificationRequest): string {
+    return request.campus?.trim() || 'USTP Villanueva Campus';
+  }
+
+  formatDate(value: any): string {
     if (!value) {
-      return 'Not available';
+      return '—';
     }
 
-    let date: Date | null = null;
+    let date: Date;
 
     if (typeof value?.toDate === 'function') {
       date = value.toDate();
-    } else if (value instanceof Date) {
-      date = value;
+    } else if (value?.seconds) {
+      date = new Date(value.seconds * 1000);
     } else {
-      const parsed = new Date(value);
-      date = Number.isNaN(parsed.getTime()) ? null : parsed;
+      date = new Date(value);
     }
 
-    if (!date) {
-      return 'Not available';
+    if (Number.isNaN(date.getTime())) {
+      return '—';
     }
 
-    return new Intl.DateTimeFormat('en-US', {
+    return date.toLocaleDateString('en-PH', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
-    }).format(date);
+    });
   }
 }

@@ -5,20 +5,21 @@
         <i class="pi pi-sparkles"></i>
         Welcome back
       </span>
-
       <h1>{{ alumniName }}</h1>
-
-      <p>
-        {{ program }} · {{ batch }} · Here's your alumni overview for today.
-      </p>
+      <p>{{ program }} · {{ batch }} · Here's your alumni overview for today.</p>
     </div>
 
     <div class="hero-actions">
-      <button type="button" class="secondary-btn">Edit Profile</button>
-      <button type="button" class="primary-btn">Update Status</button>
+      <button type="button" class="secondary-btn" [routerLink]="['/alumni/my-profile']">
+        Edit Profile
+      </button>
+      <button type="button" class="primary-btn" [routerLink]="['/alumni/employment-status']">
+        Update Status
+      </button>
     </div>
   </div>
 
+  <!-- TOP CARDS -->
   <section class="top-cards">
     <article
       class="top-card"
@@ -47,7 +48,10 @@
             </div>
 
             <div class="progress-bar">
-              <div class="progress-fill"></div>
+              <div
+                class="progress-fill"
+                [style.width.%]="card.progress || 0"
+              ></div>
             </div>
 
             <p class="helper-text">{{ card.helperText }}</p>
@@ -56,21 +60,20 @@
           <ng-container *ngSwitchDefault>
             <h2>{{ card.mainValue }}</h2>
             <p class="sub-line">{{ card.subtitle }}</p>
-            <p class="helper-text" *ngIf="card.helperText">
-              {{ card.helperText }}
-            </p>
+            <p class="helper-text" *ngIf="card.helperText">{{ card.helperText }}</p>
           </ng-container>
         </ng-container>
       </div>
 
-      <a href="javascript:void(0)" class="card-link">
-        {{ card.actionText }}
-        <i class="pi pi-arrow-right"></i>
+      <a [routerLink]="[card.actionRoute]" class="card-link">
+        {{ card.actionText }} <i class="pi pi-arrow-right"></i>
       </a>
     </article>
   </section>
 
+  <!-- MIDDLE GRID -->
   <section class="middle-grid">
+    <!-- Upcoming Events -->
     <article class="panel">
       <div class="panel-header">
         <div class="panel-title">
@@ -78,33 +81,40 @@
           <h3>Upcoming Events</h3>
         </div>
 
-        <a href="javascript:void(0)" class="view-link">
-          View all
-          <i class="pi pi-angle-right"></i>
+        <a [routerLink]="['/alumni/events']" class="view-link">
+          View all <i class="pi pi-angle-right"></i>
         </a>
       </div>
 
       <div class="event-list">
+        <div class="empty-panel" *ngIf="upcomingEvents.length === 0">
+          <i class="pi pi-calendar"></i>
+          <span>No upcoming events.</span>
+        </div>
+
         <div
           class="event-item"
           *ngFor="let event of upcomingEvents; trackBy: trackByIndex"
         >
           <div class="event-date">
-            <span class="month">{{ event.month }}</span>
-            <span class="day">{{ event.day }}</span>
+            <span class="month">{{ eventMonth(event) }}</span>
+            <span class="day">{{ eventDay(event) }}</span>
           </div>
 
           <div class="event-info">
-            <h4>{{ event.title }}</h4>
-            <p>
-              <i class="pi pi-map-marker"></i>
-              {{ event.location }}
-            </p>
+            <h4>{{ eventTitle(event) }}</h4>
+            <p><i class="pi pi-map-marker"></i> {{ eventLocation(event) }}</p>
           </div>
+
+          <span
+            class="event-status-dot"
+            [class]="eventStatus(event).toLowerCase()"
+          ></span>
         </div>
       </div>
     </article>
 
+    <!-- Announcements -->
     <article class="panel">
       <div class="panel-header">
         <div class="panel-title">
@@ -112,49 +122,59 @@
           <h3>Announcements</h3>
         </div>
 
-        <a href="javascript:void(0)" class="view-link">
-          View all
-          <i class="pi pi-angle-right"></i>
+        <a [routerLink]="['/alumni/announcements']" class="view-link">
+          View all <i class="pi pi-angle-right"></i>
         </a>
       </div>
 
       <div class="announcement-list">
+        <div class="empty-panel" *ngIf="announcements.length === 0">
+          <i class="pi pi-megaphone"></i>
+          <span>No announcements yet.</span>
+        </div>
+
         <div
           class="announcement-item"
           *ngFor="let item of announcements; trackBy: trackByIndex"
-          [ngClass]="{ highlighted: item.highlighted }"
+          [class.highlighted]="item.isPinned"
         >
           <div class="announcement-copy">
             <h4>{{ item.title }}</h4>
-            <p>{{ item.date }}</p>
+            <p>{{ formatAnnouncementDate(item.createdAt) }}</p>
           </div>
 
-          <span class="announcement-tag" [ngClass]="item.tagClass">
-            {{ item.tag }}
+          <span class="announcement-tag" [ngClass]="announcementTagClass(item)">
+            {{ announcementTag(item) }}
           </span>
         </div>
       </div>
     </article>
   </section>
 
+  <!-- BOTTOM GRID -->
   <section class="bottom-grid">
+    <!-- Active Jobs -->
     <article class="panel recommended-panel">
       <div class="panel-header">
         <div class="panel-title">
-          <i class="pi pi-chart-line"></i>
-          <h3>Recommended for You</h3>
+          <i class="pi pi-briefcase"></i>
+          <h3>Latest Job Postings</h3>
         </div>
 
-        <a href="javascript:void(0)" class="view-link">
-          Browse jobs
-          <i class="pi pi-angle-right"></i>
+        <a [routerLink]="['/alumni/job-postings']" class="view-link">
+          Browse jobs <i class="pi pi-angle-right"></i>
         </a>
       </div>
 
       <div class="job-list">
+        <div class="empty-panel" *ngIf="activeJobs.length === 0">
+          <i class="pi pi-briefcase"></i>
+          <span>No active job postings.</span>
+        </div>
+
         <div
           class="job-item"
-          *ngFor="let job of recommendedJobs; trackBy: trackByIndex"
+          *ngFor="let job of activeJobs; trackBy: trackByIndex"
         >
           <div class="job-left">
             <div class="job-icon">
@@ -162,42 +182,79 @@
             </div>
 
             <div class="job-copy">
-              <h4>{{ job.title }}</h4>
-              <p>{{ job.company }} · {{ job.location }}</p>
+              <h4>{{ job.jobTitle }}</h4>
+              <p>{{ job.companyName }} · {{ job.location }}</p>
             </div>
           </div>
 
-          <div class="job-match">
-            <strong>{{ job.match }}%</strong>
-            <span>match</span>
+          <div class="job-meta">
+            <span class="job-type-pill">{{ job.employmentType }}</span>
           </div>
         </div>
       </div>
     </article>
 
+    <!-- Quick Links -->
     <article class="panel activity-panel">
       <div class="panel-header">
         <div class="panel-title">
-          <i class="pi pi-clock"></i>
-          <h3>Recent Activity</h3>
+          <i class="pi pi-bolt"></i>
+          <h3>Quick Links</h3>
         </div>
       </div>
 
-      <div class="activity-list">
-        <div
-          class="activity-item"
-          *ngFor="let activity of recentActivities; trackBy: trackByIndex"
-        >
-          <div class="activity-icon" [ngClass]="activity.iconClass">
-            <i [class]="activity.icon"></i>
+      <div class="quick-links">
+        <a [routerLink]="['/alumni/verification-status']" class="quick-link">
+          <div class="ql-icon activity-blue">
+            <i class="pi pi-shield"></i>
           </div>
 
-          <div class="activity-copy">
-            <h4>{{ activity.title }}</h4>
-            <p>{{ activity.description }}</p>
-            <span>{{ activity.time }}</span>
+          <div class="ql-copy">
+            <h4>Verification Status</h4>
+            <p>Check your alumni verification</p>
           </div>
-        </div>
+
+          <i class="pi pi-chevron-right ql-arrow"></i>
+        </a>
+
+        <a [routerLink]="['/alumni/employment-status']" class="quick-link">
+          <div class="ql-icon activity-green">
+            <i class="pi pi-briefcase"></i>
+          </div>
+
+          <div class="ql-copy">
+            <h4>Employment Status</h4>
+            <p>Update your work information</p>
+          </div>
+
+          <i class="pi pi-chevron-right ql-arrow"></i>
+        </a>
+
+        <a [routerLink]="['/alumni/events']" class="quick-link">
+          <div class="ql-icon activity-purple">
+            <i class="pi pi-calendar"></i>
+          </div>
+
+          <div class="ql-copy">
+            <h4>Events</h4>
+            <p>Browse alumni activities</p>
+          </div>
+
+          <i class="pi pi-chevron-right ql-arrow"></i>
+        </a>
+
+        <a [routerLink]="['/alumni/announcements']" class="quick-link">
+          <div class="ql-icon activity-yellow">
+            <i class="pi pi-megaphone"></i>
+          </div>
+
+          <div class="ql-copy">
+            <h4>Announcements</h4>
+            <p>Stay up to date</p>
+          </div>
+
+          <i class="pi pi-chevron-right ql-arrow"></i>
+        </a>
       </div>
     </article>
   </section>

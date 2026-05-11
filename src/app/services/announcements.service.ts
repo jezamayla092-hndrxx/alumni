@@ -1,45 +1,80 @@
-import {
-  Injectable,
-  EnvironmentInjector,
-  inject,
-  runInInjectionContext,
-} from '@angular/core';
-import {
-  Firestore,
-  collection,
-  collectionData,
-  addDoc,
-  doc,
-  updateDoc,
-  deleteDoc,
-  query,
-  orderBy,
-  CollectionReference,
-  DocumentData,
-} from '@angular/fire/firestore';
-import {
-  getDownloadURL,
-  getStorage,
-  ref,
-  uploadBytes,
-} from 'firebase/storage';
+import { Injectable, NgZone } from '@angular/core';
 import { Observable } from 'rxjs';
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  query,
+  updateDoc,
+  where,
+} from 'firebase/firestore';
+
+import { db } from '../firebase.config';
 import { Announcement } from '../models/announcements.model';
 
 @Injectable({ providedIn: 'root' })
 export class AnnouncementService {
-  private firestore = inject(Firestore);
-  private injector = inject(EnvironmentInjector);
+  private col = collection(db, 'announcements');
 
-  private col: CollectionReference<DocumentData> = collection(
-    this.firestore,
-    'announcements'
-  );
+  constructor(private ngZone: NgZone) {}
 
   getAnnouncements(): Observable<Announcement[]> {
-    return runInInjectionContext(this.injector, () => {
-      const q = query(this.col, orderBy('createdAt', 'desc'));
-      return collectionData(q, { idField: 'id' }) as Observable<Announcement[]>;
+    return new Observable((observer) => {
+      const q = query(this.col);
+
+      const unsubscribe = onSnapshot(
+        q,
+        (snapshot) => {
+          const announcements = snapshot.docs
+            .map((d) => ({
+              id: d.id,
+              ...(d.data() as Omit<Announcement, 'id'>),
+            }))
+            .sort((a, b) => {
+              const dateA = new Date(a.createdAt || '').getTime();
+              const dateB = new Date(b.createdAt || '').getTime();
+              return dateB - dateA;
+            }) as Announcement[];
+
+          this.ngZone.run(() => observer.next(announcements));
+        },
+        (error) => {
+          this.ngZone.run(() => observer.error(error));
+        }
+      );
+
+      return () => unsubscribe();
+    });
+  }
+
+  getPublishedAnnouncements(): Observable<Announcement[]> {
+    return new Observable((observer) => {
+      const q = query(this.col, where('status', '==', 'Published'));
+
+      const unsubscribe = onSnapshot(
+        q,
+        (snapshot) => {
+          const announcements = snapshot.docs
+            .map((d) => ({
+              id: d.id,
+              ...(d.data() as Omit<Announcement, 'id'>),
+            }))
+            .sort((a, b) => {
+              const dateA = new Date(a.createdAt || '').getTime();
+              const dateB = new Date(b.createdAt || '').getTime();
+              return dateB - dateA;
+            }) as Announcement[];
+
+          this.ngZone.run(() => observer.next(announcements));
+        },
+        (error) => {
+          this.ngZone.run(() => observer.error(error));
+        }
+      );
+
+      return () => unsubscribe();
     });
   }
 
@@ -47,29 +82,14 @@ export class AnnouncementService {
     await addDoc(this.col, data);
   }
 
-  async updateAnnouncement(id: string, data: Partial<Announcement>): Promise<void> {
-    await updateDoc(doc(this.firestore, 'announcements', id), { ...data });
+  async updateAnnouncement(
+    id: string,
+    data: Partial<Announcement>
+  ): Promise<void> {
+    await updateDoc(doc(db, 'announcements', id), { ...data });
   }
 
   async deleteAnnouncement(id: string): Promise<void> {
-    await deleteDoc(doc(this.firestore, 'announcements', id));
-  }
-
-  async uploadAnnouncementImage(file: File): Promise<string> {
-    const storage = getStorage();
-    const safeFileName = file.name.replace(/\s+/g, '_');
-    const filePath = `announcement-images/${Date.now()}_${safeFileName}`;
-    const fileRef = ref(storage, filePath);
-    await uploadBytes(fileRef, file);
-    return getDownloadURL(fileRef);
-  }
-
-  async uploadAnnouncementAttachment(file: File): Promise<string> {
-    const storage = getStorage();
-    const safeFileName = file.name.replace(/\s+/g, '_');
-    const filePath = `announcement-attachments/${Date.now()}_${safeFileName}`;
-    const fileRef = ref(storage, filePath);
-    await uploadBytes(fileRef, file);
-    return getDownloadURL(fileRef);
+    await deleteDoc(doc(db, 'announcements', id));
   }
 }

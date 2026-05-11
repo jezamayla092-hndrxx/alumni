@@ -33,7 +33,7 @@
           class="panel-link-btn"
           (click)="goToVerificationRequests()"
         >
-          View all → 
+          View all →
         </button>
       </div>
 
@@ -60,8 +60,8 @@
                 <span
                   class="status-badge"
                   [ngClass]="{
-                    'status-pending': item.status === 'pending',
-                    'status-review': item.status === 'under_review',
+                    'status-pending':  item.status === 'pending',
+                    'status-review':   item.status === 'under_review',
                     'status-approved': item.status === 'approved',
                     'status-rejected': item.status === 'rejected'
                   }"
@@ -76,7 +76,9 @@
 
       <ng-template #emptyVerifications>
         <div class="empty-state">
-          <i class="pi pi-inbox"></i>
+          <div class="empty-icon-wrap">
+            <i class="pi pi-inbox"></i>
+          </div>
           <h3>No verification requests yet</h3>
           <p>Incoming requests will appear here.</p>
         </div>
@@ -96,8 +98,8 @@
           <div
             class="activity-icon"
             [ngClass]="{
-              'activity-job': activity.type === 'job',
-              'activity-event': activity.type === 'event',
+              'activity-job':          activity.type === 'job',
+              'activity-event':        activity.type === 'event',
               'activity-announcement': activity.type === 'announcement'
             }"
           >
@@ -105,7 +107,7 @@
               class="pi"
               [ngClass]="{
                 'pi-briefcase': activity.type === 'job',
-                'pi-calendar': activity.type === 'event',
+                'pi-calendar':  activity.type === 'event',
                 'pi-megaphone': activity.type === 'announcement'
               }"
             ></i>
@@ -120,7 +122,9 @@
 
       <ng-template #emptyActivities>
         <div class="empty-state">
-          <i class="pi pi-history"></i>
+          <div class="empty-icon-wrap">
+            <i class="pi pi-history"></i>
+          </div>
           <h3>No recent activity</h3>
           <p>Recent updates will appear here.</p>
         </div>

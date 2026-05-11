@@ -1,0 +1,132 @@
+<section class="events-page">
+  <div class="page-header">
+    <div>
+      <div class="eyebrow">ALUMNI PORTAL</div>
+      <h1>Events</h1>
+      <p>Browse upcoming and past alumni activities.</p>
+    </div>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-icon purple"><i class="pi pi-calendar"></i></div>
+      <div><strong>{{ totalCount }}</strong><span>Total</span></div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-icon blue"><i class="pi pi-clock"></i></div>
+      <div><strong>{{ upcomingCount }}</strong><span>Upcoming</span></div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-icon amber"><i class="pi pi-sync"></i></div>
+      <div><strong>{{ ongoingCount }}</strong><span>Ongoing</span></div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-icon green"><i class="pi pi-check-circle"></i></div>
+      <div><strong>{{ completedCount }}</strong><span>Completed</span></div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-field">
+      <i class="pi pi-search"></i>
+      <input type="text" placeholder="Search events..." [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" />
+    </div>
+    <select [(ngModel)]="statusFilter" (ngModelChange)="applyFilters()">
+      <option value="all">All Statuses</option>
+      <option value="Upcoming">Upcoming</option>
+      <option value="Ongoing">Ongoing</option>
+      <option value="Completed">Completed</option>
+      <option value="Cancelled">Cancelled</option>
+    </select>
+    <select [(ngModel)]="typeFilter" (ngModelChange)="applyFilters()">
+      <option value="all">All Types</option>
+      <option *ngFor="let type of eventTypes" [value]="type">{{ type }}</option>
+    </select>
+  </div>
+
+  <ng-container *ngIf="pinnedEvent as event">
+    <div class="section-title"><span>Featured Event</span></div>
+    <div class="pinned-card" (click)="openView(event)">
+      <div class="pinned-content">
+        <div class="badge-row">
+          <span class="status-badge" [class]="eventStatus(event).toLowerCase()">{{ eventStatus(event) }}</span>
+          <span class="type-badge">{{ eventType(event) }}</span>
+        </div>
+        <h2>{{ eventTitle(event) }}</h2>
+        <p>{{ eventDescription(event) }}</p>
+        <div class="info-grid">
+          <span><i class="pi pi-calendar"></i> {{ formatDate(event) }}</span>
+          <span><i class="pi pi-clock"></i> {{ eventStartTime(event) }} – {{ eventEndTime(event) }}</span>
+          <span><i class="pi pi-map-marker"></i> {{ eventLocation(event) }}</span>
+        </div>
+        <div class="view-hint"><i class="pi pi-eye"></i> Click to view details</div>
+      </div>
+    </div>
+  </ng-container>
+
+  <div class="section-title">
+    <span>All Events</span>
+    <small>{{ allEvents.length }} result{{ allEvents.length === 1 ? '' : 's' }}</small>
+  </div>
+
+  <div *ngIf="loading" class="empty-state">Loading events...</div>
+  <div *ngIf="!loading && filteredEvents.length === 0" class="empty-state">No events found.</div>
+
+  <div *ngIf="!loading && allEvents.length > 0" class="event-list">
+    <div
+      *ngFor="let event of allEvents"
+      class="event-row"
+      [class.cancelled-row]="eventStatus(event) === 'Cancelled'"
+      (click)="openView(event)"
+    >
+      <div class="date-box">
+        <span>{{ eventMonth(event) }}</span>
+        <strong>{{ eventDay(event) }}</strong>
+        <small>{{ eventYear(event) }}</small>
+      </div>
+      <div class="event-main">
+        <div class="event-title-row">
+          <h3>{{ eventTitle(event) }}</h3>
+          <span class="status-badge" [class]="eventStatus(event).toLowerCase()">{{ eventStatus(event) }}</span>
+          <span class="type-badge">{{ eventType(event) }}</span>
+        </div>
+        <p>{{ eventDescription(event) }}</p>
+        <div class="row-meta">
+          <span><i class="pi pi-clock"></i> {{ eventStartTime(event) }} – {{ eventEndTime(event) }}</span>
+          <span><i class="pi pi-map-marker"></i> {{ eventLocation(event) }}</span>
+        </div>
+      </div>
+      <div class="row-caret"><i class="pi pi-chevron-right"></i></div>
+    </div>
+  </div>
+</section>
+
+<div class="modal-backdrop" *ngIf="showViewModal && selectedEvent" (click)="closeView()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-header-copy">
+        <div class="badge-row">
+          <span class="status-badge" [class]="eventStatus(selectedEvent).toLowerCase()">{{ eventStatus(selectedEvent) }}</span>
+          <span class="type-badge">{{ eventType(selectedEvent) }}</span>
+        </div>
+        <h2>{{ eventTitle(selectedEvent) }}</h2>
+      </div>
+      <button type="button" class="close-btn" (click)="closeView()"><i class="pi pi-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="view-meta-grid">
+        <div class="view-meta-item"><span class="meta-label">Date</span><span>{{ formatDate(selectedEvent) }}</span></div>
+        <div class="view-meta-item"><span class="meta-label">Time</span><span>{{ eventStartTime(selectedEvent) }} – {{ eventEndTime(selectedEvent) }}</span></div>
+        <div class="view-meta-item"><span class="meta-label">Location</span><span>{{ eventLocation(selectedEvent) }}</span></div>
+        <div class="view-meta-item"><span class="meta-label">Type</span><span>{{ eventType(selectedEvent) }}</span></div>
+      </div>
+      <div class="view-content">
+        <h4>About this Event</h4>
+        <p>{{ eventDescription(selectedEvent) }}</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="secondary-btn" (click)="closeView()">Close</button>
+    </div>
+  </div>
+</div>

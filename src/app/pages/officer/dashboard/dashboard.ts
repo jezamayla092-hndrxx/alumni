@@ -1,15 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
-import { Subject, filter, takeUntil } from 'rxjs';
-import { Unsubscribe } from 'firebase/firestore';
+import { Router } from '@angular/router';
+import { collection, onSnapshot, Unsubscribe } from 'firebase/firestore';
 
-import { VerificationService } from '../../../services/verification.service';
-import { VerificationRequest } from '../../../models/verification.model';
-import { UsersService } from '../../../services/users.service';
+import { db } from '../../../firebase.config';
 
 type VerificationStatus = 'pending' | 'under_review' | 'approved' | 'rejected';
-type ActivityType = 'job' | 'event' | 'announcement';
+type ActivityType = 'job' | 'event' | 'announcement' | 'verification';
 
 interface SummaryCard {
   title: string;
@@ -32,6 +29,12 @@ interface ActivityPreview {
   type: ActivityType;
   title: string;
   date: string;
+  timestamp: number;
+}
+
+interface RawRecord {
+  id?: string;
+  [key: string]: any;
 }
 
 @Component({
@@ -42,15 +45,10 @@ interface ActivityPreview {
   styleUrls: ['./dashboard.scss'],
 })
 export class Dashboard implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
-
-  private alumniCountUnsubscribe?: Unsubscribe;
-  private monthlyAlumniCountUnsubscribe?: Unsubscribe;
+  private unsubscribers: Unsubscribe[] = [];
 
   pendingVerifications = 0;
   totalAlumni = 0;
-  thisMonthAlumni = 0;
-
   activeJobPosts = 0;
   upcomingEvents = 0;
   announcements = 0;
@@ -59,12 +57,14 @@ export class Dashboard implements OnInit, OnDestroy {
   loadingVerifications = false;
 
   verificationRequests: VerificationPreview[] = [];
-
   recentActivities: ActivityPreview[] = [];
 
+  private allVerificationRequests: RawRecord[] = [];
+  private allJobs: RawRecord[] = [];
+  private allEvents: RawRecord[] = [];
+  private allAnnouncements: RawRecord[] = [];
+
   constructor(
-    private verificationService: VerificationService,
-    private usersService: UsersService,
     private router: Router,
     private cdr: ChangeDetectorRef,
     private zone: NgZone
@@ -111,112 +111,377 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.loadVerificationDashboardData();
-    this.subscribeToRealTimeData();
-
-    this.router.events
-      .pipe(
-        filter((event) => event instanceof NavigationEnd),
-        takeUntil(this.destroy$)
-      )
-      .subscribe((event) => {
-        const nav = event as NavigationEnd;
-
-        if (nav.urlAfterRedirects.includes('/officer/dashboard')) {
-          this.loadVerificationDashboardData();
-        }
-      });
+    this.loadDashboardData();
   }
 
   ngOnDestroy(): void {
-    this.alumniCountUnsubscribe?.();
-    this.monthlyAlumniCountUnsubscribe?.();
-
-    this.destroy$.next();
-    this.destroy$.complete();
+    this.unsubscribers.forEach((unsubscribe) => unsubscribe());
+    this.unsubscribers = [];
   }
 
-  loadVerificationDashboardData(): void {
+  private loadDashboardData(): void {
     this.loadingVerifications = true;
 
-    this.verificationService
-      .getAllVerificationRequests()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (requests: VerificationRequest[]) => {
-          this.zone.run(() => {
-            const safeRequests = Array.isArray(requests) ? [...requests] : [];
+    this.listenToVerificationRequests();
+    this.listenToUsers();
+    this.listenToJobPostings();
+    this.listenToEvents();
+    this.listenToAnnouncements();
+  }
 
-            const pendingRequests = safeRequests.filter(
-              (request) => request.status === 'pending'
+  private listenToVerificationRequests(): void {
+    const unsubscribe = onSnapshot(
+      collection(db, 'verification_requests'),
+      (snapshot) => {
+        this.zone.run(() => {
+          this.allVerificationRequests = snapshot.docs.map((docItem) => {
+            const data = docItem.data() as RawRecord;
+
+            return {
+              id: docItem.id,
+              ...data,
+            };
+          });
+
+          const reviewStatuses = ['pending', 'under_review'];
+
+          const requestsNeedingReview = this.allVerificationRequests.filter((request) => {
+            const status = String(request['status'] || '').toLowerCase();
+            return reviewStatuses.includes(status);
+          });
+
+          this.pendingVerifications = requestsNeedingReview.length;
+
+          this.verificationSubtitle =
+            this.pendingVerifications === 1
+              ? '1 request awaiting review'
+              : `${this.pendingVerifications} requests awaiting review`;
+
+          this.verificationRequests = [...this.allVerificationRequests]
+            .sort((a, b) => {
+              const bTime = this.getDateValue(b['submittedAt'] || b['createdAt'] || b['updatedAt']);
+              const aTime = this.getDateValue(a['submittedAt'] || a['createdAt'] || a['updatedAt']);
+              return bTime - aTime;
+            })
+            .slice(0, 4)
+            .map((request, index) => ({
+              id: request['id'] || `VR-${index + 1}`,
+              name:
+                request['fullName'] ||
+                request['name'] ||
+                request['email'] ||
+                'Unknown Applicant',
+              program: request['program'] || 'Not specified',
+              year: request['yearGraduated'] || '—',
+              status: this.normalizeVerificationStatus(request['status']),
+            }));
+
+          this.loadingVerifications = false;
+          this.rebuildRecentActivities();
+          this.cdr.detectChanges();
+        });
+      },
+      (error) => {
+        this.zone.run(() => {
+          console.error('Error loading verification requests:', error);
+
+          this.pendingVerifications = 0;
+          this.verificationSubtitle = 'Failed to load verification data';
+          this.verificationRequests = [];
+          this.loadingVerifications = false;
+
+          this.rebuildRecentActivities();
+          this.cdr.detectChanges();
+        });
+      }
+    );
+
+    this.unsubscribers.push(unsubscribe);
+  }
+
+  private listenToUsers(): void {
+    const unsubscribe = onSnapshot(
+      collection(db, 'users'),
+      (snapshot) => {
+        this.zone.run(() => {
+          const users: RawRecord[] = snapshot.docs.map((docItem) => {
+            const data = docItem.data() as RawRecord;
+
+            return {
+              id: docItem.id,
+              ...data,
+            };
+          });
+
+          this.totalAlumni = users.filter((user) => {
+            const role = String(user['role'] || '').toLowerCase();
+            const verificationStatus = String(
+              user['verificationStatus'] || user['status'] || ''
+            ).toLowerCase();
+
+            return (
+              role === 'alumni' &&
+              user['isVerified'] === true &&
+              verificationStatus !== 'rejected'
             );
+          }).length;
 
-            this.pendingVerifications = pendingRequests.length;
+          this.cdr.detectChanges();
+        });
+      },
+      (error) => {
+        this.zone.run(() => {
+          console.error('Error loading users:', error);
+          this.totalAlumni = 0;
+          this.cdr.detectChanges();
+        });
+      }
+    );
 
-            this.verificationSubtitle =
-              pendingRequests.length === 1
-                ? '1 request awaiting review'
-                : `${pendingRequests.length} requests awaiting review`;
-
-            this.verificationRequests = safeRequests
-              .slice()
-              .sort((a, b) => this.getRequestTime(b) - this.getRequestTime(a))
-              .slice(0, 4)
-              .map((request, index) => ({
-                id: request.id || `VR-${index + 1}`,
-                name: request.fullName || 'Unknown Applicant',
-                program: request.program || 'Not specified',
-                year: request.yearGraduated || '—',
-                status: request.status || 'pending',
-              }));
-
-            this.loadingVerifications = false;
-            this.cdr.detectChanges();
-          });
-        },
-        error: (error) => {
-          this.zone.run(() => {
-            console.error('Error loading verification dashboard data:', error);
-
-            this.pendingVerifications = 0;
-            this.verificationSubtitle = 'Failed to load verification data';
-            this.verificationRequests = [];
-            this.loadingVerifications = false;
-
-            this.cdr.detectChanges();
-          });
-        },
-      });
+    this.unsubscribers.push(unsubscribe);
   }
 
-  subscribeToRealTimeData(): void {
-    this.alumniCountUnsubscribe?.();
-    this.monthlyAlumniCountUnsubscribe?.();
+  private listenToJobPostings(): void {
+    const unsubscribe = onSnapshot(
+      collection(db, 'jobPostings'),
+      (snapshot) => {
+        this.zone.run(() => {
+          this.allJobs = snapshot.docs.map((docItem) => {
+            const data = docItem.data() as RawRecord;
 
-    this.alumniCountUnsubscribe = this.usersService.getAlumniCountRealTime((count) => {
-      this.zone.run(() => {
-        this.totalAlumni = count;
-        this.cdr.detectChanges();
+            return {
+              id: docItem.id,
+              ...data,
+            };
+          });
+
+          this.activeJobPosts = this.allJobs.filter((job) => {
+            const status = String(job['status'] || '').toLowerCase();
+            return status === 'active';
+          }).length;
+
+          this.rebuildRecentActivities();
+          this.cdr.detectChanges();
+        });
+      },
+      (error) => {
+        this.zone.run(() => {
+          console.error('Error loading job postings:', error);
+          this.allJobs = [];
+          this.activeJobPosts = 0;
+          this.rebuildRecentActivities();
+          this.cdr.detectChanges();
+        });
+      }
+    );
+
+    this.unsubscribers.push(unsubscribe);
+  }
+
+  private listenToEvents(): void {
+    const unsubscribe = onSnapshot(
+      collection(db, 'events'),
+      (snapshot) => {
+        this.zone.run(() => {
+          this.allEvents = snapshot.docs.map((docItem) => {
+            const data = docItem.data() as RawRecord;
+
+            return {
+              id: docItem.id,
+              ...data,
+            };
+          });
+
+          this.upcomingEvents = this.allEvents.filter((event) => {
+            const status = String(event['status'] || '').toLowerCase();
+
+            if (
+              status === 'cancelled' ||
+              status === 'canceled' ||
+              status === 'archived' ||
+              status === 'completed'
+            ) {
+              return false;
+            }
+
+            const rawDate = event['eventDate'] || event['date'] || event['startDate'];
+            const eventTime = this.getDateValue(rawDate);
+
+            if (!eventTime) return false;
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            return eventTime >= today.getTime();
+          }).length;
+
+          this.rebuildRecentActivities();
+          this.cdr.detectChanges();
+        });
+      },
+      (error) => {
+        this.zone.run(() => {
+          console.error('Error loading events:', error);
+          this.allEvents = [];
+          this.upcomingEvents = 0;
+          this.rebuildRecentActivities();
+          this.cdr.detectChanges();
+        });
+      }
+    );
+
+    this.unsubscribers.push(unsubscribe);
+  }
+
+  private listenToAnnouncements(): void {
+    const unsubscribe = onSnapshot(
+      collection(db, 'announcements'),
+      (snapshot) => {
+        this.zone.run(() => {
+          this.allAnnouncements = snapshot.docs.map((docItem) => {
+            const data = docItem.data() as RawRecord;
+
+            return {
+              id: docItem.id,
+              ...data,
+            };
+          });
+
+          this.announcements = this.allAnnouncements.filter((announcement) => {
+            const status = String(announcement['status'] || '').toLowerCase();
+            return status === 'published';
+          }).length;
+
+          this.rebuildRecentActivities();
+          this.cdr.detectChanges();
+        });
+      },
+      (error) => {
+        this.zone.run(() => {
+          console.error('Error loading announcements:', error);
+          this.allAnnouncements = [];
+          this.announcements = 0;
+          this.rebuildRecentActivities();
+          this.cdr.detectChanges();
+        });
+      }
+    );
+
+    this.unsubscribers.push(unsubscribe);
+  }
+
+  private rebuildRecentActivities(): void {
+    const activities: ActivityPreview[] = [];
+
+    this.allVerificationRequests.forEach((request, index) => {
+      const rawDate = request['submittedAt'] || request['createdAt'] || request['updatedAt'];
+      const timestamp = this.getDateValue(rawDate);
+
+      activities.push({
+        id: request['id'] || `verification-${index}`,
+        type: 'verification',
+        title: request['fullName']
+          ? `Verification: ${request['fullName']}`
+          : 'Verification request submitted',
+        date: this.formatActivityDate(rawDate),
+        timestamp,
       });
     });
 
-    this.monthlyAlumniCountUnsubscribe = this.usersService.getAlumniCountThisMonthRealTime((count) => {
-      this.zone.run(() => {
-        this.thisMonthAlumni = count;
-        this.cdr.detectChanges();
+    this.allJobs.forEach((job, index) => {
+      const rawDate = job['createdAt'] || job['updatedAt'] || job['deadline'];
+      const timestamp = this.getDateValue(rawDate);
+
+      activities.push({
+        id: job['id'] || `job-${index}`,
+        type: 'job',
+        title: job['jobTitle'] || job['title'] || 'Job posting created',
+        date: this.formatActivityDate(rawDate),
+        timestamp,
       });
+    });
+
+    this.allEvents.forEach((event, index) => {
+      const rawDate =
+        event['createdAt'] ||
+        event['updatedAt'] ||
+        event['eventDate'] ||
+        event['date'];
+
+      const timestamp = this.getDateValue(rawDate);
+
+      activities.push({
+        id: event['id'] || `event-${index}`,
+        type: 'event',
+        title:
+          event['eventTitle'] ||
+          event['title'] ||
+          event['eventName'] ||
+          'Event created',
+        date: this.formatActivityDate(rawDate),
+        timestamp,
+      });
+    });
+
+    this.allAnnouncements.forEach((announcement, index) => {
+      const rawDate = announcement['createdAt'] || announcement['updatedAt'];
+      const timestamp = this.getDateValue(rawDate);
+
+      activities.push({
+        id: announcement['id'] || `announcement-${index}`,
+        type: 'announcement',
+        title: announcement['title'] || 'Announcement published',
+        date: this.formatActivityDate(rawDate),
+        timestamp,
+      });
+    });
+
+    this.recentActivities = activities
+      .filter((item) => item.timestamp > 0)
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, 5);
+  }
+
+  private normalizeVerificationStatus(status: any): VerificationStatus {
+    const raw = String(status || '').toLowerCase();
+
+    if (raw === 'approved' || raw === 'verified') return 'approved';
+    if (raw === 'rejected') return 'rejected';
+    if (raw === 'under_review') return 'under_review';
+
+    return 'pending';
+  }
+
+  private formatActivityDate(value: any): string {
+    if (!value) return '—';
+
+    const rawValue =
+      typeof value === 'string'
+        ? value
+        : value?.toDate?.() ?? value;
+
+    const date = new Date(rawValue);
+
+    if (isNaN(date.getTime())) return '—';
+
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
     });
   }
 
-  private getRequestTime(request: VerificationRequest): number {
-    const raw: any = request.submittedAt;
+  private getDateValue(value: any): number {
+    if (!value) return 0;
 
-    if (!raw) return 0;
-    if (typeof raw === 'number') return raw;
-    if (raw?.seconds) return raw.seconds * 1000;
+    const rawValue =
+      typeof value === 'string'
+        ? value
+        : value?.toDate?.() ?? value;
 
-    const parsed = new Date(raw).getTime();
-    return Number.isNaN(parsed) ? 0 : parsed;
+    const date = new Date(rawValue);
+
+    return isNaN(date.getTime()) ? 0 : date.getTime();
   }
 
   getVerificationStatusLabel(status: VerificationStatus): string {
@@ -231,6 +496,21 @@ export class Dashboard implements OnInit, OnDestroy {
         return 'Rejected';
       default:
         return status;
+    }
+  }
+
+  getActivityTypeLabel(type: ActivityType): string {
+    switch (type) {
+      case 'verification':
+        return 'Verification';
+      case 'job':
+        return 'Job Posting';
+      case 'event':
+        return 'Event';
+      case 'announcement':
+        return 'Announcement';
+      default:
+        return type;
     }
   }
 
