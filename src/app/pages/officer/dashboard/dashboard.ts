@@ -53,7 +53,7 @@ export class Dashboard implements OnInit, OnDestroy {
   upcomingEvents = 0;
   announcements = 0;
 
-  verificationSubtitle = '';
+  verificationSubtitle = 'Loading pending data...';
   loadingVerifications = false;
 
   verificationRequests: VerificationPreview[] = [];
@@ -143,20 +143,6 @@ export class Dashboard implements OnInit, OnDestroy {
             };
           });
 
-          const reviewStatuses = ['pending', 'under_review'];
-
-          const requestsNeedingReview = this.allVerificationRequests.filter((request) => {
-            const status = String(request['status'] || '').toLowerCase();
-            return reviewStatuses.includes(status);
-          });
-
-          this.pendingVerifications = requestsNeedingReview.length;
-
-          this.verificationSubtitle =
-            this.pendingVerifications === 1
-              ? '1 request awaiting review'
-              : `${this.pendingVerifications} requests awaiting review`;
-
           this.verificationRequests = [...this.allVerificationRequests]
             .sort((a, b) => {
               const bTime = this.getDateValue(b['submittedAt'] || b['createdAt'] || b['updatedAt']);
@@ -185,8 +171,6 @@ export class Dashboard implements OnInit, OnDestroy {
         this.zone.run(() => {
           console.error('Error loading verification requests:', error);
 
-          this.pendingVerifications = 0;
-          this.verificationSubtitle = 'Failed to load verification data';
           this.verificationRequests = [];
           this.loadingVerifications = false;
 
@@ -213,17 +197,34 @@ export class Dashboard implements OnInit, OnDestroy {
             };
           });
 
-          this.totalAlumni = users.filter((user) => {
-            const role = String(user['role'] || '').toLowerCase();
-            const verificationStatus = String(
-              user['verificationStatus'] || user['status'] || ''
-            ).toLowerCase();
+          const alumniUsers = users.filter((user) => {
+            const role = String(user['role'] || '').toLowerCase().trim();
+            return role === 'alumni';
+          });
 
-            return (
-              role === 'alumni' &&
-              user['isVerified'] === true &&
-              verificationStatus !== 'rejected'
+          this.pendingVerifications = alumniUsers.filter((user) => {
+            const status = this.normalizeStatusValue(
+              user['verificationStatus'] || user['status']
             );
+
+            return status === 'pending' && user['isVerified'] !== true;
+          }).length;
+
+          this.verificationSubtitle =
+            this.pendingVerifications === 1
+              ? '1 pending alumni account'
+              : `${this.pendingVerifications} pending alumni accounts`;
+
+          this.totalAlumni = alumniUsers.filter((user) => {
+            const status = this.normalizeStatusValue(
+              user['verificationStatus'] || user['status']
+            );
+
+            const isVerified =
+              user['isVerified'] === true ||
+              status === 'verified';
+
+            return isVerified && status !== 'rejected';
           }).length;
 
           this.cdr.detectChanges();
@@ -232,7 +233,11 @@ export class Dashboard implements OnInit, OnDestroy {
       (error) => {
         this.zone.run(() => {
           console.error('Error loading users:', error);
+
+          this.pendingVerifications = 0;
           this.totalAlumni = 0;
+          this.verificationSubtitle = 'Failed to load user data';
+
           this.cdr.detectChanges();
         });
       }
@@ -256,7 +261,7 @@ export class Dashboard implements OnInit, OnDestroy {
           });
 
           this.activeJobPosts = this.allJobs.filter((job) => {
-            const status = String(job['status'] || '').toLowerCase();
+            const status = this.normalizeStatusValue(job['status']);
             return status === 'active';
           }).length;
 
@@ -293,7 +298,7 @@ export class Dashboard implements OnInit, OnDestroy {
           });
 
           this.upcomingEvents = this.allEvents.filter((event) => {
-            const status = String(event['status'] || '').toLowerCase();
+            const status = this.normalizeStatusValue(event['status']);
 
             if (
               status === 'cancelled' ||
@@ -348,7 +353,7 @@ export class Dashboard implements OnInit, OnDestroy {
           });
 
           this.announcements = this.allAnnouncements.filter((announcement) => {
-            const status = String(announcement['status'] || '').toLowerCase();
+            const status = this.normalizeStatusValue(announcement['status']);
             return status === 'published';
           }).length;
 
@@ -442,8 +447,15 @@ export class Dashboard implements OnInit, OnDestroy {
       .slice(0, 5);
   }
 
+  private normalizeStatusValue(status: any): string {
+    return String(status || '')
+      .toLowerCase()
+      .replace(/[\s-]+/g, '_')
+      .trim();
+  }
+
   private normalizeVerificationStatus(status: any): VerificationStatus {
-    const raw = String(status || '').toLowerCase();
+    const raw = this.normalizeStatusValue(status);
 
     if (raw === 'approved' || raw === 'verified') return 'approved';
     if (raw === 'rejected') return 'rejected';

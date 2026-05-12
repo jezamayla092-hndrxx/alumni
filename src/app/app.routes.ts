@@ -4,6 +4,7 @@ import { Login } from './pages/auth/login/login';
 import { Signup } from './pages/auth/signup/signup';
 import { MainLayout } from './components/layout/main-layout/main-layout';
 import { MyProfile } from './pages/shared/my-profile/my-profile';
+import { ContactSupport } from './pages/contact-support/contact-support';
 
 import { authGuard } from './guards/auth.guard';
 import { officerGuard } from './guards/officer.guard';
@@ -37,6 +38,9 @@ export const routes: Routes = [
 
   { path: 'login', component: Login },
   { path: 'signup', component: Signup },
+
+  // Public page for disabled users or users who need help before logging in
+  { path: 'contact-support', component: ContactSupport },
 
   {
     path: 'admin',

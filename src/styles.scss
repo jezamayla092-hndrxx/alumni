@@ -1,10 +1,89 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined');
 @import "primeicons/primeicons.css";
 
-html, body { min-height: 100%; margin: 0; overflow-x: hidden; overflow-y: auto; }
-body { font-family: "Inter", sans-serif; -webkit-font-smoothing: antialiased; background: #ffffff; color: #0f172a; }
-* { box-sizing: border-box; }
-button, input, textarea, select { font: inherit; }
-button { pointer-events: auto !important; cursor: pointer !important; }
-button:disabled { cursor: not-allowed !important; }
+:root {
+  --atms-page-bg: #f6f8fc;
+  --atms-topbar-bg: #f6f8fc;
+  --atms-card-bg: #ffffff;
+  --atms-card-border: #e7ebf3;
+
+  --atms-primary: #0e7490;
+  --atms-primary-hover: #0f6475;
+  --atms-primary-soft: #ecfeff;
+
+  --atms-text-main: #111827;
+  --atms-text-muted: #667085;
+  --atms-text-soft: #98a2b3;
+
+  --atms-sidebar-bg: #07111f;
+
+  --atms-radius-sm: 10px;
+  --atms-radius-md: 12px;
+  --atms-radius-lg: 14px;
+  --atms-radius-xl: 16px;
+  --atms-radius-pill: 999px;
+
+  --atms-shadow-card: 0 4px 14px rgba(15, 23, 42, 0.045);
+  --atms-shadow-panel: 0 8px 24px rgba(15, 23, 42, 0.055);
+
+  --atms-input-bg: #ffffff;
+  --atms-input-disabled-bg: #f8fafc;
+  --atms-input-border: #e4e7ec;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+body {
+  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-weight: 400;
+  background: var(--atms-page-bg);
+  color: var(--atms-text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+button:disabled {
+  cursor: not-allowed !important;
+}
+
+a {
+  color: inherit;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin-top: 0;
+}
+
+::selection {
+  background: rgba(14, 116, 144, 0.18);
+}

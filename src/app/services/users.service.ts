@@ -35,6 +35,17 @@ export class UsersService {
       role: userData.role || 'alumni',
       isVerified: userData.isVerified ?? false,
       isActive: userData.isActive ?? true,
+      accountStatus: userData.isActive === false ? 'disabled' : 'active',
+
+      disabledReason: null,
+      disabledAt: null,
+      disabledBy: null,
+      disabledByName: null,
+
+      reactivatedAt: null,
+      reactivatedBy: null,
+      reactivatedByName: null,
+
       campus: userData.campus || 'USTP Villanueva Campus',
       createdAt: userData.createdAt || now,
       updatedAt: userData.updatedAt || now,
@@ -183,20 +194,65 @@ export class UsersService {
     });
   }
 
-  async updateUserActiveStatus(uid: string, isActive: boolean): Promise<void> {
+  async updateUserActiveStatus(
+    uid: string,
+    isActive: boolean,
+    reason: string = '',
+    actorUid: string = '',
+    actorName: string = 'Administrator'
+  ): Promise<void> {
     const userRef = doc(db, 'users', uid);
+    const now = new Date().toISOString();
 
-    await updateDoc(userRef, {
+    const payload: Record<string, any> = {
       isActive,
-      updatedAt: new Date().toISOString(),
-    });
+      accountStatus: isActive ? 'active' : 'disabled',
+      updatedAt: now,
+    };
+
+    if (isActive) {
+      payload['reactivatedAt'] = now;
+      payload['reactivatedBy'] = actorUid || '';
+      payload['reactivatedByName'] = actorName || 'Administrator';
+
+      payload['disabledReason'] = null;
+      payload['disabledAt'] = null;
+      payload['disabledBy'] = null;
+      payload['disabledByName'] = null;
+    } else {
+      const cleanedReason = reason.trim();
+
+      if (!cleanedReason) {
+        throw new Error('A disable reason is required.');
+      }
+
+      payload['disabledReason'] = cleanedReason;
+      payload['disabledAt'] = now;
+      payload['disabledBy'] = actorUid || '';
+      payload['disabledByName'] = actorName || 'Administrator';
+
+      payload['reactivatedAt'] = null;
+      payload['reactivatedBy'] = null;
+      payload['reactivatedByName'] = null;
+    }
+
+    await updateDoc(userRef, payload);
   }
 
-  async activateUser(uid: string): Promise<void> {
-    await this.updateUserActiveStatus(uid, true);
+  async activateUser(
+    uid: string,
+    actorUid: string = '',
+    actorName: string = 'Administrator'
+  ): Promise<void> {
+    await this.updateUserActiveStatus(uid, true, '', actorUid, actorName);
   }
 
-  async disableUser(uid: string): Promise<void> {
-    await this.updateUserActiveStatus(uid, false);
+  async disableUser(
+    uid: string,
+    reason: string = '',
+    actorUid: string = '',
+    actorName: string = 'Administrator'
+  ): Promise<void> {
+    await this.updateUserActiveStatus(uid, false, reason, actorUid, actorName);
   }
 }

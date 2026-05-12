@@ -62,6 +62,85 @@ export class Login {
         return;
       }
 
+      if (user.isActive === false) {
+        this.stopLoading();
+
+        const disabledReason = ((user as any).disabledReason || '').trim();
+        const disabledByName = ((user as any).disabledByName || '').trim();
+        const disabledAt = (user as any).disabledAt || null;
+
+        const result = await Swal.fire({
+          icon: 'error',
+          title: 'Account Disabled',
+          html: `
+            <p style="margin:0 0 0.75rem;color:#374151;font-size:0.95rem;line-height:1.5;">
+              Your account has been disabled by the administrator.
+            </p>
+
+            <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:0.85rem 1rem;text-align:left;margin-bottom:0.75rem;">
+              <p style="margin:0 0 0.35rem;font-size:0.75rem;font-weight:800;color:#dc2626;text-transform:uppercase;letter-spacing:0.05em;">
+                Reason / Remarks
+              </p>
+
+              <p style="margin:0;font-size:0.9rem;color:#7f1d1d;font-weight:600;line-height:1.5;">
+                ${
+                  disabledReason
+                    ? this.escapeHtml(disabledReason)
+                    : 'No reason was provided. Please contact the alumni office for assistance.'
+                }
+              </p>
+            </div>
+
+            ${
+              disabledByName || disabledAt
+                ? `
+                  <p style="margin:0 0 0.65rem;color:#6b7280;font-size:0.82rem;line-height:1.4;">
+                    ${
+                      disabledByName
+                        ? `Disabled by: <strong>${this.escapeHtml(disabledByName)}</strong><br>`
+                        : ''
+                    }
+                    ${
+                      disabledAt
+                        ? `Date disabled: <strong>${this.escapeHtml(this.formatDate(disabledAt))}</strong>`
+                        : ''
+                    }
+                  </p>
+                `
+                : ''
+            }
+
+            <p style="margin:0;color:#6b7280;font-size:0.85rem;line-height:1.45;">
+              You may contact support if you believe this needs clarification or review.
+            </p>
+          `,
+          showCancelButton: true,
+          confirmButtonText: 'Contact Support',
+          cancelButtonText: 'Close',
+          confirmButtonColor: '#7c5cff',
+          cancelButtonColor: '#6b7280',
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+        });
+
+        // ✅ Navigate BEFORE logout to prevent auth state change from redirecting first
+        if (result.isConfirmed) {
+          await this.router.navigate(['/contact-support'], {
+            queryParams: {
+              uid,
+              name: this.getAccountName(user),
+              email: user.email || email,
+              reason: disabledReason,
+              issue: 'Disabled Account',
+              concern: 'Disabled Account',
+            },
+          });
+        }
+
+        await this.authService.logout();
+        return;
+      }
+
       const userStatus = (user.verificationStatus || user.status || '').toLowerCase();
 
       if (user.role === 'alumni' && userStatus === 'pending') {
@@ -80,7 +159,7 @@ export class Login {
         await Swal.fire({
           icon: 'info',
           title: 'Account Under Review',
-          text: 'Your resubmitted verification request is currently under review. Please wait for the officer’s decision.',
+          text: 'Your resubmitted verification request is currently under review. Please wait for the officer\u2019s decision.',
         });
         await this.authService.logout();
         return;
@@ -125,7 +204,7 @@ export class Login {
                   Officer's Remarks
                 </p>
                 <p style="margin:0;font-size:0.9rem;color:#7f1d1d;font-weight:500;line-height:1.5;">
-                  ${remarks}
+                  ${this.escapeHtml(remarks)}
                 </p>
               </div>
               <p style="margin:0;color:#6b7280;font-size:0.85rem;">
@@ -150,17 +229,6 @@ export class Login {
           await this.authService.logout();
         }
 
-        return;
-      }
-
-      if (user.isActive === false) {
-        this.stopLoading();
-        await Swal.fire({
-          icon: 'error',
-          title: 'Account Disabled',
-          text: 'Your account is inactive. Please contact the administrator.',
-        });
-        await this.authService.logout();
         return;
       }
 
@@ -226,5 +294,50 @@ export class Login {
   private stopLoading(): void {
     this.loading = false;
     this.cdr.detectChanges();
+  }
+
+  private getAccountName(user: any): string {
+    return (
+      user.fullName ||
+      [
+        user.firstName,
+        user.middleName ? `${user.middleName.charAt(0).toUpperCase()}.` : '',
+        user.lastName,
+        user.suffix,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .trim() ||
+      user.email ||
+      'User'
+    );
+  }
+
+  private escapeHtml(value: string): string {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  private formatDate(value: any): string {
+    if (!value) return '—';
+
+    const rawValue =
+      typeof value === 'string'
+        ? value
+        : value?.toDate?.() ?? value;
+
+    const date = new Date(rawValue);
+
+    if (isNaN(date.getTime())) return '—';
+
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
   }
 }

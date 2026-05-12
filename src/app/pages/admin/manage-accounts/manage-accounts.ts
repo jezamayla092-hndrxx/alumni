@@ -9,6 +9,17 @@ import { User, UserRole } from '../../../models/user.model';
 type AccountStatusFilter = '' | 'active' | 'disabled';
 type VerificationFilter = '' | 'verified' | 'pending' | 'under_review' | 'rejected';
 
+type UserWithAccountAudit = User & {
+  accountStatus?: 'active' | 'disabled';
+  disabledReason?: string | null;
+  disabledAt?: any;
+  disabledBy?: string | null;
+  disabledByName?: string | null;
+  reactivatedAt?: any;
+  reactivatedBy?: string | null;
+  reactivatedByName?: string | null;
+};
+
 @Component({
   selector: 'app-manage-accounts',
   standalone: true,
@@ -39,6 +50,9 @@ export class ManageAccounts implements OnInit {
   statusTargetUser: User | null = null;
 
   selectedRole: UserRole = 'alumni';
+
+  statusReason = '';
+  readonly statusReasonMaxLength = 300;
 
   readonly roleOptions: { label: string; value: UserRole }[] = [
     { label: 'Admin', value: 'admin' },
@@ -230,6 +244,7 @@ export class ManageAccounts implements OnInit {
 
   openStatusModal(user: User): void {
     this.statusTargetUser = user;
+    this.statusReason = '';
     this.showStatusModal = true;
     this.actionError = '';
     this.cdr.detectChanges();
@@ -237,6 +252,7 @@ export class ManageAccounts implements OnInit {
 
   closeStatusModal(): void {
     this.statusTargetUser = null;
+    this.statusReason = '';
     this.showStatusModal = false;
     this.actionError = '';
     this.saving = false;
@@ -248,9 +264,16 @@ export class ManageAccounts implements OnInit {
 
     const currentUid = this.authService.getCurrentUid();
     const willDisable = this.statusTargetUser.isActive !== false;
+    const reason = this.statusReason.trim();
 
     if (this.statusTargetUser.id === currentUid && willDisable) {
       this.actionError = 'You cannot disable your own admin account.';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    if (willDisable && !reason) {
+      this.actionError = 'Please provide a reason or remarks before disabling this account.';
       this.cdr.detectChanges();
       return;
     }
@@ -260,16 +283,37 @@ export class ManageAccounts implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      await this.usersService.updateUser(this.statusTargetUser.id, {
-        isActive: !willDisable,
-        updatedAt: new Date().toISOString(),
-      });
+      let actorName = 'Administrator';
+
+      if (currentUid) {
+        const currentUser = await this.usersService.getUserById(currentUid);
+        if (currentUser) {
+          actorName = this.getAccountName(currentUser);
+        }
+      }
+
+      if (willDisable) {
+        await this.usersService.disableUser(
+          this.statusTargetUser.id,
+          reason,
+          currentUid || '',
+          actorName
+        );
+      } else {
+        await this.usersService.activateUser(
+          this.statusTargetUser.id,
+          currentUid || '',
+          actorName
+        );
+      }
 
       await this.loadUsers();
       this.closeStatusModal();
     } catch (error) {
       console.error('Failed to update account status:', error);
-      this.actionError = 'Failed to update account status.';
+      this.actionError = willDisable
+        ? 'Failed to disable account.'
+        : 'Failed to activate account.';
       this.saving = false;
       this.cdr.detectChanges();
     }
@@ -410,10 +454,50 @@ export class ManageAccounts implements OnInit {
     if (!user) return '';
 
     if (user.isActive === false) {
-      return 'This will allow the user to access the system again.';
+      return 'This will restore the user’s access to the system.';
     }
 
     return 'This will block the user from accessing the system without deleting their account.';
+  }
+
+  getStatusModalTitle(user: User | null): string {
+    if (!user) return 'Update Account Status';
+    return user.isActive === false ? 'Activate Account' : 'Disable Account';
+  }
+
+  getStatusModalIntro(user: User | null): string {
+    if (!user) return '';
+
+    if (user.isActive === false) {
+      return `You are about to activate ${this.getAccountName(user)}’s account. The user will be able to access the system again.`;
+    }
+
+    return `You are about to disable ${this.getAccountName(user)}’s account. Please provide a reason or remarks because this will be shown to the user when they try to log in.`;
+  }
+
+  getDisabledReason(user: User | null): string {
+    if (!user) return '';
+
+    const auditedUser = user as UserWithAccountAudit;
+    return (auditedUser.disabledReason || '').trim();
+  }
+
+  getDisabledByName(user: User | null): string {
+    if (!user) return '';
+
+    const auditedUser = user as UserWithAccountAudit;
+    return (auditedUser.disabledByName || '').trim();
+  }
+
+  getDisabledAt(user: User | null): any {
+    if (!user) return null;
+
+    const auditedUser = user as UserWithAccountAudit;
+    return auditedUser.disabledAt || null;
+  }
+
+  get reasonCharactersLeft(): number {
+    return this.statusReasonMaxLength - this.statusReason.length;
   }
 
   formatDate(value: any): string {

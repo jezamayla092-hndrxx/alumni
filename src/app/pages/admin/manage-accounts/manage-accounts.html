@@ -323,6 +323,30 @@
         </div>
       </div>
 
+      <div
+        class="disabled-details-card"
+        *ngIf="selectedUser.isActive === false"
+      >
+        <div class="disabled-details-icon">
+          <i class="pi pi-ban"></i>
+        </div>
+
+        <div class="disabled-details-copy">
+          <span>Disabled Account</span>
+          <strong>{{ getDisabledReason(selectedUser) || 'No reason recorded.' }}</strong>
+
+          <small>
+            Disabled
+            <ng-container *ngIf="getDisabledAt(selectedUser)">
+              on {{ formatDate(getDisabledAt(selectedUser)) }}
+            </ng-container>
+            <ng-container *ngIf="getDisabledByName(selectedUser)">
+              by {{ getDisabledByName(selectedUser) }}
+            </ng-container>
+          </small>
+        </div>
+      </div>
+
       <div class="details-grid">
         <div class="detail-item">
           <span>Full Name</span>
@@ -459,7 +483,7 @@
 
 <!-- STATUS MODAL -->
 <div class="modal-backdrop" *ngIf="showStatusModal" (click)="closeStatusModal()">
-  <div class="modal confirm-modal" (click)="$event.stopPropagation()" *ngIf="statusTargetUser">
+  <div class="modal confirm-modal status-confirm-modal" (click)="$event.stopPropagation()" *ngIf="statusTargetUser">
 
     <div
       class="confirm-icon"
@@ -472,14 +496,36 @@
       ></i>
     </div>
 
-    <h3>{{ getStatusActionText(statusTargetUser) }}</h3>
+    <h3>{{ getStatusModalTitle(statusTargetUser) }}</h3>
 
     <p>
-      Are you sure you want to
-      <strong>{{ statusTargetUser.isActive === false ? 'activate' : 'disable' }}</strong>
-      <strong>{{ getAccountName(statusTargetUser) }}</strong>?
-      {{ getStatusActionDescription(statusTargetUser) }}
+      {{ getStatusModalIntro(statusTargetUser) }}
     </p>
+
+    <div class="reason-block" *ngIf="statusTargetUser.isActive !== false">
+      <label for="disableReason">
+        Reason / Remarks <span>*</span>
+      </label>
+
+      <textarea
+        id="disableReason"
+        class="reason-textarea"
+        rows="5"
+        maxlength="300"
+        placeholder="Example: Account disabled due to incomplete verification documents."
+        [(ngModel)]="statusReason"
+      ></textarea>
+
+      <div class="reason-footer">
+        <small>This reason will be shown to the user during login.</small>
+        <small>{{ reasonCharactersLeft }} characters left</small>
+      </div>
+    </div>
+
+    <div class="previous-reason-card" *ngIf="statusTargetUser.isActive === false && getDisabledReason(statusTargetUser)">
+      <span>Previous disable reason</span>
+      <strong>{{ getDisabledReason(statusTargetUser) }}</strong>
+    </div>
 
     <div class="action-error" *ngIf="actionError">
       <i class="pi pi-exclamation-triangle"></i>
@@ -497,7 +543,7 @@
         [class.danger-btn]="statusTargetUser.isActive !== false"
         [class.success-btn]="statusTargetUser.isActive === false"
         (click)="confirmStatusChange()"
-        [disabled]="saving"
+        [disabled]="saving || (statusTargetUser.isActive !== false && !statusReason.trim())"
       >
         {{ saving ? 'Saving...' : getStatusActionText(statusTargetUser) }}
       </button>

@@ -1,0 +1,171 @@
+<section class="support-page">
+  <div class="support-shell">
+
+    <div class="support-brand">
+      <div class="brand-mark">
+        <i class="pi pi-comments"></i>
+      </div>
+
+      <div>
+        <span>ALUMNI TRACKING AND MANAGEMENT SYSTEM</span>
+        <h1>Contact Support</h1>
+        <p>
+          Submit a concern if you cannot access your account, your account was disabled,
+          or you need assistance with your alumni record.
+        </p>
+      </div>
+    </div>
+
+    <div class="support-card">
+
+      <div class="card-header">
+        <div>
+          <h2>Support Request Form</h2>
+          <p>Fill out the form below so the administrator or alumni office can review your concern.</p>
+        </div>
+
+        <a routerLink="/login" class="login-link">
+          <i class="pi pi-arrow-left"></i>
+          Back to Login
+        </a>
+      </div>
+
+      <div class="loading-state" *ngIf="loading">
+        <i class="pi pi-spin pi-spinner"></i>
+        Loading support form...
+      </div>
+
+      <form *ngIf="!loading" (ngSubmit)="submitTicket()" #supportForm="ngForm">
+
+        <div class="disabled-reason-card" *ngIf="disabledReason">
+          <div class="reason-icon">
+            <i class="pi pi-ban"></i>
+          </div>
+
+          <div>
+            <span>Recorded Disable Reason</span>
+            <strong>{{ disabledReason }}</strong>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-field">
+            <label for="fullName">Full Name <span>*</span></label>
+            <input
+              id="fullName"
+              type="text"
+              name="fullName"
+              [(ngModel)]="fullName"
+              placeholder="Enter your full name"
+              required
+            />
+          </div>
+
+          <div class="form-field">
+            <label for="email">Email Address <span>*</span></label>
+            <input
+              id="email"
+              type="email"
+              name="email"
+              [(ngModel)]="email"
+              placeholder="Enter your email address"
+              required
+            />
+          </div>
+
+          <div class="form-field full">
+            <label for="alumniId">Alumni ID</label>
+            <input
+              id="alumniId"
+              type="text"
+              name="alumniId"
+              [(ngModel)]="alumniId"
+              placeholder="Enter your alumni ID if available"
+            />
+          </div>
+
+          <div class="form-field full">
+            <label for="concernType">Concern Type <span>*</span></label>
+            <div class="select-wrap">
+              <select
+                id="concernType"
+                name="concernType"
+                [(ngModel)]="concernType"
+                required
+              >
+                <option *ngFor="let type of concernTypes" [value]="type">
+                  {{ type }}
+                </option>
+              </select>
+
+              <i class="pi pi-angle-down"></i>
+            </div>
+          </div>
+
+          <div class="form-field full">
+            <label for="message">Message / Explanation <span>*</span></label>
+            <textarea
+              id="message"
+              name="message"
+              rows="6"
+              [(ngModel)]="message"
+              placeholder="Explain your concern clearly..."
+              required
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="form-note">
+          <i class="pi pi-info-circle"></i>
+          <span>
+            Your request will be saved as a support ticket for admin/officer review.
+          </span>
+        </div>
+
+        <div class="support-contact-card">
+          <div class="support-contact-icon">
+            <i class="pi pi-building"></i>
+          </div>
+
+          <div class="support-contact-content">
+            <span>Need urgent assistance?</span>
+            <p>
+              For urgent account concerns, please contact the alumni office or system administrator
+              during working hours.
+            </p>
+
+            <div class="support-contact-grid">
+              <div>
+                <i class="pi pi-envelope"></i>
+                <strong>alumni.support@ustp.edu.ph</strong>
+              </div>
+
+              <div>
+                <i class="pi pi-clock"></i>
+                <strong>Monday to Friday, 8:00 AM - 5:00 PM</strong>
+              </div>
+
+              <div>
+                <i class="pi pi-map-marker"></i>
+                <strong>USTP Villanueva Campus</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="secondary-btn" (click)="clearForm()" [disabled]="submitting">
+            Clear
+          </button>
+
+          <button type="submit" class="primary-btn" [disabled]="submitting">
+            <i class="pi" [ngClass]="submitting ? 'pi-spin pi-spinner' : 'pi-send'"></i>
+            {{ submitting ? 'Submitting...' : 'Submit Ticket' }}
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+  </div>
+</section>
