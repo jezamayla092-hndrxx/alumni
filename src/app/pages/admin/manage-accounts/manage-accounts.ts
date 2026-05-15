@@ -20,6 +20,17 @@ type UserWithAccountAudit = User & {
   reactivatedByName?: string | null;
 };
 
+type CreateOfficerForm = {
+  firstName: string;
+  middleName: string;
+  lastName: string;
+  suffix: string;
+  email: string;
+  contactNumber: string;
+  password: string;
+  confirmPassword: string;
+};
+
 @Component({
   selector: 'app-manage-accounts',
   standalone: true,
@@ -41,6 +52,7 @@ export class ManageAccounts implements OnInit {
   filterAccountStatus: AccountStatusFilter = '';
   filterVerificationStatus: VerificationFilter = '';
 
+  showCreateOfficerModal = false;
   showViewModal = false;
   showRoleModal = false;
   showStatusModal = false;
@@ -54,8 +66,9 @@ export class ManageAccounts implements OnInit {
   statusReason = '';
   readonly statusReasonMaxLength = 300;
 
+  createOfficerForm: CreateOfficerForm = this.getEmptyCreateOfficerForm();
+
   readonly roleOptions: { label: string; value: UserRole }[] = [
-    { label: 'Admin', value: 'admin' },
     { label: 'Officer', value: 'officer' },
     { label: 'Alumni', value: 'alumni' },
   ];
@@ -107,7 +120,7 @@ export class ManageAccounts implements OnInit {
   applyFilters(): void {
     const term = this.searchTerm.trim().toLowerCase();
 
-    this.filteredUsers = this.users.filter((user) => {
+    this.filteredUsers = this.getManageableUsers().filter((user) => {
       const name = this.getAccountName(user).toLowerCase();
       const email = (user.email || '').toLowerCase();
       const studentId = (user.studentId || '').toLowerCase();
@@ -160,6 +173,10 @@ export class ManageAccounts implements OnInit {
     return this.users.length;
   }
 
+  get manageableAccounts(): number {
+    return this.getManageableUsers().length;
+  }
+
   get adminCount(): number {
     return this.users.filter((user) => user.role === 'admin').length;
   }
@@ -180,6 +197,89 @@ export class ManageAccounts implements OnInit {
     return this.users.filter((user) => user.isActive === false).length;
   }
 
+  openCreateOfficerModal(): void {
+    this.createOfficerForm = this.getEmptyCreateOfficerForm();
+    this.actionError = '';
+    this.saving = false;
+    this.showCreateOfficerModal = true;
+    this.cdr.detectChanges();
+  }
+
+  closeCreateOfficerModal(): void {
+    if (this.saving) return;
+
+    this.createOfficerForm = this.getEmptyCreateOfficerForm();
+    this.actionError = '';
+    this.showCreateOfficerModal = false;
+    this.cdr.detectChanges();
+  }
+
+  async confirmCreateOfficer(): Promise<void> {
+    if (this.saving) return;
+
+    const firstName = this.createOfficerForm.firstName.trim();
+    const middleName = this.createOfficerForm.middleName.trim();
+    const lastName = this.createOfficerForm.lastName.trim();
+    const suffix = this.createOfficerForm.suffix.trim();
+    const email = this.createOfficerForm.email.trim().toLowerCase();
+    const contactNumber = this.createOfficerForm.contactNumber.trim();
+    const password = this.createOfficerForm.password.trim();
+    const confirmPassword = this.createOfficerForm.confirmPassword.trim();
+
+    if (!firstName || !lastName || !email || !password || !confirmPassword) {
+      this.actionError = 'Please complete all required officer account fields.';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    if (!this.isValidEmail(email)) {
+      this.actionError = 'Please enter a valid officer email address.';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    if (password.length < 6) {
+      this.actionError = 'Password must be at least 6 characters.';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      this.actionError = 'Password and confirm password do not match.';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.saving = true;
+    this.actionError = '';
+    this.cdr.detectChanges();
+
+    try {
+      await this.usersService.createOfficerAccount({
+        firstName,
+        middleName,
+        lastName,
+        suffix,
+        email,
+        contactNumber,
+        password,
+      });
+
+      await this.loadUsers();
+
+      this.createOfficerForm = this.getEmptyCreateOfficerForm();
+      this.showCreateOfficerModal = false;
+      this.saving = false;
+      this.actionError = '';
+      this.cdr.detectChanges();
+    } catch (error) {
+      console.error('Failed to create officer account:', error);
+      this.actionError = this.getCreateOfficerErrorMessage(error);
+      this.saving = false;
+      this.cdr.detectChanges();
+    }
+  }
+
   openView(user: User): void {
     this.selectedUser = user;
     this.showViewModal = true;
@@ -196,7 +296,7 @@ export class ManageAccounts implements OnInit {
 
   openRoleModal(user: User): void {
     this.roleTargetUser = user;
-    this.selectedRole = user.role || 'alumni';
+    this.selectedRole = user.role === 'admin' ? 'officer' : user.role || 'alumni';
     this.showRoleModal = true;
     this.actionError = '';
     this.cdr.detectChanges();
@@ -218,6 +318,12 @@ export class ManageAccounts implements OnInit {
 
     if (this.roleTargetUser.id === currentUid && this.selectedRole !== 'admin') {
       this.actionError = 'You cannot remove your own admin role while logged in.';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    if (this.selectedRole === 'admin') {
+      this.actionError = 'Admin role cannot be assigned from this page.';
       this.cdr.detectChanges();
       return;
     }
@@ -521,6 +627,54 @@ export class ManageAccounts implements OnInit {
 
   trackByUser(index: number, user: User): string {
     return user.id ?? index.toString();
+  }
+
+  private getManageableUsers(): User[] {
+    return this.users.filter((user) => user.role !== 'admin');
+  }
+
+  private getEmptyCreateOfficerForm(): CreateOfficerForm {
+    return {
+      firstName: '',
+      middleName: '',
+      lastName: '',
+      suffix: '',
+      email: '',
+      contactNumber: '',
+      password: '',
+      confirmPassword: '',
+    };
+  }
+
+  private isValidEmail(email: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  private getCreateOfficerErrorMessage(error: any): string {
+    const code = String(error?.code || '').toLowerCase();
+    const message = String(error?.message || '').toLowerCase();
+
+    if (code.includes('auth/email-already-in-use') || message.includes('email-already-in-use')) {
+      return 'This email is already registered.';
+    }
+
+    if (code.includes('auth/invalid-email')) {
+      return 'The officer email address is invalid.';
+    }
+
+    if (code.includes('auth/weak-password')) {
+      return 'The password is too weak. Use at least 6 characters.';
+    }
+
+    if (code.includes('auth/network-request-failed')) {
+      return 'Network error. Please check your connection and try again.';
+    }
+
+    if (message.includes('permission')) {
+      return 'Permission denied. Please check your Firestore rules for admin account creation.';
+    }
+
+    return 'Failed to create officer account.';
   }
 
   private getDateValue(value: any): number {

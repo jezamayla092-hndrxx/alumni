@@ -3,23 +3,32 @@
     <div class="hero-copy">
       <span class="welcome-chip">
         <i class="pi pi-sparkles"></i>
-        Welcome back
+        Alumni Portal
       </span>
-      <h1>{{ alumniName }}</h1>
-      <p>{{ program }} · {{ batch }} · Here's your alumni overview for today.</p>
+
+      <h1>Welcome back, {{ alumniName }}</h1>
+      <p>{{ program }} · {{ batch }}</p>
     </div>
 
     <div class="hero-actions">
-      <button type="button" class="secondary-btn" [routerLink]="['/alumni/my-profile']">
+      <button
+        type="button"
+        class="secondary-btn"
+        [routerLink]="['/alumni/my-profile']"
+      >
         Edit Profile
       </button>
-      <button type="button" class="primary-btn" [routerLink]="['/alumni/employment-status']">
+
+      <button
+        type="button"
+        class="primary-btn"
+        [routerLink]="['/alumni/employment-status']"
+      >
         Update Status
       </button>
     </div>
   </div>
 
-  <!-- TOP CARDS -->
   <section class="top-cards">
     <article
       class="top-card"
@@ -31,6 +40,7 @@
           <div class="card-icon">
             <i [class]="card.icon"></i>
           </div>
+
           <h3>{{ card.title }}</h3>
         </div>
 
@@ -40,40 +50,35 @@
       </div>
 
       <div class="card-body" [ngClass]="card.type">
-        <ng-container [ngSwitch]="card.type">
-          <ng-container *ngSwitchCase="'profile'">
-            <div class="profile-progress-row">
-              <h2>{{ card.mainValue }}</h2>
-              <span>{{ card.subtitle }}</span>
-            </div>
-
-            <div class="progress-bar">
-              <div
-                class="progress-fill"
-                [style.width.%]="card.progress || 0"
-              ></div>
-            </div>
-
-            <p class="helper-text">{{ card.helperText }}</p>
-          </ng-container>
-
-          <ng-container *ngSwitchDefault>
+        <ng-container *ngIf="card.type === 'profile'; else normalCardValue">
+          <div class="profile-progress-row">
             <h2>{{ card.mainValue }}</h2>
-            <p class="sub-line">{{ card.subtitle }}</p>
-            <p class="helper-text" *ngIf="card.helperText">{{ card.helperText }}</p>
-          </ng-container>
+            <span>{{ card.subtitle }}</span>
+          </div>
+
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="card.progress || 0"></div>
+          </div>
         </ng-container>
+
+        <ng-template #normalCardValue>
+          <h2>{{ card.mainValue }}</h2>
+          <p class="sub-line">{{ card.subtitle }}</p>
+        </ng-template>
+
+        <p class="helper-text" *ngIf="card.helperText">
+          {{ card.helperText }}
+        </p>
       </div>
 
-      <a [routerLink]="[card.actionRoute]" class="card-link">
-        {{ card.actionText }} <i class="pi pi-arrow-right"></i>
+      <a class="card-link" [routerLink]="[card.actionRoute]">
+       View details
+        <i class="pi pi-angle-right"></i>
       </a>
     </article>
   </section>
 
-  <!-- MIDDLE GRID -->
   <section class="middle-grid">
-    <!-- Upcoming Events -->
     <article class="panel">
       <div class="panel-header">
         <div class="panel-title">
@@ -81,8 +86,9 @@
           <h3>Upcoming Events</h3>
         </div>
 
-        <a [routerLink]="['/alumni/events']" class="view-link">
-          View all <i class="pi pi-angle-right"></i>
+        <a class="view-link" [routerLink]="['/alumni/events']">
+          View all
+          <i class="pi pi-angle-right"></i>
         </a>
       </div>
 
@@ -103,27 +109,30 @@
 
           <div class="event-info">
             <h4>{{ eventTitle(event) }}</h4>
-            <p><i class="pi pi-map-marker"></i> {{ eventLocation(event) }}</p>
+            <p>
+              <i class="pi pi-map-marker"></i>
+              {{ eventLocation(event) }}
+            </p>
           </div>
 
           <span
             class="event-status-dot"
-            [class]="eventStatus(event).toLowerCase()"
+            [ngClass]="eventStatus(event).toLowerCase()"
           ></span>
         </div>
       </div>
     </article>
 
-    <!-- Announcements -->
     <article class="panel">
       <div class="panel-header">
         <div class="panel-title">
-          <i class="pi pi-bell"></i>
+          <i class="pi pi-megaphone"></i>
           <h3>Announcements</h3>
         </div>
 
-        <a [routerLink]="['/alumni/announcements']" class="view-link">
-          View all <i class="pi pi-angle-right"></i>
+        <a class="view-link" [routerLink]="['/alumni/announcements']">
+          View all
+          <i class="pi pi-angle-right"></i>
         </a>
       </div>
 
@@ -151,18 +160,17 @@
     </article>
   </section>
 
-  <!-- BOTTOM GRID -->
   <section class="bottom-grid">
-    <!-- Active Jobs -->
-    <article class="panel recommended-panel">
+    <article class="panel">
       <div class="panel-header">
         <div class="panel-title">
           <i class="pi pi-briefcase"></i>
           <h3>Latest Job Postings</h3>
         </div>
 
-        <a [routerLink]="['/alumni/job-postings']" class="view-link">
-          Browse jobs <i class="pi pi-angle-right"></i>
+        <a class="view-link" [routerLink]="['/alumni/job-postings']">
+          Browse jobs
+          <i class="pi pi-angle-right"></i>
         </a>
       </div>
 
@@ -188,14 +196,15 @@
           </div>
 
           <div class="job-meta">
-            <span class="job-type-pill">{{ job.employmentType }}</span>
+            <span class="job-type-pill">
+              {{ job.employmentType }}
+            </span>
           </div>
         </div>
       </div>
     </article>
 
-    <!-- Quick Links -->
-    <article class="panel activity-panel">
+    <article class="panel">
       <div class="panel-header">
         <div class="panel-title">
           <i class="pi pi-bolt"></i>
@@ -204,53 +213,53 @@
       </div>
 
       <div class="quick-links">
-        <a [routerLink]="['/alumni/verification-status']" class="quick-link">
+        <a class="quick-link" [routerLink]="['/alumni/verification-status']">
           <div class="ql-icon activity-blue">
             <i class="pi pi-shield"></i>
           </div>
 
           <div class="ql-copy">
-            <h4>Verification Status</h4>
-            <p>Check your alumni verification</p>
+            <h4>Verification</h4>
+            <p>Check account status</p>
           </div>
 
           <i class="pi pi-chevron-right ql-arrow"></i>
         </a>
 
-        <a [routerLink]="['/alumni/employment-status']" class="quick-link">
+        <a class="quick-link" [routerLink]="['/alumni/employment-status']">
           <div class="ql-icon activity-green">
             <i class="pi pi-briefcase"></i>
           </div>
 
           <div class="ql-copy">
-            <h4>Employment Status</h4>
-            <p>Update your work information</p>
+            <h4>Employment</h4>
+            <p>Update career details</p>
           </div>
 
           <i class="pi pi-chevron-right ql-arrow"></i>
         </a>
 
-        <a [routerLink]="['/alumni/events']" class="quick-link">
+        <a class="quick-link" [routerLink]="['/alumni/events']">
           <div class="ql-icon activity-purple">
             <i class="pi pi-calendar"></i>
           </div>
 
           <div class="ql-copy">
             <h4>Events</h4>
-            <p>Browse alumni activities</p>
+            <p>Browse activities</p>
           </div>
 
           <i class="pi pi-chevron-right ql-arrow"></i>
         </a>
 
-        <a [routerLink]="['/alumni/announcements']" class="quick-link">
+        <a class="quick-link" [routerLink]="['/alumni/announcements']">
           <div class="ql-icon activity-yellow">
             <i class="pi pi-megaphone"></i>
           </div>
 
           <div class="ql-copy">
             <h4>Announcements</h4>
-            <p>Stay up to date</p>
+            <p>View updates</p>
           </div>
 
           <i class="pi pi-chevron-right ql-arrow"></i>

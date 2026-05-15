@@ -4,11 +4,12 @@ import {
   createUserWithEmailAndPassword,
   deleteUser,
   onAuthStateChanged,
+  sendPasswordResetEmail as firebaseSendPasswordResetEmail,
   setPersistence,
   signInWithEmailAndPassword,
   signOut,
   User as FirebaseUser,
-  UserCredential
+  UserCredential,
 } from 'firebase/auth';
 
 import { BehaviorSubject } from 'rxjs';
@@ -75,6 +76,16 @@ export class AuthService {
     });
 
     return credential;
+  }
+
+  async sendPasswordResetEmail(email: string): Promise<void> {
+    const cleanedEmail = email.trim().toLowerCase();
+
+    if (!cleanedEmail) {
+      throw new Error('Email address is required.');
+    }
+
+    await firebaseSendPasswordResetEmail(auth, cleanedEmail);
   }
 
   async deleteCurrentAuthUser(): Promise<void> {

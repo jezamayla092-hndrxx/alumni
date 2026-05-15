@@ -27,3 +27,20 @@ export interface EventRecord {
   createdAt?: string;
   updatedAt?: string;
 }
+
+export interface EventInterest {
+  id?: string;
+
+  eventId: string;
+  userId: string;
+
+  fullName: string;
+  email: string;
+
+  program?: string;
+  yearGraduated?: string;
+  studentId?: string;
+  contactNumber?: string;
+
+  createdAt: string;
+}

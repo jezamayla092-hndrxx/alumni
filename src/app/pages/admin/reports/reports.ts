@@ -303,6 +303,25 @@ export class Reports implements OnInit {
     });
   }
 
+  getReportDescription(tab: string): string {
+    switch (tab) {
+      case 'Overview':
+        return 'General report summary for accounts and recent system activity.';
+      case 'Accounts':
+        return 'Account role distribution and account status reporting.';
+      case 'Alumni':
+        return 'Alumni distribution by academic program and college.';
+      case 'Verification':
+        return 'Verification status breakdown for alumni accounts.';
+      case 'Employment':
+        return 'Employment tracking summary based on alumni updates.';
+      case 'Content':
+        return 'Reports for job postings, events, and announcements.';
+      default:
+        return 'System report view.';
+    }
+  }
+
   exportReport(): void {
     const rows = this.getExportRows();
 

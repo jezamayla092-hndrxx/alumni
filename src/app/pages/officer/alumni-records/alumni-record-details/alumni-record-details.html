@@ -8,7 +8,9 @@
 
   <div class="page-heading">
     <h1>Alumni Record Details</h1>
-    <p>View complete alumni profile, verification, academic, and post-graduation information.</p>
+    <p>
+      View the alumni profile, verification, academic, and post-graduation information.
+    </p>
   </div>
 
   <section class="state-card card" *ngIf="loading">
@@ -54,116 +56,114 @@
     <section class="details-grid">
       <article class="card info-card">
         <div class="card-header">
-          <h3>Personal Information</h3>
-          <p>Basic identity and contact details linked to the alumni profile.</p>
+          <h3>Alumni Information</h3>
+          <p>Identity, contact, academic, and verification details.</p>
         </div>
 
-        <div class="field-grid">
-          <div class="field-item">
-            <span>Full Name</span>
-            <strong>{{ getDisplayName() }}</strong>
-          </div>
+        <div class="subsection">
+          <h4>Personal Information</h4>
 
-          <div class="field-item">
-            <span>Email</span>
-            <strong>{{ getEmailLabel() }}</strong>
-          </div>
+          <div class="field-grid">
+            <div class="field-item">
+              <span>Full Name</span>
+              <strong>{{ getDisplayName() }}</strong>
+            </div>
 
-          <div class="field-item">
-            <span>Contact Number</span>
-            <strong>{{ getContactNumberLabel() }}</strong>
-          </div>
+            <div class="field-item">
+              <span>Email</span>
+              <strong>{{ getEmailLabel() }}</strong>
+            </div>
 
-          <div class="field-item">
-            <span>Birth Date</span>
-            <strong>{{ getBirthDateLabel() }}</strong>
-          </div>
+            <div class="field-item">
+              <span>Contact Number</span>
+              <strong>{{ getContactNumberLabel() }}</strong>
+            </div>
 
-          <div class="field-item">
-            <span>Sex</span>
-            <strong>{{ getSexLabel() }}</strong>
-          </div>
+            <div class="field-item">
+              <span>Birth Date</span>
+              <strong>{{ getBirthDateLabel() }}</strong>
+            </div>
 
-          <div class="field-item">
-            <span>Role</span>
-            <strong>{{ getRoleLabel() }}</strong>
-          </div>
-        </div>
-      </article>
+            <div class="field-item">
+              <span>Sex</span>
+              <strong>{{ getSexLabel() }}</strong>
+            </div>
 
-      <article class="card info-card">
-        <div class="card-header">
-          <h3>Academic Information</h3>
-          <p>Academic records submitted during alumni registration.</p>
-        </div>
-
-        <div class="field-grid">
-          <div class="field-item">
-            <span>University ID</span>
-            <strong>{{ getUniversityIdLabel() }}</strong>
-          </div>
-
-          <div class="field-item">
-            <span>Alumni ID</span>
-            <strong>{{ getAlumniIdLabel() }}</strong>
-          </div>
-
-          <div class="field-item">
-            <span>Program</span>
-            <strong>{{ getProgramLabel() }}</strong>
-          </div>
-
-          <div class="field-item">
-            <span>Year Graduated</span>
-            <strong>{{ getYearGraduatedLabel() }}</strong>
-          </div>
-
-          <div class="field-item field-item-full">
-            <span>Campus</span>
-            <strong>{{ getCampusLabel() }}</strong>
+            <div class="field-item">
+              <span>Role</span>
+              <strong>{{ getRoleLabel() }}</strong>
+            </div>
           </div>
         </div>
-      </article>
 
-      <article class="card info-card">
-        <div class="card-header">
-          <h3>Verification Information</h3>
-          <p>Latest alumni verification status and review details.</p>
+        <div class="subsection">
+          <h4>Academic Information</h4>
+
+          <div class="field-grid">
+            <div class="field-item">
+              <span>University ID</span>
+              <strong>{{ getUniversityIdLabel() }}</strong>
+            </div>
+
+            <div class="field-item">
+              <span>Alumni ID</span>
+              <strong>{{ getAlumniIdLabel() }}</strong>
+            </div>
+
+            <div class="field-item">
+              <span>Program</span>
+              <strong>{{ getProgramLabel() }}</strong>
+            </div>
+
+            <div class="field-item">
+              <span>Year Graduated</span>
+              <strong>{{ getYearGraduatedLabel() }}</strong>
+            </div>
+
+            <div class="field-item field-item-full">
+              <span>Campus</span>
+              <strong>{{ getCampusLabel() }}</strong>
+            </div>
+          </div>
         </div>
 
-        <div class="field-grid">
-          <div class="field-item">
-            <span>Status</span>
-            <strong>
-              <span class="status-pill" [ngClass]="getVerificationStatusClass()">
-                {{ getVerificationStatusLabel() }}
-              </span>
-            </strong>
-          </div>
+        <div class="subsection">
+          <h4>Verification Information</h4>
 
-          <div class="field-item">
-            <span>Submitted</span>
-            <strong>{{ getSubmittedDateLabel() }}</strong>
-          </div>
+          <div class="field-grid">
+            <div class="field-item">
+              <span>Status</span>
+              <strong>
+                <span class="status-pill" [ngClass]="getVerificationStatusClass()">
+                  {{ getVerificationStatusLabel() }}
+                </span>
+              </strong>
+            </div>
 
-          <div class="field-item">
-            <span>Reviewed</span>
-            <strong>{{ getReviewedDateLabel() }}</strong>
-          </div>
+            <div class="field-item">
+              <span>Submitted</span>
+              <strong>{{ getSubmittedDateLabel() }}</strong>
+            </div>
 
-          <div class="field-item">
-            <span>Alumni ID Issued</span>
-            <strong>{{ getIssuedDateLabel() }}</strong>
-          </div>
+            <div class="field-item">
+              <span>Reviewed</span>
+              <strong>{{ getReviewedDateLabel() }}</strong>
+            </div>
 
-          <div class="field-item">
-            <span>Reviewed By</span>
-            <strong>{{ getReviewerLabel() }}</strong>
-          </div>
+            <div class="field-item">
+              <span>Alumni ID Issued</span>
+              <strong>{{ getIssuedDateLabel() }}</strong>
+            </div>
 
-          <div class="field-item field-item-full">
-            <span>Remarks</span>
-            <strong>{{ getRemarksLabel() }}</strong>
+            <div class="field-item">
+              <span>Reviewed By</span>
+              <strong>{{ getReviewerLabel() }}</strong>
+            </div>
+
+            <div class="field-item field-item-full">
+              <span>Remarks</span>
+              <strong>{{ getRemarksLabel() }}</strong>
+            </div>
           </div>
         </div>
       </article>
@@ -175,34 +175,38 @@
         </div>
 
         <ng-container *ngIf="employmentStatus; else noEmploymentRecord">
-          <div class="field-grid">
-            <div class="field-item">
-              <span>Current Status</span>
-              <strong>
-                <span class="status-pill" [ngClass]="getPostGraduationStatusClass()">
-                  {{ getPostGraduationStatusLabel() }}
-                </span>
-              </strong>
-            </div>
+          <div class="subsection">
+            <h4>Current Status</h4>
 
-            <div class="field-item">
-              <span>Job Opportunity Preference</span>
-              <strong>{{ getEmploymentValue('jobOpportunityPreference') }}</strong>
-            </div>
+            <div class="field-grid">
+              <div class="field-item">
+                <span>Current Status</span>
+                <strong>
+                  <span class="status-pill" [ngClass]="getPostGraduationStatusClass()">
+                    {{ getPostGraduationStatusLabel() }}
+                  </span>
+                </strong>
+              </div>
 
-            <div class="field-item">
-              <span>Course Relevance</span>
-              <strong>{{ getEmploymentValue('courseRelevance') }}</strong>
-            </div>
+              <div class="field-item">
+                <span>Job Opportunity Preference</span>
+                <strong>{{ getEmploymentValue('jobOpportunityPreference') }}</strong>
+              </div>
 
-            <div class="field-item">
-              <span>Last Updated</span>
-              <strong>{{ getEmploymentDateTime('lastUpdated') }}</strong>
-            </div>
+              <div class="field-item">
+                <span>Course Relevance</span>
+                <strong>{{ getEmploymentValue('courseRelevance') }}</strong>
+              </div>
 
-            <div class="field-item field-item-full">
-              <span>Career Summary</span>
-              <strong>{{ getEmploymentValue('careerSummary') }}</strong>
+              <div class="field-item">
+                <span>Last Updated</span>
+                <strong>{{ getEmploymentDateTime('lastUpdated') }}</strong>
+              </div>
+
+              <div class="field-item field-item-full">
+                <span>Career Summary</span>
+                <strong>{{ getEmploymentValue('careerSummary') }}</strong>
+              </div>
             </div>
           </div>
 

@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, NgZone, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { NgIf, NgFor } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
@@ -19,7 +19,7 @@ interface AlumniRecordView {
 @Component({
   selector: 'app-alumni-records',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [NgIf, NgFor, FormsModule],
   templateUrl: './alumni-records.html',
   styleUrls: ['./alumni-records.scss'],
 })

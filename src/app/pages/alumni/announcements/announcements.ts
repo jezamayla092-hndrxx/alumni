@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
@@ -22,6 +22,7 @@ export class AlumniAnnouncements implements OnInit, OnDestroy {
 
   loading = false;
   loadError = '';
+
   searchTerm = '';
   filterCategory = '';
 
@@ -53,15 +54,15 @@ export class AlumniAnnouncements implements OnInit, OnDestroy {
 
     this.sub = this.announcementService.getAnnouncements().subscribe({
       next: (records: Announcement[]) => {
-        const allRecords = records ?? [];
+        this.announcements = (Array.isArray(records) ? records : [])
+          .filter((announcement) => announcement.status === 'Published')
+          .map((announcement) => ({
+            ...announcement,
+            isPinned: !!announcement.isPinned,
+          }))
+          .sort((a, b) => this.sortAnnouncements(a, b));
 
-        console.log('Alumni announcements fetched:', allRecords);
-
-        this.announcements = allRecords.filter((announcement) => {
-          return announcement.status === 'Published';
-        });
-
-        this.applyFilters();
+        this.applyFilters(false);
         this.loading = false;
         this.cdr.detectChanges();
       },
@@ -76,25 +77,35 @@ export class AlumniAnnouncements implements OnInit, OnDestroy {
     });
   }
 
-  applyFilters(): void {
+  applyFilters(triggerDetectChanges = true): void {
     const term = this.searchTerm.trim().toLowerCase();
 
-    this.filteredAnnouncements = this.announcements.filter((announcement) => {
-      const title = announcement.title?.toLowerCase() ?? '';
-      const content = announcement.content?.toLowerCase() ?? '';
-      const category = announcement.category?.toLowerCase() ?? '';
+    this.filteredAnnouncements = this.announcements
+      .filter((announcement) => {
+        const title = (announcement.title || '').toLowerCase();
+        const content = (announcement.content || '').toLowerCase();
+        const category = (announcement.category || '').toLowerCase();
+        const visibility = (announcement.visibility || '').toLowerCase();
+        const program = (announcement.program || '').toLowerCase();
 
-      const matchesSearch =
-        !term ||
-        title.includes(term) ||
-        content.includes(term) ||
-        category.includes(term);
+        const matchesSearch =
+          !term ||
+          title.includes(term) ||
+          content.includes(term) ||
+          category.includes(term) ||
+          visibility.includes(term) ||
+          program.includes(term);
 
-      const matchesCategory =
-        !this.filterCategory || announcement.category === this.filterCategory;
+        const matchesCategory =
+          !this.filterCategory || announcement.category === this.filterCategory;
 
-      return matchesSearch && matchesCategory;
-    });
+        return matchesSearch && matchesCategory;
+      })
+      .sort((a, b) => this.sortAnnouncements(a, b));
+
+    if (triggerDetectChanges) {
+      this.cdr.detectChanges();
+    }
   }
 
   clearFilters(): void {
@@ -136,14 +147,20 @@ export class AlumniAnnouncements implements OnInit, OnDestroy {
   }
 
   getPreview(announcement: Announcement): string {
-    const content = announcement.content ?? '';
+    const content = announcement.content || '';
+
     return content.length > 120 ? `${content.slice(0, 120)}...` : content;
   }
 
-  formatDate(dateStr: string): string {
-    if (!dateStr) return '—';
+  formatDate(value: any): string {
+    if (!value) return '—';
 
-    const date = new Date(dateStr);
+    const resolved =
+      typeof value === 'string'
+        ? value
+        : value?.toDate?.() ?? value;
+
+    const date = new Date(resolved);
 
     if (isNaN(date.getTime())) return '—';
 
@@ -154,7 +171,38 @@ export class AlumniAnnouncements implements OnInit, OnDestroy {
     });
   }
 
+  hasUpdatedDate(announcement: Announcement): boolean {
+    const created = this.toTime(announcement.createdAt);
+    const updated = this.toTime(announcement.updatedAt);
+
+    return !!updated && updated !== created;
+  }
+
   trackByAnnouncement(index: number, announcement: Announcement): string {
     return announcement.id ?? index.toString();
+  }
+
+  private sortAnnouncements(a: Announcement, b: Announcement): number {
+    const pinnedDiff = Number(!!b.isPinned) - Number(!!a.isPinned);
+
+    if (pinnedDiff !== 0) return pinnedDiff;
+
+    const bTime = this.toTime(b.updatedAt || b.createdAt);
+    const aTime = this.toTime(a.updatedAt || a.createdAt);
+
+    return bTime - aTime;
+  }
+
+  private toTime(value: any): number {
+    if (!value) return 0;
+
+    const resolved =
+      typeof value === 'string'
+        ? value
+        : value?.toDate?.() ?? value;
+
+    const time = new Date(resolved).getTime();
+
+    return isNaN(time) ? 0 : time;
   }
 }

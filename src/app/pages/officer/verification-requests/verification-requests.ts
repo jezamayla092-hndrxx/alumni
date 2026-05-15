@@ -136,6 +136,7 @@ export class VerificationRequestsComponent implements OnInit, OnDestroy {
       request.birthDate,
       request.sex,
       request.remarks,
+      this.getIdPhotoUrl(request),
       this.getUniversityIdLabel(request),
       this.getAlumniIdLabel(request),
       this.getContactNumberLabel(request),
@@ -258,6 +259,7 @@ export class VerificationRequestsComponent implements OnInit, OnDestroy {
       showCancelButton: true,
       confirmButtonText,
     });
+
     return result.isConfirmed;
   }
 
@@ -340,19 +342,26 @@ export class VerificationRequestsComponent implements OnInit, OnDestroy {
 
   getFilterTotal(): number {
     if (this.activeFilter === 'all') return this.verificationRequests.length;
+
     return this.verificationRequests.filter(
-      (r) => this.normalizeStatus(r.status) === this.activeFilter
+      (request) => this.normalizeStatus(request.status) === this.activeFilter
     ).length;
   }
 
   getFilterLabel(): string {
     switch (this.activeFilter) {
-      case 'all':          return 'total accounts';
-      case 'pending':      return 'pending requests';
-      case 'under_review': return 'under review requests';
-      case 'approved':     return 'approved requests';
-      case 'rejected':     return 'rejected requests';
-      default:             return 'requests';
+      case 'all':
+        return 'total accounts';
+      case 'pending':
+        return 'pending requests';
+      case 'under_review':
+        return 'under review requests';
+      case 'approved':
+        return 'approved requests';
+      case 'rejected':
+        return 'rejected requests';
+      default:
+        return 'requests';
     }
   }
 
@@ -410,6 +419,24 @@ export class VerificationRequestsComponent implements OnInit, OnDestroy {
     return request.remarks?.trim() || 'No remarks';
   }
 
+  getIdPhotoUrl(request: VerificationRequest): string {
+    return String((request as any).idPhotoUrl || '').trim();
+  }
+
+  hasIdPhoto(request: VerificationRequest): boolean {
+    return !!this.getIdPhotoUrl(request);
+  }
+
+  openIdPhoto(request: VerificationRequest, event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+
+    const url = this.getIdPhotoUrl(request);
+    if (!url) return;
+
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
   getVerificationDocuments(request: VerificationRequest): VerificationDocumentView[] {
     const documents: VerificationDocumentView[] = [];
 
@@ -433,7 +460,12 @@ export class VerificationRequestsComponent implements OnInit, OnDestroy {
         String(document?.fileType || document?.type || document?.mimeType || '').trim() ||
         this.guessFileTypeFromUrl(url);
 
-      documents.push({ fileName, fileType, url, isImage: this.isImageDocument(fileType, url) });
+      documents.push({
+        fileName,
+        fileType,
+        url,
+        isImage: this.isImageDocument(fileType, url),
+      });
     });
 
     const submittedDocuments = Array.isArray(request.submittedDocuments)
@@ -442,23 +474,37 @@ export class VerificationRequestsComponent implements OnInit, OnDestroy {
 
     submittedDocuments.forEach((documentUrl, index) => {
       const url = String(documentUrl || '').trim();
+
       if (!url) return;
-      if (documents.some((d) => d.url === url)) return;
+      if (documents.some((document) => document.url === url)) return;
 
       const fileName = this.getFileNameFromUrl(url) || `Submitted Document ${index + 1}`;
       const fileType = this.guessFileTypeFromUrl(url);
-      documents.push({ fileName, fileType, url, isImage: this.isImageDocument(fileType, url) });
+
+      documents.push({
+        fileName,
+        fileType,
+        url,
+        isImage: this.isImageDocument(fileType, url),
+      });
     });
 
     const oldDocumentUrl = request.documentUrl?.trim();
 
-    if (oldDocumentUrl && !documents.some((d) => d.url === oldDocumentUrl)) {
+    if (oldDocumentUrl && !documents.some((document) => document.url === oldDocumentUrl)) {
       const fileName =
         request.documentName?.trim() ||
         this.getFileNameFromUrl(oldDocumentUrl) ||
         'Verification Document';
+
       const fileType = this.guessFileTypeFromUrl(oldDocumentUrl);
-      documents.push({ fileName, fileType, url: oldDocumentUrl, isImage: this.isImageDocument(fileType, oldDocumentUrl) });
+
+      documents.push({
+        fileName,
+        fileType,
+        url: oldDocumentUrl,
+        isImage: this.isImageDocument(fileType, oldDocumentUrl),
+      });
     }
 
     return documents;
@@ -473,7 +519,9 @@ export class VerificationRequestsComponent implements OnInit, OnDestroy {
   openDocument(url: string, event?: Event): void {
     event?.preventDefault();
     event?.stopPropagation();
+
     if (!url) return;
+
     window.open(url, '_blank', 'noopener,noreferrer');
   }
 
@@ -493,17 +541,20 @@ export class VerificationRequestsComponent implements OnInit, OnDestroy {
 
   private guessFileTypeFromUrl(url: string): string {
     const cleanUrl = url.split('?')[0].toLowerCase();
+
     if (/\.(jpg|jpeg)$/.test(cleanUrl)) return 'image/jpeg';
-    if (/\.png$/.test(cleanUrl))        return 'image/png';
-    if (/\.webp$/.test(cleanUrl))       return 'image/webp';
-    if (/\.gif$/.test(cleanUrl))        return 'image/gif';
-    if (/\.pdf$/.test(cleanUrl))        return 'application/pdf';
+    if (/\.png$/.test(cleanUrl)) return 'image/png';
+    if (/\.webp$/.test(cleanUrl)) return 'image/webp';
+    if (/\.gif$/.test(cleanUrl)) return 'image/gif';
+    if (/\.pdf$/.test(cleanUrl)) return 'application/pdf';
+
     return '';
   }
 
   private isImageDocument(fileType: string, url: string): boolean {
     const normalizedType = String(fileType || '').toLowerCase();
-    const normalizedUrl  = String(url || '').split('?')[0].toLowerCase();
+    const normalizedUrl = String(url || '').split('?')[0].toLowerCase();
+
     return (
       normalizedType.startsWith('image/') ||
       /\.(jpg|jpeg|png|webp|gif)$/.test(normalizedUrl)
@@ -512,27 +563,39 @@ export class VerificationRequestsComponent implements OnInit, OnDestroy {
 
   getStatusClass(status: string): string {
     switch (this.normalizeStatus(status)) {
-      case 'pending':      return 'status-pending';
-      case 'under_review': return 'status-review';
-      case 'approved':     return 'status-approved';
-      case 'rejected':     return 'status-rejected';
-      default:             return 'status-pending';
+      case 'pending':
+        return 'status-pending';
+      case 'under_review':
+        return 'status-review';
+      case 'approved':
+        return 'status-approved';
+      case 'rejected':
+        return 'status-rejected';
+      default:
+        return 'status-pending';
     }
   }
 
   getStatusLabel(status: string): string {
     switch (this.normalizeStatus(status)) {
-      case 'pending':      return 'Pending';
-      case 'under_review': return 'Under Review';
-      case 'approved':     return 'Approved';
-      case 'rejected':     return 'Rejected';
-      default:             return 'Pending';
+      case 'pending':
+        return 'Pending';
+      case 'under_review':
+        return 'Under Review';
+      case 'approved':
+        return 'Approved';
+      case 'rejected':
+        return 'Rejected';
+      default:
+        return 'Pending';
     }
   }
 
   formatDate(value: any): string {
     if (!value) return '—';
+
     const date = value?.seconds ? new Date(value.seconds * 1000) : new Date(value);
+
     return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString();
   }
 

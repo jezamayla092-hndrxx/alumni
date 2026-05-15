@@ -27,7 +27,6 @@ input[type='password']::-ms-clear {
   max-width: 620px;
 }
 
-/* Card removed — no background, border, shadow, or backdrop */
 .signup-card {
   width: 100%;
   padding: 2rem;
@@ -75,9 +74,7 @@ input[type='password']::-ms-clear {
     color: #0f172a;
     transition: border-color 0.22s ease, box-shadow 0.22s ease;
 
-    &::placeholder {
-      color: transparent;
-    }
+    &::placeholder { color: transparent; }
 
     &:focus {
       border-color: #7c3aed;
@@ -93,10 +90,7 @@ input[type='password']::-ms-clear {
       color: #6d28d9;
     }
 
-    &:disabled {
-      cursor: not-allowed;
-      opacity: 0.65;
-    }
+    &:disabled { cursor: not-allowed; opacity: 0.65; }
   }
 
   label {
@@ -120,7 +114,12 @@ input[type='password']::-ms-clear {
   line-height: 1.35;
 }
 
-/* ─── Native Select Fields ───────────────────────────────────────── */
+.required-star {
+  color: #dc2626;
+  font-size: 0.85rem;
+}
+
+/* ─── Select Fields ──────────────────────────────────────────────── */
 .select-field {
   position: relative;
   margin-bottom: 1.05rem;
@@ -152,21 +151,12 @@ input[type='password']::-ms-clear {
     appearance: none;
     transition: border-color 0.22s ease, box-shadow 0.22s ease;
 
-    &:focus {
-      border-color: #7c3aed;
-      box-shadow: 0 0 0 4px rgba(109, 40, 217, 0.12);
-    }
-
-    &:disabled {
-      cursor: not-allowed;
-      opacity: 0.65;
-    }
+    &:focus { border-color: #7c3aed; box-shadow: 0 0 0 4px rgba(109, 40, 217, 0.12); }
+    &:disabled { cursor: not-allowed; opacity: 0.65; }
   }
 }
 
-.full-width-select {
-  width: 100%;
-}
+.full-width-select { width: 100%; }
 
 /* ─── Phone Field ────────────────────────────────────────────────── */
 .phone-field {
@@ -184,10 +174,7 @@ input[type='password']::-ms-clear {
   overflow: hidden;
   transition: border-color 0.22s ease, box-shadow 0.22s ease;
 
-  &:focus-within {
-    border-color: #7c3aed;
-    box-shadow: 0 0 0 4px rgba(109, 40, 217, 0.12);
-  }
+  &:focus-within { border-color: #7c3aed; box-shadow: 0 0 0 4px rgba(109, 40, 217, 0.12); }
 }
 
 .country-select {
@@ -204,10 +191,7 @@ input[type='password']::-ms-clear {
   font-weight: 800;
   cursor: pointer;
 
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.65;
-  }
+  &:disabled { cursor: not-allowed; opacity: 0.65; }
 }
 
 .phone-input-wrapper {
@@ -226,19 +210,184 @@ input[type='password']::-ms-clear {
     font-size: 0.95rem;
     padding: 0 1rem;
 
-    &::placeholder {
-      color: #9ca3af;
-      font-size: 0.92rem;
-    }
-
-    &:disabled {
-      cursor: not-allowed;
-      opacity: 0.65;
-    }
+    &::placeholder { color: #9ca3af; font-size: 0.92rem; }
+    &:disabled { cursor: not-allowed; opacity: 0.65; }
   }
 }
 
-/* ─── Upload Section ─────────────────────────────────────────────── */
+/* ─── ID Photo Section ───────────────────────────────────────────── */
+.id-photo-section {
+  margin-bottom: 1.2rem;
+  border: 1px solid #ddd6fe;
+  border-radius: 14px;
+  background: #faf7ff;
+  overflow: hidden;
+}
+
+.id-photo-header {
+  padding: 0.85rem 1rem 0.7rem;
+  border-bottom: 1px solid #ede9fe;
+
+  strong {
+    display: block;
+    color: #111827;
+    font-size: 0.9rem;
+    font-weight: 800;
+    margin-bottom: 0.18rem;
+  }
+
+  p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.78rem;
+    line-height: 1.45;
+  }
+}
+
+.id-photo-drop {
+  display: block;
+  cursor: pointer;
+  padding: 1.2rem 1rem;
+  transition: background 0.18s ease;
+
+  &:hover:not(.disabled) { background: #f3f0ff; }
+  &.disabled { cursor: not-allowed; opacity: 0.65; }
+
+  input[type='file'] {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+.id-photo-drop-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  text-align: center;
+}
+
+.id-photo-drop-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #ede9fe;
+  color: #6d28d9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .material-symbols-outlined { font-size: 1.6rem; }
+}
+
+.id-photo-drop-label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #6d28d9;
+}
+
+.id-photo-drop-hint {
+  font-size: 0.74rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.id-photo-preview-wrap {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.id-photo-preview {
+  width: 110px;
+  height: 130px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid #ddd6fe;
+  background: #f3f0ff;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.id-photo-preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.id-photo-change-btn {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 9px;
+  background: #ede9fe;
+  color: #6d28d9;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease;
+
+  input[type='file'] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .material-symbols-outlined { font-size: 1rem; }
+
+  &:hover:not(.disabled) { background: #ddd6fe; }
+  &.disabled { cursor: not-allowed; opacity: 0.65; pointer-events: none; }
+}
+
+.id-photo-remove-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 9px;
+  border: 1px solid #fecaca;
+  background: #fff;
+  color: #dc2626;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease;
+
+  .material-symbols-outlined { font-size: 1rem; }
+
+  &:hover:not(:disabled) { background: #fef2f2; }
+  &:disabled { cursor: not-allowed; opacity: 0.65; }
+}
+
+.id-photo-preview-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: 0.74rem;
+  color: #94a3b8;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.45;
+
+  .material-symbols-outlined { font-size: 0.9rem; flex-shrink: 0; margin-top: 1px; }
+}
+
+/* ─── Verification Documents ─────────────────────────────────────── */
 .upload-summary {
   margin-bottom: 1.2rem;
   border: 1px dashed #c4b5fd;
@@ -250,18 +399,8 @@ input[type='password']::-ms-clear {
   justify-content: space-between;
   gap: 0.9rem;
 
-  strong {
-    display: block;
-    color: #111827;
-    font-size: 0.9rem;
-    font-weight: 800;
-  }
-
-  p {
-    margin: 0.15rem 0 0;
-    color: #64748b;
-    font-size: 0.8rem;
-  }
+  strong { display: block; color: #111827; font-size: 0.9rem; font-weight: 800; }
+  p { margin: 0.15rem 0 0; color: #64748b; font-size: 0.8rem; }
 }
 
 .upload-open-btn {
@@ -280,26 +419,11 @@ input[type='password']::-ms-clear {
   gap: 0.28rem;
   transition: background 0.2s ease;
 
-  input {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    cursor: pointer;
-  }
+  input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .material-symbols-outlined { font-size: 1.15rem; }
 
-  .material-symbols-outlined {
-    font-size: 1.15rem;
-  }
-
-  &:hover {
-    background: #ddd6fe;
-  }
-
-  &.disabled {
-    cursor: not-allowed;
-    opacity: 0.65;
-    pointer-events: none;
-  }
+  &:hover { background: #ddd6fe; }
+  &.disabled { cursor: not-allowed; opacity: 0.65; pointer-events: none; }
 }
 
 .selected-documents-preview {
@@ -321,17 +445,8 @@ input[type='password']::-ms-clear {
   padding: 0.45rem 0.55rem;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
 
-  img {
-    width: 44px;
-    height: 44px;
-    border-radius: 9px;
-    object-fit: cover;
-    background: #f8fafc;
-  }
-
-  div {
-    min-width: 0;
-  }
+  img { width: 44px; height: 44px; border-radius: 9px; object-fit: cover; background: #f8fafc; }
+  div { min-width: 0; }
 
   strong {
     display: block;
@@ -343,12 +458,7 @@ input[type='password']::-ms-clear {
     text-overflow: ellipsis;
   }
 
-  span {
-    display: block;
-    margin-top: 0.1rem;
-    font-size: 0.72rem;
-    color: #94a3b8;
-  }
+  span { display: block; margin-top: 0.1rem; font-size: 0.72rem; color: #94a3b8; }
 
   button {
     width: 30px;
@@ -362,26 +472,14 @@ input[type='password']::-ms-clear {
     place-items: center;
     transition: background 0.18s ease, color 0.18s ease;
 
-    .material-symbols-outlined {
-      font-size: 1rem;
-    }
-
-    &:hover:not(:disabled) {
-      background: #ede9fe;
-      color: #6d28d9;
-    }
-
-    &:disabled {
-      cursor: not-allowed;
-      opacity: 0.55;
-    }
+    .material-symbols-outlined { font-size: 1rem; }
+    &:hover:not(:disabled) { background: #ede9fe; color: #6d28d9; }
+    &:disabled { cursor: not-allowed; opacity: 0.55; }
   }
 }
 
-/* ─── Password Fields ────────────────────────────────────────────── */
-.password-field input {
-  padding-right: 48px;
-}
+/* ─── Password ───────────────────────────────────────────────────── */
+.password-field input { padding-right: 48px; }
 
 .toggle-password {
   position: absolute;
@@ -400,21 +498,12 @@ input[type='password']::-ms-clear {
   align-items: center;
   justify-content: center;
 
-  .material-symbols-outlined {
-    font-size: 21px;
-  }
-
-  &:hover {
-    opacity: 0.8;
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.65;
-  }
+  .material-symbols-outlined { font-size: 21px; }
+  &:hover { opacity: 0.8; }
+  &:disabled { cursor: not-allowed; opacity: 0.65; }
 }
 
-/* ─── Consent Checkbox ───────────────────────────────────────────── */
+/* ─── Consent ────────────────────────────────────────────────────── */
 .consent-field {
   display: flex;
   align-items: flex-start;
@@ -428,20 +517,10 @@ input[type='password']::-ms-clear {
     margin-top: 3px;
     accent-color: #6d28d9;
     cursor: pointer;
-
-    &:disabled {
-      cursor: not-allowed;
-      opacity: 0.65;
-    }
+    &:disabled { cursor: not-allowed; opacity: 0.65; }
   }
 
-  label {
-    font-size: 0.875rem;
-    color: #374151;
-    line-height: 1.55;
-    cursor: pointer;
-    user-select: none;
-  }
+  label { font-size: 0.875rem; color: #374151; line-height: 1.55; cursor: pointer; user-select: none; }
 }
 
 /* ─── Signup Button ──────────────────────────────────────────────── */
@@ -458,10 +537,7 @@ input[type='password']::-ms-clear {
   cursor: pointer;
   box-shadow: 0 14px 28px rgba(109, 40, 217, 0.24);
 
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.65;
-  }
+  &:disabled { cursor: not-allowed; opacity: 0.65; }
 }
 
 .login-link {
@@ -470,67 +546,30 @@ input[type='password']::-ms-clear {
   color: #64748b;
   font-size: 0.94rem;
 
-  a {
-    color: #6d28d9;
-    text-decoration: none;
-    font-weight: 800;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
+  a { color: #6d28d9; text-decoration: none; font-weight: 800; &:hover { text-decoration: underline; } }
 }
 
 .back-login-btn {
   border: none;
   background: transparent;
   color: #6d28d9;
-  text-decoration: none;
   font-weight: 800;
   cursor: pointer;
   font-family: inherit;
   font-size: 0.94rem;
   padding: 0;
 
-  &:hover {
-    text-decoration: underline;
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.65;
-  }
+  &:hover { text-decoration: underline; }
+  &:disabled { cursor: not-allowed; opacity: 0.65; }
 }
 
 /* ─── Mobile ─────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
-  .signup-page {
-    padding: 1rem;
-  }
-
-  .signup-card {
-    padding: 1.4rem;
-  }
-
-  .signup-header h1 {
-    font-size: 1.5rem;
-  }
-
-  .form-grid {
-    grid-template-columns: 1fr;
-    gap: 0;
-  }
-
-  .upload-summary {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .upload-open-btn {
-    justify-content: center;
-  }
-
-  .selected-document-chip {
-    grid-template-columns: 42px 1fr 32px;
-  }
+  .signup-page { padding: 1rem; }
+  .signup-card { padding: 1.4rem; }
+  .signup-header h1 { font-size: 1.5rem; }
+  .form-grid { grid-template-columns: 1fr; gap: 0; }
+  .upload-summary { align-items: stretch; flex-direction: column; }
+  .upload-open-btn { justify-content: center; }
+  .selected-document-chip { grid-template-columns: 42px 1fr 32px; }
 }

@@ -13,11 +13,11 @@
     <aside class="sidebar">
       <div class="sidebar-header">
         <div class="brand-wrap">
-          <div class="brand-icon">
-            <i class="pi pi-graduation-cap"></i>
+          <div class="brand-icon brand-logo">
+            <img src="/ustp-logo.png" alt="ATMS Logo" />
           </div>
 
-          <div class="brand-text" *ngIf="!sidebarCollapsed">
+          <div class="brand-text" [class.is-hidden]="sidebarCollapsed">
             <h2>ATMS</h2>
           </div>
         </div>
@@ -33,7 +33,7 @@
           (click)="closeSidebarOnMobile()"
         >
           <div class="nav-icon">
-            <i class="pi" [ngClass]="item.icon"></i>
+            <i [class]="item.icon"></i>
           </div>
 
           <span
@@ -56,8 +56,7 @@
           [attr.aria-label]="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
         >
           <i
-            class="pi"
-            [ngClass]="sidebarCollapsed ? 'pi-angle-right' : 'pi-angle-left'"
+            [class]="sidebarCollapsed ? 'ti ti-chevron-right' : 'ti ti-chevron-left'"
           ></i>
         </button>
       </div>
@@ -72,7 +71,7 @@
             (click)="toggleSidebar()"
             aria-label="Toggle sidebar"
           >
-            <i class="pi pi-bars"></i>
+            <i class="ti ti-menu-2"></i>
           </button>
         </div>
 
@@ -83,7 +82,7 @@
             (click)="toggleDarkMode()"
             [attr.aria-label]="darkMode ? 'Switch to light mode' : 'Switch to dark mode'"
           >
-            <i class="pi" [ngClass]="darkMode ? 'pi-sun' : 'pi-moon'"></i>
+            <i [class]="darkMode ? 'ti ti-sun' : 'ti ti-moon'"></i>
           </button>
 
           <div class="topbar-user">
@@ -110,14 +109,14 @@
               </div>
 
               <button type="button" class="dropdown-item" (click)="goToProfile()">
-                <i class="pi pi-user"></i>
+                <i class="ti ti-user-circle"></i>
                 <span>My Profile</span>
               </button>
 
               <div class="dropdown-divider"></div>
 
               <button type="button" class="dropdown-item logout" (click)="logout()">
-                <i class="pi pi-sign-out"></i>
+                <i class="ti ti-logout-2"></i>
                 <span>Sign out</span>
               </button>
             </div>
@@ -129,13 +128,112 @@
         <router-outlet></router-outlet>
       </main>
     </div>
+
+    <div
+      class="profile-modal-backdrop"
+      *ngIf="profileModalRendered"
+      [class.is-open]="profileModalOpen"
+      (click)="closeProfileModal()"
+    >
+      <section
+        class="profile-modal-panel"
+        [class.is-open]="profileModalOpen"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Account Settings"
+        (click)="onProfileModalPanelClick($event)"
+      >
+        <aside class="profile-modal-sidebar">
+          <div class="profile-modal-user">
+            <div class="profile-modal-avatar">
+              <ng-container *ngIf="currentUserPhotoUrl; else modalAvatarInitial">
+                <img [src]="currentUserPhotoUrl" alt="Profile photo" />
+              </ng-container>
+
+              <ng-template #modalAvatarInitial>
+                {{ currentUserInitial }}
+              </ng-template>
+            </div>
+
+            <div class="profile-modal-user-text">
+              <strong>{{ currentUserName }}</strong>
+              <span>{{ currentUserRole }}</span>
+            </div>
+          </div>
+
+          <div class="profile-modal-search">
+            <i class="ti ti-search"></i>
+            <span>Search</span>
+          </div>
+
+          <nav class="profile-settings-nav" aria-label="Account settings">
+            <div class="profile-settings-group account-tree">
+              <span class="profile-settings-label">Account Settings</span>
+
+              <button
+                type="button"
+                class="profile-settings-item"
+                [class.active]="activeAccountSettingsSection === 'account_info'"
+                (click)="setAccountSettingsSection('account_info')"
+              >
+                <i class="ti ti-user-circle"></i>
+                <span>Account Info</span>
+              </button>
+
+              <button
+                type="button"
+                class="profile-settings-item"
+                [class.active]="activeAccountSettingsSection === 'password_security'"
+                (click)="setAccountSettingsSection('password_security')"
+              >
+                <i class="ti ti-lock"></i>
+                <span>Password & Security</span>
+              </button>
+            </div>
+          </nav>
+        </aside>
+
+        <div class="profile-modal-main">
+          <button
+            type="button"
+            class="profile-modal-close"
+            (click)="closeProfileModal()"
+            aria-label="Close profile modal"
+          >
+            <i class="ti ti-x"></i>
+          </button>
+
+          <div class="profile-modal-content">
+            <ng-container *ngIf="activeAccountSettingsSection === 'account_info'">
+              <app-my-profile></app-my-profile>
+
+              <section class="account-session-card">
+                <div class="account-session-copy">
+                  <h3>Session</h3>
+                  <p>Sign out from your current ATMS session.</p>
+                </div>
+
+                <button type="button" class="account-logout-btn" (click)="logout()">
+                  <i class="ti ti-logout-2"></i>
+                  <span>Log Out</span>
+                </button>
+              </section>
+            </ng-container>
+
+            <app-settings
+              *ngIf="activeAccountSettingsSection === 'password_security'"
+            ></app-settings>
+          </div>
+        </div>
+      </section>
+    </div>
   </div>
 </ng-container>
 
 <ng-template #layoutLoading>
   <div class="layout-loading">
     <div class="layout-loading-card">
-      <i class="pi pi-spin pi-spinner"></i>
+      <i class="ti ti-loader-2 layout-spinner-icon"></i>
       <span>Loading user session...</span>
     </div>
   </div>

@@ -7,7 +7,7 @@ import {
   HostListener,
   OnDestroy,
 } from '@angular/core';
-import { CommonModule, NgClass, isPlatformBrowser } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import {
   RouterLink,
   RouterLinkActive,
@@ -17,11 +17,12 @@ import {
 } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 import { doc, onSnapshot, Unsubscribe } from 'firebase/firestore';
-import Swal from 'sweetalert2';
 
 import { AuthService } from '../../../services/auth.service';
 import { User } from '../../../models/user.model';
 import { db } from '../../../firebase.config';
+import { MyProfile } from '../../../pages/shared/my-profile/my-profile';
+import { Settings } from '../../../pages/shared/settings/settings';
 
 interface NavItem {
   label: string;
@@ -30,10 +31,19 @@ interface NavItem {
   small?: boolean;
 }
 
+type AccountSettingsSection = 'account_info' | 'password_security';
+
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, NgClass, RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [
+    CommonModule,
+    RouterLink,
+    RouterLinkActive,
+    RouterOutlet,
+    MyProfile,
+    Settings,
+  ],
   templateUrl: './main-layout.html',
   styleUrls: ['./main-layout.scss'],
 })
@@ -45,33 +55,101 @@ export class MainLayout implements OnInit, OnDestroy {
   pageTitle = 'Dashboard';
   isMobileView = false;
 
+  profileModalRendered = false;
+  profileModalOpen = false;
+  activeAccountSettingsSection: AccountSettingsSection = 'account_info';
+
   private destroyed = false;
-  private accountDisabledHandled = false;
   private routerEventsSub?: Subscription;
   private userDocUnsubscribe?: Unsubscribe;
+  private profileModalCloseTimer?: ReturnType<typeof setTimeout>;
 
   adminNavItems: NavItem[] = [
-    { label: 'Dashboard', icon: 'pi-home', route: '/admin/dashboard' },
-    { label: 'Manage Accounts', icon: 'pi-users', route: '/admin/manage-accounts', small: true },
-    { label: 'Reports', icon: 'pi-chart-bar', route: '/admin/reports' },
+    {
+      label: 'Dashboard',
+      icon: 'ti ti-home',
+      route: '/admin/dashboard',
+    },
+    {
+      label: 'Manage Accounts',
+      icon: 'ti ti-users-group',
+      route: '/admin/manage-accounts',
+      small: true,
+    },
+    {
+      label: 'Reports',
+      icon: 'ti ti-chart-bar',
+      route: '/admin/reports',
+    },
   ];
 
   officerNavItems: NavItem[] = [
-    { label: 'Dashboard', icon: 'pi-home', route: '/officer/dashboard' },
-    { label: 'Verification Requests', icon: 'pi-check-square', route: '/officer/verification-requests', small: true },
-    { label: 'Alumni Records', icon: 'pi-id-card', route: '/officer/alumni-records' },
-    { label: 'Events', icon: 'pi-calendar', route: '/officer/events' },
-    { label: 'Announcements', icon: 'pi-megaphone', route: '/officer/announcements' },
-    { label: 'Job Postings', icon: 'pi-briefcase', route: '/officer/job-postings', small: true },
+    {
+      label: 'Dashboard',
+      icon: 'ti ti-home',
+      route: '/officer/dashboard',
+    },
+    {
+      label: 'Verification Requests',
+      icon: 'ti ti-shield-check',
+      route: '/officer/verification-requests',
+      small: true,
+    },
+    {
+      label: 'Alumni Records',
+      icon: 'ti ti-id-badge-2',
+      route: '/officer/alumni-records',
+    },
+    {
+      label: 'Events',
+      icon: 'ti ti-calendar-event',
+      route: '/officer/events',
+    },
+    {
+      label: 'Announcements',
+      icon: 'ti ti-speakerphone',
+      route: '/officer/announcements',
+    },
+    {
+      label: 'Job Postings',
+      icon: 'ti ti-briefcase-2',
+      route: '/officer/job-postings',
+      small: true,
+    },
   ];
 
   alumniNavItems: NavItem[] = [
-    { label: 'Dashboard', icon: 'pi-home', route: '/alumni/dashboard' },
-    { label: 'Verification Status', icon: 'pi-check-circle', route: '/alumni/verification-status' },
-    { label: 'Employment Status', icon: 'pi-briefcase', route: '/alumni/employment-status' },
-    { label: 'Announcements', icon: 'pi-megaphone', route: '/alumni/announcements' },
-    { label: 'Events', icon: 'pi-calendar', route: '/alumni/events' },
-    { label: 'Job Postings', icon: 'pi-briefcase', route: '/alumni/job-postings', small: true },
+    {
+      label: 'Dashboard',
+      icon: 'ti ti-home',
+      route: '/alumni/dashboard',
+    },
+    {
+      label: 'Verification Status',
+      icon: 'ti ti-shield-check',
+      route: '/alumni/verification-status',
+    },
+    {
+      label: 'Employment Status',
+      icon: 'ti ti-briefcase-2',
+      route: '/alumni/employment-status',
+    },
+    {
+      label: 'Announcements',
+      icon: 'ti ti-speakerphone',
+      route: '/alumni/announcements',
+    },
+    {
+      label: 'Events',
+      icon: 'ti ti-calendar-event',
+      route: '/alumni/events',
+    },
+    {
+      label: 'Job Postings',
+      icon: 'ti ti-briefcase-2',
+      route: '/alumni/job-postings',
+      small: true,
+    },
   ];
 
   currentUser: User | null = null;
@@ -99,6 +177,10 @@ export class MainLayout implements OnInit, OnDestroy {
     this.destroyed = true;
     this.routerEventsSub?.unsubscribe();
     this.userDocUnsubscribe?.();
+
+    if (this.profileModalCloseTimer) {
+      clearTimeout(this.profileModalCloseTimer);
+    }
   }
 
   get navItems(): NavItem[] {
@@ -159,6 +241,11 @@ export class MainLayout implements OnInit, OnDestroy {
     }
   }
 
+  setAccountSettingsSection(section: AccountSettingsSection): void {
+    this.activeAccountSettingsSection = section;
+    this.cdr.detectChanges();
+  }
+
   toggleSidebar(): void {
     this.sidebarCollapsed = !this.sidebarCollapsed;
     this.userMenuOpen = false;
@@ -190,28 +277,55 @@ export class MainLayout implements OnInit, OnDestroy {
   }
 
   goToProfile(): void {
+    this.openProfileModal();
+  }
+
+  openProfileModal(): void {
     this.userMenuOpen = false;
+    this.activeAccountSettingsSection = 'account_info';
 
-    if (this.currentUser?.role === 'admin') {
-      this.router.navigate(['/admin/my-profile']);
-      return;
+    if (this.profileModalCloseTimer) {
+      clearTimeout(this.profileModalCloseTimer);
+      this.profileModalCloseTimer = undefined;
     }
 
-    if (this.currentUser?.role === 'officer') {
-      this.router.navigate(['/officer/my-profile']);
-      return;
+    this.profileModalRendered = true;
+    this.cdr.detectChanges();
+
+    requestAnimationFrame(() => {
+      if (this.destroyed) return;
+
+      this.profileModalOpen = true;
+      this.cdr.detectChanges();
+    });
+  }
+
+  closeProfileModal(): void {
+    if (!this.profileModalRendered) return;
+
+    this.profileModalOpen = false;
+    this.cdr.detectChanges();
+
+    if (this.profileModalCloseTimer) {
+      clearTimeout(this.profileModalCloseTimer);
     }
 
-    if (this.currentUser?.role === 'alumni') {
-      this.router.navigate(['/alumni/my-profile']);
-      return;
-    }
+    this.profileModalCloseTimer = setTimeout(() => {
+      if (this.destroyed) return;
 
-    this.router.navigate(['/login']);
+      this.profileModalRendered = false;
+      this.profileModalCloseTimer = undefined;
+      this.cdr.detectChanges();
+    }, 220);
+  }
+
+  onProfileModalPanelClick(event: MouseEvent): void {
+    event.stopPropagation();
   }
 
   async logout(): Promise<void> {
     this.userMenuOpen = false;
+    this.closeProfileModal();
     this.destroyed = true;
     this.userDocUnsubscribe?.();
 
@@ -232,6 +346,13 @@ export class MainLayout implements OnInit, OnDestroy {
     if (!target.closest('.topbar-user') && this.userMenuOpen) {
       this.userMenuOpen = false;
       this.cdr.detectChanges();
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    if (this.profileModalOpen) {
+      this.closeProfileModal();
     }
   }
 
@@ -354,12 +475,6 @@ export class MainLayout implements OnInit, OnDestroy {
           : fallbackUser;
 
         this.currentUser = latestUser;
-
-        if (latestUser.isActive === false && !this.accountDisabledHandled) {
-          void this.handleDisabledAccount(latestUser);
-          return;
-        }
-
         this.cdr.detectChanges();
       },
       (error) => {
@@ -370,97 +485,6 @@ export class MainLayout implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       }
     );
-  }
-
-  private async handleDisabledAccount(user: User): Promise<void> {
-    if (this.accountDisabledHandled) return;
-
-    this.accountDisabledHandled = true;
-    this.userMenuOpen = false;
-    this.cdr.detectChanges();
-
-    const disabledReason = ((user as any).disabledReason || '').trim();
-    const disabledByName = ((user as any).disabledByName || '').trim();
-    const disabledAt = (user as any).disabledAt || null;
-
-    const result = await Swal.fire({
-      icon: 'error',
-      title: 'Account Disabled',
-      html: `
-        <p style="margin:0 0 0.75rem;color:#374151;font-size:0.95rem;line-height:1.5;">
-          Your account has been disabled by the administrator.
-        </p>
-
-        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:0.85rem 1rem;text-align:left;margin-bottom:0.75rem;">
-          <p style="margin:0 0 0.35rem;font-size:0.75rem;font-weight:800;color:#dc2626;text-transform:uppercase;letter-spacing:0.05em;">
-            Reason / Remarks
-          </p>
-
-          <p style="margin:0;font-size:0.9rem;color:#7f1d1d;font-weight:600;line-height:1.5;">
-            ${
-              disabledReason
-                ? this.escapeHtml(disabledReason)
-                : 'No reason was provided. Please contact the alumni office for assistance.'
-            }
-          </p>
-        </div>
-
-        ${
-          disabledByName || disabledAt
-            ? `
-              <p style="margin:0 0 0.65rem;color:#6b7280;font-size:0.82rem;line-height:1.4;">
-                ${
-                  disabledByName
-                    ? `Disabled by: <strong>${this.escapeHtml(disabledByName)}</strong><br>`
-                    : ''
-                }
-                ${
-                  disabledAt
-                    ? `Date disabled: <strong>${this.escapeHtml(this.formatDate(disabledAt))}</strong>`
-                    : ''
-                }
-              </p>
-            `
-            : ''
-        }
-
-        <p style="margin:0;color:#6b7280;font-size:0.85rem;line-height:1.45;">
-          You will be logged out for security purposes. You may contact support if you need assistance.
-        </p>
-      `,
-      showCancelButton: true,
-      confirmButtonText: 'Contact Support',
-      cancelButtonText: 'Log Out',
-      confirmButtonColor: '#7c5cff',
-      cancelButtonColor: '#6b7280',
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-    });
-
-    this.destroyed = true;
-    this.userDocUnsubscribe?.();
-
-    try {
-      await this.authService.logout();
-    } catch (error) {
-      console.error('Logout after disabled account failed:', error);
-    }
-
-    if (result.isConfirmed) {
-      await this.router.navigate(['/contact-support'], {
-        queryParams: {
-          uid: user.id || '',
-          name: this.getAccountName(user),
-          email: user.email || '',
-          reason: disabledReason,
-          issue: 'Disabled Account',
-          concern: 'Disabled Account',
-        },
-      });
-      return;
-    }
-
-    await this.router.navigate(['/login']);
   }
 
   private inferRoleFromUrl(): 'admin' | 'officer' | 'alumni' {
@@ -479,50 +503,5 @@ export class MainLayout implements OnInit, OnDestroy {
     }
 
     return 'officer';
-  }
-
-  private getAccountName(user: User): string {
-    return (
-      user.fullName ||
-      [
-        user.firstName,
-        user.middleName ? `${user.middleName.charAt(0).toUpperCase()}.` : '',
-        user.lastName,
-        user.suffix,
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .trim() ||
-      user.email ||
-      'User'
-    );
-  }
-
-  private escapeHtml(value: string): string {
-    return value
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
-  }
-
-  private formatDate(value: any): string {
-    if (!value) return '—';
-
-    const rawValue =
-      typeof value === 'string'
-        ? value
-        : value?.toDate?.() ?? value;
-
-    const date = new Date(rawValue);
-
-    if (isNaN(date.getTime())) return '—';
-
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
   }
 }

@@ -111,22 +111,11 @@
               </div>
             </td>
             <td>
-              <!-- Pending: clock icon → directly marks as Under Review -->
               <span
-                *ngIf="request.status === 'pending'"
-                class="clock-icon"
-                role="button"
-                tabindex="0"
-                title="Mark as Under Review"
-                (click)="markAsUnderReview(request, $event)">
-                <i class="pi pi-clock"></i>
-              </span>
-              <!-- All other statuses: eye icon → opens details modal -->
-              <span
-                *ngIf="request.status !== 'pending'"
                 class="eye-icon"
                 role="button"
                 tabindex="0"
+                title="View Details"
                 (click)="openDetails(request, $event)">
                 <i class="pi pi-eye"></i>
               </span>
@@ -223,6 +212,40 @@
               <div class="detail-value">{{ getRemarksLabel(req) }}</div>
             </div>
           </div>
+
+          <section class="documents-section id-photo-section">
+            <div class="section-header">
+              <h3>Digital ID Face Photo</h3>
+              <span>{{ hasIdPhoto(req) ? '1 uploaded' : 'No photo' }}</span>
+            </div>
+
+            <button
+              *ngIf="hasIdPhoto(req); else noIdPhoto"
+              type="button"
+              class="document-card id-photo-card"
+              (click)="openIdPhoto(req, $event)">
+
+              <div class="document-preview id-photo-preview">
+                <img [src]="getIdPhotoUrl(req)" alt="Digital ID face photo" />
+              </div>
+
+              <div class="document-meta">
+                <strong>ID Face Photo</strong>
+                <span>Used for Alumni Digital ID</span>
+              </div>
+
+              <div class="document-open-icon">
+                <i class="pi pi-external-link"></i>
+              </div>
+            </button>
+
+            <ng-template #noIdPhoto>
+              <div class="documents-empty">
+                <i class="pi pi-image"></i>
+                <p>No Digital ID face photo submitted.</p>
+              </div>
+            </ng-template>
+          </section>
 
           <section class="documents-section" *ngIf="getVerificationDocuments(req) as documents">
             <div class="section-header">

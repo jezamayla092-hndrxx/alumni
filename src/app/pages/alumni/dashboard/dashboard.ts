@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { NgIf, NgFor, NgClass } from '@angular/common';
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -55,7 +55,7 @@ interface TopCard {
 @Component({
   selector: 'app-alumni-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [NgIf, NgFor, NgClass, RouterLink],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
 })

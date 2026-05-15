@@ -31,6 +31,7 @@ export class VerificationService {
     if (!value) return 0;
     if (typeof value?.toDate === 'function') return value.toDate().getTime();
     if (value instanceof Date) return value.getTime();
+
     const parsed = new Date(value);
     return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
   }
@@ -46,8 +47,10 @@ export class VerificationService {
   private async hasExistingUser(request: VerificationRequest): Promise<boolean> {
     const userUid = request.userUid?.trim();
     if (!userUid) return false;
-    const userRef  = doc(db, 'users', userUid);
+
+    const userRef = doc(db, 'users', userUid);
     const userSnap = await getDoc(userRef);
+
     return userSnap.exists();
   }
 
@@ -60,13 +63,13 @@ export class VerificationService {
         exists: await this.hasExistingUser(request),
       }))
     );
+
     return checked.filter((item) => item.exists).map((item) => item.request);
   }
 
-  // ── New: fetch request ID while user is still authenticated (used during login) ──
   async getLatestRequestIdByUserUid(userUid: string): Promise<string | null> {
     try {
-      const q        = query(this.verificationCollection, where('userUid', '==', userUid));
+      const q = query(this.verificationCollection, where('userUid', '==', userUid));
       const snapshot = await getDocs(q);
 
       if (snapshot.empty) return null;
@@ -105,18 +108,30 @@ export class VerificationService {
             }));
 
             if (!requests.length && normalizedEmail) {
-              const emailQuery    = query(this.verificationCollection, where('email', '==', normalizedEmail));
+              const emailQuery = query(
+                this.verificationCollection,
+                where('email', '==', normalizedEmail)
+              );
+
               const emailSnapshot = await getDocs(emailQuery);
+
               requests = emailSnapshot.docs.map((docSnap) => ({
                 id: docSnap.id,
                 ...(docSnap.data() as Omit<VerificationRequest, 'id'>),
               }));
             }
 
-            if (!requests.length) { observer.next(null); return; }
+            if (!requests.length) {
+              observer.next(null);
+              return;
+            }
 
             const existingRequests = await this.filterRequestsWithExistingUsers(requests);
-            if (!existingRequests.length) { observer.next(null); return; }
+
+            if (!existingRequests.length) {
+              observer.next(null);
+              return;
+            }
 
             observer.next(this.sortLatestFirst(existingRequests)[0]);
           } catch (error) {
@@ -154,7 +169,11 @@ export class VerificationService {
               }));
 
               const existingRequests = await this.filterRequestsWithExistingUsers(requests);
-              if (!existingRequests.length) { observer.next(null); return; }
+
+              if (!existingRequests.length) {
+                observer.next(null);
+                return;
+              }
 
               observer.next(this.sortLatestFirst(existingRequests)[0]);
             } else {
@@ -216,110 +235,117 @@ export class VerificationService {
     contactDialCode?: string;
     birthDate?: string;
     sex?: string;
+    idPhotoUrl?: string;
     verificationDocuments?: any[];
   }): Promise<void> {
     await addDoc(this.verificationCollection, {
-      userUid:               data.userUid,
-      alumniId:              '',
-      campus:                this.alumniIdService.campus,
-      fullName:              data.fullName,
-      email:                 data.email.trim().toLowerCase(),
-      program:               data.program              || '',
-      yearGraduated:         data.yearGraduated        || '',
-      studentId:             data.studentId            || '',
-      contactNumber:         data.contactNumber        || '',
-      contactCountry:        data.contactCountry       || '',
-      contactDialCode:       data.contactDialCode      || '',
-      birthDate:             data.birthDate            || '',
-      sex:                   data.sex                  || '',
+      userUid: data.userUid,
+      alumniId: '',
+      campus: this.alumniIdService.campus,
+      fullName: data.fullName,
+      email: data.email.trim().toLowerCase(),
+      program: data.program || '',
+      yearGraduated: data.yearGraduated || '',
+      studentId: data.studentId || '',
+      contactNumber: data.contactNumber || '',
+      contactCountry: data.contactCountry || '',
+      contactDialCode: data.contactDialCode || '',
+      birthDate: data.birthDate || '',
+      sex: data.sex || '',
+      idPhotoUrl: data.idPhotoUrl || '',
       verificationDocuments: data.verificationDocuments || [],
-      submittedDocuments:    [],
-      status:                'pending',
-      remarks:               '',
-      isResubmission:        false,
-      submittedAt:           serverTimestamp(),
-      reviewedAt:            null,
-      reviewedBy:            '',
-      updatedAt:             serverTimestamp(),
+      submittedDocuments: [],
+      status: 'pending',
+      remarks: '',
+      isResubmission: false,
+      submittedAt: serverTimestamp(),
+      reviewedAt: null,
+      reviewedBy: '',
+      updatedAt: serverTimestamp(),
     });
 
     if (data.userUid) {
       const userRef = doc(db, 'users', data.userUid);
+
       await updateDoc(userRef, {
-        status:             'pending',
+        status: 'pending',
         verificationStatus: 'pending',
-        isVerified:         false,
-        isActive:           false,
-        campus:             this.alumniIdService.campus,
-        updatedAt:          serverTimestamp(),
+        isVerified: false,
+        isActive: false,
+        campus: this.alumniIdService.campus,
+        idPhotoUrl: data.idPhotoUrl || '',
+        updatedAt: serverTimestamp(),
       });
     }
   }
 
-  // ── Appeal resubmit: takes requestId directly — no query needed ──
   async resubmitAppeal(
     userUid: string,
     requestId: string,
     data: {
-      fullName:        string;
-      firstName:       string;
-      middleName?:     string;
-      lastName:        string;
-      suffix?:         string;
-      contactNumber:   string;
-      contactCountry:  string;
+      fullName: string;
+      firstName: string;
+      middleName?: string;
+      lastName: string;
+      suffix?: string;
+      contactNumber: string;
+      contactCountry: string;
       contactDialCode: string;
-      studentId:       string;
-      program:         string;
-      yearGraduated:   number;
-      birthDate:       string;
-      sex:             string;
+      studentId: string;
+      program: string;
+      yearGraduated: number;
+      birthDate: string;
+      sex: string;
+      idPhotoUrl?: string;
       verificationDocuments: any[];
     }
   ): Promise<void> {
     const requestRef = doc(db, 'verification_requests', requestId);
-    const userRef    = doc(db, 'users', userUid);
+    const userRef = doc(db, 'users', userUid);
 
     await updateDoc(requestRef, {
-      status:                'pending',
-      remarks:               '',
-      isResubmission:        true,
-      fullName:              data.fullName,
-      contactNumber:         data.contactNumber,
-      contactCountry:        data.contactCountry,
-      contactDialCode:       data.contactDialCode,
-      studentId:             data.studentId,
-      program:               data.program,
-      yearGraduated:         data.yearGraduated,
-      birthDate:             data.birthDate,
-      sex:                   data.sex,
+      status: 'pending',
+      remarks: '',
+      isResubmission: true,
+      fullName: data.fullName,
+      contactNumber: data.contactNumber,
+      contactCountry: data.contactCountry,
+      contactDialCode: data.contactDialCode,
+      studentId: data.studentId,
+      program: data.program,
+      yearGraduated: data.yearGraduated,
+      birthDate: data.birthDate,
+      sex: data.sex,
+      idPhotoUrl: data.idPhotoUrl || '',
       verificationDocuments: data.verificationDocuments,
-      submittedAt:           serverTimestamp(),
-      reviewedAt:            null,
-      reviewedBy:            '',
-      updatedAt:             serverTimestamp(),
+      submittedAt: serverTimestamp(),
+      reviewedAt: null,
+      reviewedBy: '',
+      updatedAt: serverTimestamp(),
     });
 
     await updateDoc(userRef, {
-      status:             'pending',
+      status: 'pending',
       verificationStatus: 'pending',
-      isVerified:         false,
-      isActive:           false,
-      remarks:            '',
-      firstName:          data.firstName,
-      middleName:         data.middleName  || '',
-      lastName:           data.lastName,
-      suffix:             data.suffix      || '',
-      fullName:           data.fullName,
-      contactNumber:      data.contactNumber,
-      contactCountry:     data.contactCountry,
-      contactDialCode:    data.contactDialCode,
-      studentId:          data.studentId,
-      program:            data.program,
-      yearGraduated:      data.yearGraduated,
-      birthDate:          data.birthDate,
-      sex:                data.sex,
-      updatedAt:          serverTimestamp(),
+      isVerified: false,
+      isActive: false,
+      remarks: '',
+      firstName: data.firstName,
+      middleName: data.middleName || '',
+      lastName: data.lastName,
+      suffix: data.suffix || '',
+      fullName: data.fullName,
+      contactNumber: data.contactNumber,
+      contactCountry: data.contactCountry,
+      contactDialCode: data.contactDialCode,
+      studentId: data.studentId,
+      program: data.program,
+      yearGraduated: data.yearGraduated,
+      birthDate: data.birthDate,
+      sex: data.sex,
+      idPhotoUrl: data.idPhotoUrl || '',
+      verificationDocuments: data.verificationDocuments,
+      updatedAt: serverTimestamp(),
     });
   }
 
@@ -329,7 +355,11 @@ export class VerificationService {
   ): Promise<void> {
     try {
       const requestRef = doc(db, 'verification_requests', requestId);
-      await updateDoc(requestRef, { status, updatedAt: serverTimestamp() });
+
+      await updateDoc(requestRef, {
+        status,
+        updatedAt: serverTimestamp(),
+      });
     } catch (error) {
       console.error('Error updating verification status:', error);
       throw error;
@@ -340,10 +370,10 @@ export class VerificationService {
     const requestRef = doc(db, 'verification_requests', requestId);
 
     await updateDoc(requestRef, {
-      status:     'under_review',
+      status: 'under_review',
       reviewedBy,
       reviewedAt: serverTimestamp(),
-      updatedAt:  serverTimestamp(),
+      updatedAt: serverTimestamp(),
     });
 
     const requestSnap = await getDoc(requestRef);
@@ -353,12 +383,13 @@ export class VerificationService {
 
       if (requestData.userUid) {
         const userRef = doc(db, 'users', requestData.userUid);
+
         await updateDoc(userRef, {
-          status:             'under_review',
+          status: 'under_review',
           verificationStatus: 'under_review',
-          isVerified:         false,
-          isActive:           false,
-          updatedAt:          serverTimestamp(),
+          isVerified: false,
+          isActive: false,
+          updatedAt: serverTimestamp(),
         });
       }
     }
@@ -376,53 +407,74 @@ export class VerificationService {
 
     await runTransaction(db, async (transaction) => {
       const requestSnap = await transaction.get(requestRef);
-      if (!requestSnap.exists()) throw new Error('Verification request not found.');
+
+      if (!requestSnap.exists()) {
+        throw new Error('Verification request not found.');
+      }
 
       const requestData = requestSnap.data() as VerificationRequest;
-      if (!requestData.userUid) throw new Error('Verification request is missing user UID.');
 
-      const userRef  = doc(db, 'users', requestData.userUid);
+      if (!requestData.userUid) {
+        throw new Error('Verification request is missing user UID.');
+      }
+
+      const userRef = doc(db, 'users', requestData.userUid);
       const userSnap = await transaction.get(userRef);
-      if (!userSnap.exists()) throw new Error('User record for this verification request no longer exists.');
+
+      if (!userSnap.exists()) {
+        throw new Error('User record for this verification request no longer exists.');
+      }
 
       const userData = userSnap.data() as User;
 
-      const existingUserAlumniId    = userData?.alumniId?.trim()   || '';
+      const existingUserAlumniId = userData?.alumniId?.trim() || '';
       const existingRequestAlumniId = requestData.alumniId?.trim() || '';
+
       const hasValidExistingAlumniId =
         this.alumniIdService.isValidAlumniId(existingUserAlumniId) ||
         this.alumniIdService.isValidAlumniId(existingRequestAlumniId);
 
-      let alumniId           = '';
+      let alumniId = '';
       let alumniIdIssuedYear = new Date().getFullYear();
-      let alumniIdSequence   = 0;
+      let alumniIdSequence = 0;
 
       if (hasValidExistingAlumniId) {
         alumniId = this.alumniIdService.isValidAlumniId(existingUserAlumniId)
           ? existingUserAlumniId
           : existingRequestAlumniId;
 
-        alumniIdIssuedYear = userData?.alumniIdIssuedYear || requestData.alumniIdIssuedYear || alumniIdIssuedYear;
-        alumniIdSequence   = userData?.alumniIdSequence   || requestData.alumniIdSequence   || 0;
+        alumniIdIssuedYear =
+          userData?.alumniIdIssuedYear ||
+          requestData.alumniIdIssuedYear ||
+          alumniIdIssuedYear;
+
+        alumniIdSequence =
+          userData?.alumniIdSequence ||
+          requestData.alumniIdSequence ||
+          0;
       } else {
         const currentYear = new Date().getFullYear();
         const counterSnap = await transaction.get(counterRef);
         const counterData = counterSnap.exists() ? counterSnap.data() : null;
         const counterYear = Number(counterData?.['year'] || currentYear);
-        const lastNumber  = counterYear === currentYear ? Number(counterData?.['lastNumber'] || 0) : 0;
+        const lastNumber =
+          counterYear === currentYear ? Number(counterData?.['lastNumber'] || 0) : 0;
 
         alumniIdIssuedYear = currentYear;
-        alumniIdSequence   = lastNumber + 1;
-        alumniId           = this.alumniIdService.buildAlumniId(alumniIdIssuedYear, alumniIdSequence);
+        alumniIdSequence = lastNumber + 1;
+        alumniId = this.alumniIdService.buildAlumniId(
+          alumniIdIssuedYear,
+          alumniIdSequence
+        );
 
         transaction.set(
           counterRef,
           {
-            year:       alumniIdIssuedYear,
+            year: alumniIdIssuedYear,
             lastNumber: alumniIdSequence,
-            campus:     this.alumniIdService.campus,
-            prefix:     this.alumniIdService.prefix,
-            updatedAt:  serverTimestamp(),
+            campus: this.alumniIdService.campus,
+            prefix: this.alumniIdService.prefix,
+            updatedAt: serverTimestamp(),
           },
           { merge: true }
         );
@@ -431,32 +483,32 @@ export class VerificationService {
       generatedAlumniId = alumniId;
 
       transaction.update(requestRef, {
-        status:           'approved',
+        status: 'approved',
         alumniId,
         alumniIdIssuedAt: serverTimestamp(),
         alumniIdIssuedYear,
         alumniIdSequence,
-        campus:           this.alumniIdService.campus,
+        campus: this.alumniIdService.campus,
         reviewedBy,
-        reviewedAt:       serverTimestamp(),
+        reviewedAt: serverTimestamp(),
         remarks,
-        updatedAt:        serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
 
       transaction.set(
         userRef,
         {
-          status:             'verified',
+          status: 'verified',
           verificationStatus: 'verified',
-          isVerified:         true,
-          isActive:           true,
-          role:               'alumni',
+          isVerified: true,
+          isActive: true,
+          role: 'alumni',
           alumniId,
-          alumniIdIssuedAt:   serverTimestamp(),
+          alumniIdIssuedAt: serverTimestamp(),
           alumniIdIssuedYear,
           alumniIdSequence,
-          campus:             this.alumniIdService.campus,
-          updatedAt:          serverTimestamp(),
+          campus: this.alumniIdService.campus,
+          updatedAt: serverTimestamp(),
         },
         { merge: true }
       );
@@ -470,33 +522,35 @@ export class VerificationService {
     reviewedBy: string,
     remarks: string
   ): Promise<void> {
-    const requestRef  = doc(db, 'verification_requests', requestId);
+    const requestRef = doc(db, 'verification_requests', requestId);
     const requestSnap = await getDoc(requestRef);
 
-    if (!requestSnap.exists()) throw new Error('Verification request not found.');
+    if (!requestSnap.exists()) {
+      throw new Error('Verification request not found.');
+    }
 
     const requestData = requestSnap.data() as VerificationRequest;
 
     await updateDoc(requestRef, {
-      status:     'rejected',
+      status: 'rejected',
       reviewedBy,
       reviewedAt: serverTimestamp(),
       remarks,
-      updatedAt:  serverTimestamp(),
+      updatedAt: serverTimestamp(),
     });
 
     if (requestData.userUid) {
-      const userRef  = doc(db, 'users', requestData.userUid);
+      const userRef = doc(db, 'users', requestData.userUid);
       const userSnap = await getDoc(userRef);
 
       if (userSnap.exists()) {
         await updateDoc(userRef, {
-          status:             'rejected',
+          status: 'rejected',
           verificationStatus: 'rejected',
           remarks,
-          isVerified:         false,
-          isActive:           false,
-          updatedAt:          serverTimestamp(),
+          isVerified: false,
+          isActive: false,
+          updatedAt: serverTimestamp(),
         });
       }
     }

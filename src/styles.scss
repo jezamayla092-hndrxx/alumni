@@ -1,22 +1,33 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined');
+
+@import "@tabler/icons-webfont/dist/tabler-icons.min.css";
 @import "primeicons/primeicons.css";
 
 :root {
-  --atms-page-bg: #f6f8fc;
-  --atms-topbar-bg: #f6f8fc;
+  --atms-page-bg: #f5f7fb;
+  --atms-topbar-bg: #f8fafc;
   --atms-card-bg: #ffffff;
-  --atms-card-border: #e7ebf3;
+  --atms-card-border: #e2e8f0;
 
-  --atms-primary: #0e7490;
-  --atms-primary-hover: #0f6475;
-  --atms-primary-soft: #ecfeff;
+  --atms-primary: #6d28d9;
+  --atms-primary-hover: #5b21b6;
+  --atms-primary-soft: rgba(109, 40, 217, 0.12);
 
-  --atms-text-main: #111827;
-  --atms-text-muted: #667085;
-  --atms-text-soft: #98a2b3;
+  --atms-gold: #6d28d9;
+  --atms-gold-active: #7c3aed;
+  --atms-gold-soft: rgba(109, 40, 217, 0.1);
 
-  --atms-sidebar-bg: #07111f;
+  --atms-icon-soft-bg: #f3e8ff;
+  --atms-icon-soft-color: #6d28d9;
+  --atms-icon-soft-border: #e9d5ff;
+
+  --atms-text-main: #0f172a;
+  --atms-text-muted: #64748b;
+  --atms-text-soft: #94a3b8;
+
+  --atms-sidebar-bg: #050b14;
+  --atms-sidebar-active-bg: rgba(109, 40, 217, 0.14);
 
   --atms-radius-sm: 10px;
   --atms-radius-md: 12px;
@@ -29,7 +40,36 @@
 
   --atms-input-bg: #ffffff;
   --atms-input-disabled-bg: #f8fafc;
-  --atms-input-border: #e4e7ec;
+  --atms-input-border: #e2e8f0;
+}
+
+.dark-mode,
+.dark-theme,
+[data-theme='dark'] {
+  --atms-page-bg: #080f1c;
+  --atms-topbar-bg: #0f1b2d;
+  --atms-card-bg: #0f1b2d;
+  --atms-card-border: #203149;
+
+  --atms-primary: #c084fc;
+  --atms-primary-hover: #a855f7;
+  --atms-primary-soft: rgba(192, 132, 252, 0.14);
+
+  --atms-gold: #d8b4fe;
+  --atms-gold-active: #e9d5ff;
+  --atms-gold-soft: rgba(192, 132, 252, 0.12);
+
+  --atms-icon-soft-bg: rgba(168, 85, 247, 0.14);
+  --atms-icon-soft-color: #d8b4fe;
+  --atms-icon-soft-border: rgba(192, 132, 252, 0.3);
+
+  --atms-text-main: #f8fafc;
+  --atms-text-muted: #a7b0c0;
+  --atms-text-soft: #94a3b8;
+
+  --atms-input-bg: #13223a;
+  --atms-input-disabled-bg: #13223a;
+  --atms-input-border: #203149;
 }
 
 html,
@@ -84,6 +124,306 @@ p {
   margin-top: 0;
 }
 
+i[class^='ti-'],
+i[class*=' ti-'] {
+  font-size: 1rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 ::selection {
-  background: rgba(14, 116, 144, 0.18);
+  background: rgba(109, 40, 217, 0.18);
+}
+
+/* =========================================================
+   ATMS GLOBAL ICON CLEANUP
+   Purple-blue icon style, no yellow/gold boxes.
+   ========================================================= */
+
+.stat-icon,
+.icon-violet,
+.icon-purple,
+.icon-amber,
+.icon-blue,
+.icon-pink,
+.summary-icon,
+.summary-icon.purple,
+.summary-icon.blue,
+.summary-icon.green,
+.summary-icon.red,
+.summary-icon.amber,
+.summary-icon.icon-green,
+.summary-icon.icon-amber,
+.summary-icon.icon-gray,
+.summary-icon.icon-gold,
+.settings-icon,
+.settings-icon.soft,
+.document-icon,
+.activity-icon,
+.date-box,
+.empty-state i {
+  background: var(--atms-icon-soft-bg) !important;
+  color: var(--atms-icon-soft-color) !important;
+  border-color: var(--atms-icon-soft-border) !important;
+  box-shadow: none !important;
+}
+
+.stat-icon i,
+.summary-icon i,
+.settings-icon i,
+.document-icon i,
+.activity-icon i,
+.empty-state i {
+  color: inherit !important;
+}
+
+/* Keep success states green */
+.status-approved,
+.status-badge.approved,
+.status-badge.ongoing,
+.status-pill.status-active,
+.status-pill.active,
+.status-pill.verified,
+.badge-published,
+.restore-action {
+  background: #ecfdf3 !important;
+  color: #15803d !important;
+  border-color: #bbf7d0 !important;
+}
+
+/* Keep warning/pending states muted, not yellow */
+.status-pending,
+.status-badge.pending,
+.status-badge.upcoming,
+.status-pill.pending,
+.status-pill.status-draft,
+.badge-draft {
+  background: #f8fafc !important;
+  color: #475569 !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* Keep review states purple */
+.status-review,
+.status-badge.review,
+.status-badge.under-review,
+.status-pill.under-review {
+  background: #f3e8ff !important;
+  color: #6d28d9 !important;
+  border-color: #e9d5ff !important;
+}
+
+/* Keep destructive states red */
+.status-rejected,
+.status-badge.rejected,
+.status-badge.cancelled,
+.status-pill.rejected,
+.badge-error,
+.delete-btn,
+.danger-btn,
+.action-icon.delete,
+.action-btn.delete-btn,
+.action-btn.delete-action,
+.cancelled-row .date-box,
+.confirm-icon {
+  background: #fff1f2 !important;
+  color: #b91c1c !important;
+  border-color: #fecdd3 !important;
+}
+
+/* Dark mode state fixes */
+.dark-mode .status-approved,
+.dark-mode .status-badge.approved,
+.dark-mode .status-badge.ongoing,
+.dark-mode .status-pill.status-active,
+.dark-mode .status-pill.active,
+.dark-mode .status-pill.verified,
+.dark-mode .badge-published,
+.dark-mode .restore-action,
+.dark-theme .status-approved,
+.dark-theme .status-badge.approved,
+.dark-theme .status-badge.ongoing,
+.dark-theme .status-pill.status-active,
+.dark-theme .status-pill.active,
+.dark-theme .status-pill.verified,
+.dark-theme .badge-published,
+.dark-theme .restore-action,
+[data-theme='dark'] .status-approved,
+[data-theme='dark'] .status-badge.approved,
+[data-theme='dark'] .status-badge.ongoing,
+[data-theme='dark'] .status-pill.status-active,
+[data-theme='dark'] .status-pill.active,
+[data-theme='dark'] .status-pill.verified,
+[data-theme='dark'] .badge-published,
+[data-theme='dark'] .restore-action {
+  background: rgba(22, 101, 52, 0.24) !important;
+  color: #86efac !important;
+  border-color: rgba(34, 197, 94, 0.25) !important;
+}
+
+.dark-mode .status-pending,
+.dark-mode .status-badge.pending,
+.dark-mode .status-badge.upcoming,
+.dark-mode .status-pill.pending,
+.dark-mode .status-pill.status-draft,
+.dark-mode .badge-draft,
+.dark-theme .status-pending,
+.dark-theme .status-badge.pending,
+.dark-theme .status-badge.upcoming,
+.dark-theme .status-pill.pending,
+.dark-theme .status-pill.status-draft,
+.dark-theme .badge-draft,
+[data-theme='dark'] .status-pending,
+[data-theme='dark'] .status-badge.pending,
+[data-theme='dark'] .status-badge.upcoming,
+[data-theme='dark'] .status-pill.pending,
+[data-theme='dark'] .status-pill.status-draft,
+[data-theme='dark'] .badge-draft {
+  background: #1e293b !important;
+  color: #cbd5e1 !important;
+  border-color: #334155 !important;
+}
+
+.dark-mode .status-review,
+.dark-mode .status-badge.review,
+.dark-mode .status-badge.under-review,
+.dark-mode .status-pill.under-review,
+.dark-theme .status-review,
+.dark-theme .status-badge.review,
+.dark-theme .status-badge.under-review,
+.dark-theme .status-pill.under-review,
+[data-theme='dark'] .status-review,
+[data-theme='dark'] .status-badge.review,
+[data-theme='dark'] .status-badge.under-review,
+[data-theme='dark'] .status-pill.under-review {
+  background: rgba(168, 85, 247, 0.14) !important;
+  color: #d8b4fe !important;
+  border-color: rgba(192, 132, 252, 0.3) !important;
+}
+
+.dark-mode .status-rejected,
+.dark-mode .status-badge.rejected,
+.dark-mode .status-badge.cancelled,
+.dark-mode .status-pill.rejected,
+.dark-mode .badge-error,
+.dark-mode .delete-btn,
+.dark-mode .danger-btn,
+.dark-mode .action-icon.delete,
+.dark-mode .action-btn.delete-btn,
+.dark-mode .action-btn.delete-action,
+.dark-mode .cancelled-row .date-box,
+.dark-mode .confirm-icon,
+.dark-theme .status-rejected,
+.dark-theme .status-badge.rejected,
+.dark-theme .status-badge.cancelled,
+.dark-theme .status-pill.rejected,
+.dark-theme .badge-error,
+.dark-theme .delete-btn,
+.dark-theme .danger-btn,
+.dark-theme .action-icon.delete,
+.dark-theme .action-btn.delete-btn,
+.dark-theme .action-btn.delete-action,
+.dark-theme .cancelled-row .date-box,
+.dark-theme .confirm-icon,
+[data-theme='dark'] .status-rejected,
+[data-theme='dark'] .status-badge.rejected,
+[data-theme='dark'] .status-badge.cancelled,
+[data-theme='dark'] .status-pill.rejected,
+[data-theme='dark'] .badge-error,
+[data-theme='dark'] .delete-btn,
+[data-theme='dark'] .danger-btn,
+[data-theme='dark'] .action-icon.delete,
+[data-theme='dark'] .action-btn.delete-btn,
+[data-theme='dark'] .action-btn.delete-action,
+[data-theme='dark'] .cancelled-row .date-box,
+[data-theme='dark'] .confirm-icon {
+  background: rgba(127, 29, 29, 0.28) !important;
+  color: #fca5a5 !important;
+  border-color: rgba(239, 68, 68, 0.25) !important;
+}
+
+/* ── Print styles ───────────────────────────────────────────────────────────── */
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  app-main-layout .sidebar,
+  app-main-layout .sidebar-backdrop,
+  app-main-layout .topbar {
+    display: none !important;
+  }
+
+  app-main-layout .layout-shell,
+  app-main-layout .main-panel,
+  app-main-layout .content-area {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: unset !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  app-verification-status .page-heading,
+  app-verification-status .status-card,
+  app-verification-status .no-print {
+    display: none !important;
+  }
+
+  app-verification-status .digital-id-section {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  app-verification-status .digital-id-section-header {
+    display: none !important;
+  }
+
+  app-verification-status .digital-id-card-wrap {
+    padding: 0 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+  }
+
+  app-verification-status .alumni-digital-id {
+    width: 85.6mm !important;
+    max-width: 85.6mm !important;
+    border-radius: 4mm !important;
+    box-shadow: none !important;
+    border: 0.5pt solid #cbd5e1 !important;
+    margin: 12mm auto 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  app-verification-status .did-header {
+    background: #1e3a8a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  app-verification-status .did-id-number {
+    background: #eff6ff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  app-verification-status .did-footer {
+    background: #f8fafc !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
 }

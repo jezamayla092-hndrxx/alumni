@@ -4,12 +4,13 @@
     <p>Track your alumni verification progress and review details.</p>
   </div>
 
+  <!-- ── Status card ──────────────────────────────────────────────────── -->
   <section
     class="status-card"
     [ngClass]="{
       'status-card--approved': request.status === 'approved',
-      'status-card--review': request.status === 'under_review',
-      'status-card--pending': request.status === 'pending',
+      'status-card--review':   request.status === 'under_review',
+      'status-card--pending':  request.status === 'pending',
       'status-card--rejected': request.status === 'rejected'
     }"
   >
@@ -18,8 +19,8 @@
         class="status-icon"
         [ngClass]="{
           'status-icon--approved': request.status === 'approved',
-          'status-icon--review': request.status === 'under_review',
-          'status-icon--pending': request.status === 'pending',
+          'status-icon--review':   request.status === 'under_review',
+          'status-icon--pending':  request.status === 'pending',
           'status-icon--rejected': request.status === 'rejected'
         }"
       >
@@ -42,16 +43,13 @@
         Your alumni status has been successfully verified. You now have an official Alumni ID
         and full access to alumni services.
       </p>
-
       <p *ngIf="request.status === 'under_review'">
         Your verification request is currently being reviewed by the assigned officer.
         Please wait for the approval result.
       </p>
-
       <p *ngIf="request.status === 'pending'">
         Your verification request has been submitted and is waiting to be reviewed.
       </p>
-
       <p *ngIf="request.status === 'rejected'">
         Your verification request was not approved. Please review the remarks below and update
         your submission if needed.
@@ -65,7 +63,117 @@
     </div>
   </section>
 
-  <section class="timeline-card">
+  <!-- ── Digital ID card (approved only) ─────────────────────────────── -->
+  <section class="digital-id-section" *ngIf="request.status === 'approved'">
+    <div class="section-header digital-id-section-header">
+      <div>
+        <h3>Digital ID</h3>
+        <p>Your official alumni digital identification card.</p>
+      </div>
+
+      <button
+        type="button"
+        class="print-btn"
+        (click)="printDigitalId()"
+        [disabled]="uploading"
+      >
+        <i class="ti ti-printer"></i>
+        <span>Print ID</span>
+      </button>
+    </div>
+
+    <div class="digital-id-card-wrap">
+
+      <!-- The printable card — no UI controls inside -->
+      <div class="alumni-digital-id" id="alumni-digital-id">
+
+        <!-- Card header -->
+        <div class="did-header">
+          <div class="did-header-icon">
+            <i class="ti ti-school"></i>
+          </div>
+          <div class="did-header-text">
+            <span class="did-school">USTP</span>
+            <span class="did-system">Alumni Tracking & Management System</span>
+          </div>
+          <div class="did-badge">ALUMNI</div>
+        </div>
+
+        <!-- Card body -->
+        <div class="did-body">
+
+          <!-- Photo — display only, no controls -->
+          <div class="did-photo-col">
+            <div class="did-photo">
+              <img *ngIf="photoUrl" [src]="photoUrl" alt="ID photo" />
+              <div *ngIf="!photoUrl" class="did-photo-placeholder">
+                <i class="ti ti-user"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Info -->
+          <div class="did-info">
+            <p class="did-label">Full Name</p>
+            <h2 class="did-name">{{ displayName || '—' }}</h2>
+
+            <ng-container *ngIf="program">
+              <p class="did-label">Program</p>
+              <p class="did-value">{{ program }}</p>
+            </ng-container>
+
+            <ng-container *ngIf="yearGraduated">
+              <p class="did-label">Year Graduated</p>
+              <p class="did-value">{{ yearGraduated }}</p>
+            </ng-container>
+
+            <!-- Alumni ID highlight -->
+            <div class="did-id-block">
+              <span class="did-id-label">ALUMNI ID</span>
+              <span class="did-id-number">{{ request.alumniId || '—' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card footer -->
+        <div class="did-footer">
+          <i class="ti ti-map-pin"></i>
+          <span>{{ campus }}</span>
+        </div>
+      </div>
+
+      <!-- Photo controls live OUTSIDE the card -->
+      <div class="did-photo-actions no-print">
+
+        <!-- Upload progress bar -->
+        <div class="did-progress" *ngIf="uploading">
+          <div class="did-progress-track">
+            <div class="did-progress-bar" [style.width.%]="uploadProgress"></div>
+          </div>
+          <span class="did-progress-label">Uploading... {{ uploadProgress }}%</span>
+        </div>
+
+        <button
+          type="button"
+          class="did-upload-btn"
+          (click)="triggerPhotoUpload()"
+          [disabled]="uploading"
+        >
+          <i class="ti ti-camera"></i>
+          <span>{{ uploading ? 'Uploading...' : photoUrl ? 'Change ID Photo' : 'Upload ID Photo' }}</span>
+        </button>
+
+        <p class="photo-hint" *ngIf="!photoUrl">
+          <i class="ti ti-info-circle"></i>
+          Upload a clear, professional photo. Inappropriate images will be automatically rejected.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── Timeline ─────────────────────────────────────────────────────── -->
+  <section class="timeline-card no-print">
     <div class="section-header">
       <h3>Verification Timeline</h3>
     </div>
@@ -75,7 +183,6 @@
         <div class="timeline-marker completed">
           <i class="pi pi-check"></i>
         </div>
-
         <div class="timeline-content">
           <h4>Application Submitted</h4>
           <span>{{ formatDate(request.submittedAt) }}</span>
@@ -94,19 +201,19 @@
         <div
           class="timeline-marker"
           [ngClass]="{
-            completed: request.status === 'under_review' || request.status === 'approved' || request.status === 'rejected'
+            completed:
+              request.status === 'under_review' ||
+              request.status === 'approved' ||
+              request.status === 'rejected'
           }"
         >
           <i class="pi pi-check"></i>
         </div>
-
         <div class="timeline-content">
           <h4 *ngIf="request.status === 'under_review'">Verification In Progress</h4>
           <h4 *ngIf="request.status === 'approved'">Verification Complete</h4>
           <h4 *ngIf="request.status === 'rejected'">Verification Reviewed</h4>
-
           <span>{{ formatDate(request.reviewedAt || request.updatedAt || request.submittedAt) }}</span>
-
           <p *ngIf="request.status === 'under_review'">
             Your submitted information and documents are currently being reviewed.
           </p>
@@ -123,7 +230,6 @@
         <div class="timeline-marker completed">
           <i class="pi pi-check"></i>
         </div>
-
         <div class="timeline-content">
           <h4>Alumni ID Issued</h4>
           <span>{{ formatDate(request.reviewedAt || request.updatedAt || request.submittedAt) }}</span>
@@ -133,7 +239,8 @@
     </div>
   </section>
 
-  <section class="details-card">
+  <!-- ── Details ──────────────────────────────────────────────────────── -->
+  <section class="details-card no-print">
     <div class="section-header">
       <h3>Verification Details</h3>
     </div>

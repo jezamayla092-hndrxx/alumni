@@ -13,9 +13,27 @@ import {
   Unsubscribe,
   orderBy,
 } from 'firebase/firestore';
+import { initializeApp, deleteApp } from 'firebase/app';
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  signOut,
+  deleteUser,
+} from 'firebase/auth';
 
 import { db, auth } from '../firebase.config';
 import { User, UserRole } from '../models/user.model';
+
+export interface CreateOfficerAccountPayload {
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  suffix?: string;
+  email: string;
+  contactNumber?: string;
+  password: string;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -35,21 +53,106 @@ export class UsersService {
       role: userData.role || 'alumni',
       isVerified: userData.isVerified ?? false,
       isActive: userData.isActive ?? true,
-      accountStatus: userData.isActive === false ? 'disabled' : 'active',
-
-      disabledReason: null,
-      disabledAt: null,
-      disabledBy: null,
-      disabledByName: null,
-
-      reactivatedAt: null,
-      reactivatedBy: null,
-      reactivatedByName: null,
 
       campus: userData.campus || 'USTP Villanueva Campus',
       createdAt: userData.createdAt || now,
       updatedAt: userData.updatedAt || now,
     });
+  }
+
+  async createOfficerAccount(payload: CreateOfficerAccountPayload): Promise<User> {
+    const firstName = payload.firstName.trim();
+    const middleName = (payload.middleName || '').trim();
+    const lastName = payload.lastName.trim();
+    const suffix = (payload.suffix || '').trim();
+    const email = payload.email.trim().toLowerCase();
+    const contactNumber = (payload.contactNumber || '').trim();
+    const password = payload.password.trim();
+
+    if (!firstName || !lastName || !email || !password) {
+      throw new Error('Missing required officer account fields.');
+    }
+
+    const fullName = [firstName, middleName, lastName, suffix]
+      .filter(Boolean)
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    const secondaryAppName = `atms-officer-creator-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2)}`;
+
+    const secondaryApp = initializeApp(auth.app.options, secondaryAppName);
+    const secondaryAuth = getAuth(secondaryApp);
+
+    let createdAuthUser: Awaited<
+      ReturnType<typeof createUserWithEmailAndPassword>
+    >['user'] | null = null;
+
+    try {
+      const credential = await createUserWithEmailAndPassword(
+        secondaryAuth,
+        email,
+        password
+      );
+
+      createdAuthUser = credential.user;
+
+      await updateProfile(createdAuthUser, {
+        displayName: fullName,
+      });
+
+      const now = new Date().toISOString();
+
+      const officerUser: User = {
+        id: createdAuthUser.uid,
+        firstName,
+        middleName,
+        lastName,
+        suffix,
+        fullName,
+        email,
+        contactNumber,
+        role: 'officer',
+        isVerified: true,
+        isActive: true,
+        campus: 'USTP Villanueva Campus',
+        createdAt: now,
+        updatedAt: now,
+      } as User;
+
+      const userRef = doc(db, 'users', createdAuthUser.uid);
+
+      await setDoc(userRef, {
+        ...officerUser,
+        accountStatus: 'active',
+      });
+
+      return officerUser;
+    } catch (error) {
+      if (createdAuthUser) {
+        try {
+          await deleteUser(createdAuthUser);
+        } catch (cleanupError) {
+          console.warn('Officer auth cleanup failed:', cleanupError);
+        }
+      }
+
+      throw error;
+    } finally {
+      try {
+        await signOut(secondaryAuth);
+      } catch {
+        // ignore secondary auth sign out errors
+      }
+
+      try {
+        await deleteApp(secondaryApp);
+      } catch {
+        // ignore secondary app cleanup errors
+      }
+    }
   }
 
   async getUserById(uid: string): Promise<User | null> {
@@ -194,57 +297,26 @@ export class UsersService {
     });
   }
 
-  async updateUserActiveStatus(
+  async activateUser(
     uid: string,
-    isActive: boolean,
-    reason: string = '',
     actorUid: string = '',
     actorName: string = 'Administrator'
   ): Promise<void> {
     const userRef = doc(db, 'users', uid);
     const now = new Date().toISOString();
 
-    const payload: Record<string, any> = {
-      isActive,
-      accountStatus: isActive ? 'active' : 'disabled',
+    await updateDoc(userRef, {
+      isActive: true,
+      accountStatus: 'active',
+      reactivatedAt: now,
+      reactivatedBy: actorUid || '',
+      reactivatedByName: actorName || 'Administrator',
+      disabledReason: null,
+      disabledAt: null,
+      disabledBy: null,
+      disabledByName: null,
       updatedAt: now,
-    };
-
-    if (isActive) {
-      payload['reactivatedAt'] = now;
-      payload['reactivatedBy'] = actorUid || '';
-      payload['reactivatedByName'] = actorName || 'Administrator';
-
-      payload['disabledReason'] = null;
-      payload['disabledAt'] = null;
-      payload['disabledBy'] = null;
-      payload['disabledByName'] = null;
-    } else {
-      const cleanedReason = reason.trim();
-
-      if (!cleanedReason) {
-        throw new Error('A disable reason is required.');
-      }
-
-      payload['disabledReason'] = cleanedReason;
-      payload['disabledAt'] = now;
-      payload['disabledBy'] = actorUid || '';
-      payload['disabledByName'] = actorName || 'Administrator';
-
-      payload['reactivatedAt'] = null;
-      payload['reactivatedBy'] = null;
-      payload['reactivatedByName'] = null;
-    }
-
-    await updateDoc(userRef, payload);
-  }
-
-  async activateUser(
-    uid: string,
-    actorUid: string = '',
-    actorName: string = 'Administrator'
-  ): Promise<void> {
-    await this.updateUserActiveStatus(uid, true, '', actorUid, actorName);
+    });
   }
 
   async disableUser(
@@ -253,6 +325,45 @@ export class UsersService {
     actorUid: string = '',
     actorName: string = 'Administrator'
   ): Promise<void> {
-    await this.updateUserActiveStatus(uid, false, reason, actorUid, actorName);
+    const cleanedReason = reason.trim();
+
+    if (!cleanedReason) {
+      throw new Error('A disable reason is required.');
+    }
+
+    const userRef = doc(db, 'users', uid);
+    const now = new Date().toISOString();
+
+    await updateDoc(userRef, {
+      isActive: false,
+      accountStatus: 'disabled',
+      disabledReason: cleanedReason,
+      disabledAt: now,
+      disabledBy: actorUid || '',
+      disabledByName: actorName || 'Administrator',
+      reactivatedAt: null,
+      reactivatedBy: null,
+      reactivatedByName: null,
+      updatedAt: now,
+    });
+  }
+
+  private getUserDisplayName(user: User | null): string {
+    if (!user) return 'User';
+
+    return (
+      user.fullName ||
+      [
+        user.firstName,
+        user.middleName ? `${user.middleName.charAt(0).toUpperCase()}.` : '',
+        user.lastName,
+        user.suffix,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .trim() ||
+      user.email ||
+      'User'
+    );
   }
 }

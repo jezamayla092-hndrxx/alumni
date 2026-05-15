@@ -69,6 +69,7 @@ export interface User {
   verificationStatus?: UserVerificationStatus;
   isVerified?: boolean;
   isActive?: boolean;
+
   createdAt?: any;
   updatedAt?: any;
 
@@ -76,7 +77,19 @@ export interface User {
   contactCountry?: string;
   contactDialCode?: string;
   address?: string;
+
+  /**
+   * General profile avatar — user can change freely.
+   * Shown in the topbar and profile modal.
+   */
   photoUrl?: string;
+
+  /**
+   * Face photo submitted during signup for the Digital ID.
+   * Reviewed by the officer. Locked once approved.
+   * Separate from photoUrl.
+   */
+  idPhotoUrl?: string;
 
   verificationDocuments?: VerificationDocument[];
 

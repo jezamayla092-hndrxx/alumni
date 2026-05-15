@@ -1,291 +1,657 @@
 <div class="emp-page">
-
-  <!-- ── Page Header ─────────────────────────────────────────────── -->
+  <!-- Page Header -->
   <div class="emp-header">
     <div class="emp-header__text">
       <h1>Employment Status</h1>
-      <p>Update your current career information to help the institution maintain accurate alumni records and generate employment reports.</p>
+      <p>
+        Update your current career information to help the institution maintain
+        accurate alumni records and generate employment reports.
+      </p>
     </div>
   </div>
 
-  <!-- ── Loading ──────────────────────────────────────────────────── -->
+  <!-- Loading -->
   <div class="loading-state" *ngIf="loading">
-    <div class="skeleton-card"></div>
-    <div class="skeleton-card"></div>
-    <div class="skeleton-card"></div>
+    <div class="skeleton-line skeleton-title"></div>
+    <div class="skeleton-line"></div>
+    <div class="skeleton-block"></div>
   </div>
 
-  <!-- ── Content ──────────────────────────────────────────────────── -->
+  <!-- Content -->
   <ng-container *ngIf="!loading">
-
-    <!-- Summary Card -->
-    <div class="card summary-card">
-      <div class="summary-card__header">
-        <h2>Current Information Summary</h2>
-        <span class="badge badge--verified">
-          <span class="badge__dot"></span>
-          Verified Alumni
-        </span>
-      </div>
-      <div class="summary-grid">
-        <div class="summary-item">
-          <span class="summary-item__label">Employment Status</span>
-          <span class="summary-item__value" [class.summary-item__value--empty]="summaryStatus === '—'">
-            {{ summaryStatus }}
-          </span>
-        </div>
-        <div class="summary-item">
-          <span class="summary-item__label">Career / Course Relevance</span>
-          <span class="summary-item__value" [class.summary-item__value--empty]="summaryCourseRelevance === '—'">
-            {{ summaryCourseRelevance }}
-          </span>
-        </div>
-        <div class="summary-item">
-          <span class="summary-item__label">Job Opportunity Preference</span>
-          <span class="summary-item__value" [class.summary-item__value--empty]="summaryJobPreference === '—'">
-            {{ summaryJobPreference }}
-          </span>
-        </div>
-        <div class="summary-item">
-          <span class="summary-item__label">Last Updated</span>
-          <span class="summary-item__value" [class.summary-item__value--empty]="summaryLastUpdated === '—'">
-            {{ summaryLastUpdated }}
-          </span>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── Section 1: Employment Overview ───────────────────────── -->
-    <div class="card section-card">
-      <div class="section-header">
-        <div class="section-number">1</div>
-        <div class="section-header__text">
-          <h2>Employment Overview</h2>
-          <p>Your current employment status and general career preferences.</p>
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">
-            Current Employment Status
-            <span class="required-star">*</span>
-          </label>
-          <select
-            class="form-select"
-            [(ngModel)]="form.status"
-            (change)="onStatusChange()"
-            [class.form-select--error]="fieldError('status')"
-          >
-            <option value="">Select status...</option>
-            <option *ngFor="let opt of statusOptions" [value]="opt">{{ opt }}</option>
-          </select>
-          <span class="field-error" *ngIf="fieldError('status')">This field is required.</span>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Job Opportunity Preference</label>
-          <select class="form-select" [(ngModel)]="form.jobOpportunityPreference">
-            <option value="">Select preference...</option>
-            <option *ngFor="let opt of jobOpportunityOptions" [value]="opt">{{ opt }}</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="form-group form-group--full">
-        <label class="form-label">Career Summary</label>
-        <textarea
-          class="form-textarea"
-          [(ngModel)]="form.careerSummary"
-          rows="4"
-          placeholder="Briefly describe your current career status or recent career update."
-        ></textarea>
-      </div>
-    </div>
-
-    <!-- ── Section 2: Employment Details ────────────────────────── -->
-    <div class="card section-card" *ngIf="showEmploymentSection">
-      <div class="section-header">
-        <div class="section-number">2</div>
-        <div class="section-header__text">
-          <h2>Employment Details</h2>
-          <p>Details about your current job or business.</p>
-        </div>
-      </div>
-
-      <!-- Employed / Employed and Studying -->
-      <ng-container *ngIf="isEmployed || isEmployedAndStudying">
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Company / Employer Name <span class="required-star">*</span></label>
-            <input
-              type="text"
-              class="form-input"
-              [(ngModel)]="form.companyName"
-              placeholder="Enter company or employer name"
-              [class.form-input--error]="fieldError('companyName')"
-            />
-            <span class="field-error" *ngIf="fieldError('companyName')">This field is required.</span>
+    <section class="emp-panel">
+      <!-- Summary -->
+      <div class="summary-strip">
+        <div class="summary-strip__top">
+          <div>
+            <h2>Current Information Summary</h2>
+            <p>Your latest employment record overview.</p>
           </div>
-          <div class="form-group">
-            <label class="form-label">Job Position <span class="required-star">*</span></label>
-            <input
-              type="text"
-              class="form-input"
-              [(ngModel)]="form.jobPosition"
-              placeholder="Enter your job title or position"
-              [class.form-input--error]="fieldError('jobPosition')"
-            />
-            <span class="field-error" *ngIf="fieldError('jobPosition')">This field is required.</span>
-          </div>
+
+          <span class="badge badge--verified">
+            <span class="badge__dot"></span>
+            Verified Alumni
+          </span>
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Industry <span class="required-star">*</span></label>
-            <select
-              class="form-select"
-              [(ngModel)]="form.industry"
-              [class.form-select--error]="fieldError('industry')"
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="summary-item__label">Employment Status</span>
+            <span
+              class="summary-item__value"
+              [class.summary-item__value--empty]="summaryStatus === '—'"
             >
-              <option value="">Select industry...</option>
-              <option *ngFor="let opt of industryOptions" [value]="opt">{{ opt }}</option>
-            </select>
-            <span class="field-error" *ngIf="fieldError('industry')">This field is required.</span>
+              {{ summaryStatus }}
+            </span>
           </div>
-          <div class="form-group">
-            <label class="form-label">Employment Type <span class="required-star">*</span></label>
-            <select
-              class="form-select"
-              [(ngModel)]="form.employmentType"
-              [class.form-select--error]="fieldError('employmentType')"
+
+          <div class="summary-item">
+            <span class="summary-item__label">Career / Course Relevance</span>
+            <span
+              class="summary-item__value"
+              [class.summary-item__value--empty]="summaryCourseRelevance === '—'"
             >
-              <option value="">Select type...</option>
-              <option *ngFor="let opt of employmentTypeOptions" [value]="opt">{{ opt }}</option>
-            </select>
-            <span class="field-error" *ngIf="fieldError('employmentType')">This field is required.</span>
+              {{ summaryCourseRelevance }}
+            </span>
+          </div>
+
+          <div class="summary-item">
+            <span class="summary-item__label">Job Opportunity Preference</span>
+            <span
+              class="summary-item__value"
+              [class.summary-item__value--empty]="summaryJobPreference === '—'"
+            >
+              {{ summaryJobPreference }}
+            </span>
+          </div>
+
+          <div class="summary-item">
+            <span class="summary-item__label">Last Updated</span>
+            <span
+              class="summary-item__value"
+              [class.summary-item__value--empty]="summaryLastUpdated === '—'"
+            >
+              {{ summaryLastUpdated }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 1 -->
+      <div class="emp-section">
+        <div class="section-header">
+          <div class="section-number">1</div>
+
+          <div class="section-header__text">
+            <h2>Employment Overview</h2>
+            <p>Your current employment status and general career preferences.</p>
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Work Location</label>
-            <input type="text" class="form-input" [(ngModel)]="form.workLocation" placeholder="e.g., Cagayan de Oro, Remote" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Date Hired</label>
-            <input type="date" class="form-input" [(ngModel)]="form.dateHired" />
-          </div>
-        </div>
+            <label class="form-label">
+              Current Employment Status
+              <span class="required-star">*</span>
+            </label>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Career Level</label>
-            <select class="form-select" [(ngModel)]="form.careerLevel">
-              <option value="">Select career level...</option>
-              <option *ngFor="let opt of careerLevelOptions" [value]="opt">{{ opt }}</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Is your work related to your course? <span class="required-star">*</span></label>
             <select
               class="form-select"
-              [(ngModel)]="form.courseRelevance"
-              [class.form-select--error]="fieldError('courseRelevance')"
+              [(ngModel)]="form.status"
+              (change)="onStatusChange()"
+              [class.form-select--error]="fieldError('status')"
+            >
+              <option value="">Select status...</option>
+              <option *ngFor="let opt of statusOptions" [value]="opt">
+                {{ opt }}
+              </option>
+            </select>
+
+            <span class="field-error" *ngIf="fieldError('status')">
+              This field is required.
+            </span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Job Opportunity Preference</label>
+
+            <select
+              class="form-select"
+              [(ngModel)]="form.jobOpportunityPreference"
+            >
+              <option value="">Select preference...</option>
+              <option *ngFor="let opt of jobOpportunityOptions" [value]="opt">
+                {{ opt }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group form-group--full">
+          <label class="form-label">Career Summary</label>
+
+          <textarea
+            class="form-textarea"
+            [(ngModel)]="form.careerSummary"
+            rows="4"
+            placeholder="Briefly describe your current career status or recent career update."
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Section 2 -->
+      <div class="emp-section" *ngIf="showEmploymentSection">
+        <div class="section-header">
+          <div class="section-number">2</div>
+
+          <div class="section-header__text">
+            <h2>Employment Details</h2>
+            <p>Details about your current job or business.</p>
+          </div>
+        </div>
+
+        <ng-container *ngIf="isEmployed || isEmployedAndStudying">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">
+                Company / Employer Name
+                <span class="required-star">*</span>
+              </label>
+
+              <input
+                type="text"
+                class="form-input"
+                [(ngModel)]="form.companyName"
+                placeholder="Enter company or employer name"
+                [class.form-input--error]="fieldError('companyName')"
+              />
+
+              <span class="field-error" *ngIf="fieldError('companyName')">
+                This field is required.
+              </span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                Job Position
+                <span class="required-star">*</span>
+              </label>
+
+              <input
+                type="text"
+                class="form-input"
+                [(ngModel)]="form.jobPosition"
+                placeholder="Enter your job title or position"
+                [class.form-input--error]="fieldError('jobPosition')"
+              />
+
+              <span class="field-error" *ngIf="fieldError('jobPosition')">
+                This field is required.
+              </span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">
+                Industry
+                <span class="required-star">*</span>
+              </label>
+
+              <select
+                class="form-select"
+                [(ngModel)]="form.industry"
+                [class.form-select--error]="fieldError('industry')"
+              >
+                <option value="">Select industry...</option>
+                <option *ngFor="let opt of industryOptions" [value]="opt">
+                  {{ opt }}
+                </option>
+              </select>
+
+              <span class="field-error" *ngIf="fieldError('industry')">
+                This field is required.
+              </span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                Employment Type
+                <span class="required-star">*</span>
+              </label>
+
+              <select
+                class="form-select"
+                [(ngModel)]="form.employmentType"
+                [class.form-select--error]="fieldError('employmentType')"
+              >
+                <option value="">Select type...</option>
+                <option *ngFor="let opt of employmentTypeOptions" [value]="opt">
+                  {{ opt }}
+                </option>
+              </select>
+
+              <span class="field-error" *ngIf="fieldError('employmentType')">
+                This field is required.
+              </span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Work Location</label>
+
+              <input
+                type="text"
+                class="form-input"
+                [(ngModel)]="form.workLocation"
+                placeholder="e.g., Cagayan de Oro, Remote"
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Date Hired</label>
+
+              <input
+                type="date"
+                class="form-input"
+                [(ngModel)]="form.dateHired"
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Career Level</label>
+
+              <select class="form-select" [(ngModel)]="form.careerLevel">
+                <option value="">Select career level...</option>
+                <option *ngFor="let opt of careerLevelOptions" [value]="opt">
+                  {{ opt }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                Is your work related to your course?
+                <span class="required-star">*</span>
+              </label>
+
+              <select
+                class="form-select"
+                [(ngModel)]="form.courseRelevance"
+                [class.form-select--error]="fieldError('courseRelevance')"
+              >
+                <option value="">Select...</option>
+                <option *ngFor="let opt of courseRelevanceOptions" [value]="opt">
+                  {{ opt }}
+                </option>
+              </select>
+
+              <span class="field-error" *ngIf="fieldError('courseRelevance')">
+                This field is required.
+              </span>
+            </div>
+          </div>
+        </ng-container>
+
+        <ng-container *ngIf="isSelfEmployed">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">
+                Business / Organization Name
+                <span class="required-star">*</span>
+              </label>
+
+              <input
+                type="text"
+                class="form-input"
+                [(ngModel)]="form.businessName"
+                placeholder="Enter your business or organization name"
+                [class.form-input--error]="fieldError('businessName')"
+              />
+
+              <span class="field-error" *ngIf="fieldError('businessName')">
+                This field is required.
+              </span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                Business Role / Position
+                <span class="required-star">*</span>
+              </label>
+
+              <input
+                type="text"
+                class="form-input"
+                [(ngModel)]="form.businessRole"
+                placeholder="e.g., Owner, Co-founder, Sole Proprietor"
+                [class.form-input--error]="fieldError('businessRole')"
+              />
+
+              <span class="field-error" *ngIf="fieldError('businessRole')">
+                This field is required.
+              </span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">
+                Industry / Business Field
+                <span class="required-star">*</span>
+              </label>
+
+              <select
+                class="form-select"
+                [(ngModel)]="form.industry"
+                [class.form-select--error]="fieldError('industry')"
+              >
+                <option value="">Select industry...</option>
+                <option *ngFor="let opt of industryOptions" [value]="opt">
+                  {{ opt }}
+                </option>
+              </select>
+
+              <span class="field-error" *ngIf="fieldError('industry')">
+                This field is required.
+              </span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Business Location</label>
+
+              <input
+                type="text"
+                class="form-input"
+                [(ngModel)]="form.businessLocation"
+                placeholder="City, Province or Online"
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Date Started</label>
+
+              <input
+                type="date"
+                class="form-input"
+                [(ngModel)]="form.dateStarted"
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Career Level</label>
+
+              <select class="form-select" [(ngModel)]="form.careerLevel">
+                <option value="">Select career level...</option>
+                <option *ngFor="let opt of careerLevelOptions" [value]="opt">
+                  {{ opt }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">
+                Is your business related to your course?
+                <span class="required-star">*</span>
+              </label>
+
+              <select
+                class="form-select"
+                [(ngModel)]="form.courseRelevance"
+                [class.form-select--error]="fieldError('businessRelevance')"
+              >
+                <option value="">Select...</option>
+                <option *ngFor="let opt of courseRelevanceOptions" [value]="opt">
+                  {{ opt }}
+                </option>
+              </select>
+
+              <span class="field-error" *ngIf="fieldError('businessRelevance')">
+                This field is required.
+              </span>
+            </div>
+          </div>
+        </ng-container>
+
+        <ng-container *ngIf="isEmployedAndStudying">
+          <div class="subsection-divider">
+            <span>Study Details</span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">
+                School / Institution Name
+                <span class="required-star">*</span>
+              </label>
+
+              <input
+                type="text"
+                class="form-input"
+                [(ngModel)]="form.institutionName"
+                placeholder="Enter school or institution"
+                [class.form-input--error]="fieldError('institutionName')"
+              />
+
+              <span class="field-error" *ngIf="fieldError('institutionName')">
+                This field is required.
+              </span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                Program / Course Taking
+                <span class="required-star">*</span>
+              </label>
+
+              <input
+                type="text"
+                class="form-input"
+                [(ngModel)]="form.programTaking"
+                placeholder="Enter program or course name"
+                [class.form-input--error]="fieldError('programTaking')"
+              />
+
+              <span class="field-error" *ngIf="fieldError('programTaking')">
+                This field is required.
+              </span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">
+                Study Level
+                <span class="required-star">*</span>
+              </label>
+
+              <select
+                class="form-select"
+                [(ngModel)]="form.studyLevel"
+                [class.form-select--error]="fieldError('studyLevel')"
+              >
+                <option value="">Select level...</option>
+                <option *ngFor="let opt of studyLevelOptions" [value]="opt">
+                  {{ opt }}
+                </option>
+              </select>
+
+              <span class="field-error" *ngIf="fieldError('studyLevel')">
+                This field is required.
+              </span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Study Status</label>
+
+              <select class="form-select" [(ngModel)]="form.studyStatus">
+                <option value="">Select status...</option>
+                <option *ngFor="let opt of studyStatusOptions" [value]="opt">
+                  {{ opt }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Expected Completion Year</label>
+
+              <input
+                type="number"
+                class="form-input"
+                [(ngModel)]="form.expectedCompletionYear"
+                placeholder="e.g., 2026"
+                min="2024"
+                max="2040"
+              />
+            </div>
+          </div>
+        </ng-container>
+      </div>
+
+      <!-- Unemployment Details -->
+      <div class="emp-section" *ngIf="isUnemployed">
+        <div class="section-header">
+          <div class="section-number">3</div>
+
+          <div class="section-header__text">
+            <h2>Unemployment Details</h2>
+            <p>Your current job search status and preferences.</p>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">
+              Are you currently looking for work?
+              <span class="required-star">*</span>
+            </label>
+
+            <select
+              class="form-select"
+              [(ngModel)]="form.lookingForWork"
+              [class.form-select--error]="fieldError('lookingForWork')"
             >
               <option value="">Select...</option>
-              <option *ngFor="let opt of courseRelevanceOptions" [value]="opt">{{ opt }}</option>
+              <option *ngFor="let opt of lookingForWorkOptions" [value]="opt">
+                {{ opt }}
+              </option>
             </select>
-            <span class="field-error" *ngIf="fieldError('courseRelevance')">This field is required.</span>
-          </div>
-        </div>
-      </ng-container>
 
-      <!-- Self-employed -->
-      <ng-container *ngIf="isSelfEmployed">
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Business / Organization Name <span class="required-star">*</span></label>
-            <input
-              type="text"
-              class="form-input"
-              [(ngModel)]="form.businessName"
-              placeholder="Enter your business or organization name"
-              [class.form-input--error]="fieldError('businessName')"
-            />
-            <span class="field-error" *ngIf="fieldError('businessName')">This field is required.</span>
+            <span class="field-error" *ngIf="fieldError('lookingForWork')">
+              This field is required.
+            </span>
           </div>
-          <div class="form-group">
-            <label class="form-label">Business Role / Position <span class="required-star">*</span></label>
-            <input
-              type="text"
-              class="form-input"
-              [(ngModel)]="form.businessRole"
-              placeholder="e.g., Owner, Co-founder, Sole Proprietor"
-              [class.form-input--error]="fieldError('businessRole')"
-            />
-            <span class="field-error" *ngIf="fieldError('businessRole')">This field is required.</span>
-          </div>
-        </div>
 
-        <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Industry / Business Field <span class="required-star">*</span></label>
-            <select
-              class="form-select"
-              [(ngModel)]="form.industry"
-              [class.form-select--error]="fieldError('industry')"
-            >
+            <label class="form-label">Preferred Industry</label>
+
+            <select class="form-select" [(ngModel)]="form.preferredIndustry">
               <option value="">Select industry...</option>
-              <option *ngFor="let opt of industryOptions" [value]="opt">{{ opt }}</option>
-            </select>
-            <span class="field-error" *ngIf="fieldError('industry')">This field is required.</span>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Business Location</label>
-            <input type="text" class="form-input" [(ngModel)]="form.businessLocation" placeholder="City, Province or Online" />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Date Started</label>
-            <input type="date" class="form-input" [(ngModel)]="form.dateStarted" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Career Level</label>
-            <select class="form-select" [(ngModel)]="form.careerLevel">
-              <option value="">Select career level...</option>
-              <option *ngFor="let opt of careerLevelOptions" [value]="opt">{{ opt }}</option>
+              <option *ngFor="let opt of industryOptions" [value]="opt">
+                {{ opt }}
+              </option>
             </select>
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Is your business related to your course? <span class="required-star">*</span></label>
-            <select
-              class="form-select"
-              [(ngModel)]="form.courseRelevance"
-              [class.form-select--error]="fieldError('businessRelevance')"
-            >
-              <option value="">Select...</option>
-              <option *ngFor="let opt of courseRelevanceOptions" [value]="opt">{{ opt }}</option>
-            </select>
-            <span class="field-error" *ngIf="fieldError('businessRelevance')">This field is required.</span>
-          </div>
-        </div>
-      </ng-container>
+            <label class="form-label">Preferred Work Type</label>
 
-      <!-- Study sub-section for Employed and Studying -->
-      <ng-container *ngIf="isEmployedAndStudying">
-        <div class="subsection-divider">
-          <span>Study Details</span>
+            <select class="form-select" [(ngModel)]="form.preferredWorkType">
+              <option value="">Select work type...</option>
+              <option *ngFor="let opt of preferredWorkTypeOpts" [value]="opt">
+                {{ opt }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Preferred Work Location</label>
+
+            <input
+              type="text"
+              class="form-input"
+              [(ngModel)]="form.preferredWorkLocation"
+              placeholder="e.g., Cagayan de Oro, Remote, Any"
+            />
+          </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">School / Institution Name <span class="required-star">*</span></label>
+            <label class="form-label">Previous Job Position</label>
+
+            <input
+              type="text"
+              class="form-input"
+              [(ngModel)]="form.previousJobPosition"
+              placeholder="Your last or most recent job title"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Previous Company / Employer</label>
+
+            <input
+              type="text"
+              class="form-input"
+              [(ngModel)]="form.previousCompany"
+              placeholder="Enter company name"
+            />
+          </div>
+        </div>
+
+        <div class="form-group form-group--full">
+          <label class="form-label">Skills / Strengths</label>
+
+          <textarea
+            class="form-textarea"
+            [(ngModel)]="form.unemployedSkills"
+            rows="3"
+            placeholder="List your key skills and professional strengths."
+          ></textarea>
+        </div>
+
+        <div class="form-group form-group--full">
+          <label class="form-label">Additional Notes</label>
+
+          <textarea
+            class="form-textarea"
+            [(ngModel)]="form.unemployedNotes"
+            rows="3"
+            placeholder="Any additional information about your current situation or job search."
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Further Studies -->
+      <div class="emp-section" *ngIf="isFurtherStudies">
+        <div class="section-header">
+          <div class="section-number">4</div>
+
+          <div class="section-header__text">
+            <h2>Further Studies Details</h2>
+            <p>Information about your current academic pursuit.</p>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">
+              School / Institution Name
+              <span class="required-star">*</span>
+            </label>
+
             <input
               type="text"
               class="form-input"
@@ -293,10 +659,18 @@
               placeholder="Enter school or institution"
               [class.form-input--error]="fieldError('institutionName')"
             />
-            <span class="field-error" *ngIf="fieldError('institutionName')">This field is required.</span>
+
+            <span class="field-error" *ngIf="fieldError('institutionName')">
+              This field is required.
+            </span>
           </div>
+
           <div class="form-group">
-            <label class="form-label">Program / Course Taking <span class="required-star">*</span></label>
+            <label class="form-label">
+              Program / Course Taking
+              <span class="required-star">*</span>
+            </label>
+
             <input
               type="text"
               class="form-input"
@@ -304,35 +678,89 @@
               placeholder="Enter program or course name"
               [class.form-input--error]="fieldError('programTaking')"
             />
-            <span class="field-error" *ngIf="fieldError('programTaking')">This field is required.</span>
+
+            <span class="field-error" *ngIf="fieldError('programTaking')">
+              This field is required.
+            </span>
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Study Level <span class="required-star">*</span></label>
+            <label class="form-label">
+              Study Level
+              <span class="required-star">*</span>
+            </label>
+
             <select
               class="form-select"
               [(ngModel)]="form.studyLevel"
               [class.form-select--error]="fieldError('studyLevel')"
             >
               <option value="">Select level...</option>
-              <option *ngFor="let opt of studyLevelOptions" [value]="opt">{{ opt }}</option>
+              <option *ngFor="let opt of studyLevelOptions" [value]="opt">
+                {{ opt }}
+              </option>
             </select>
-            <span class="field-error" *ngIf="fieldError('studyLevel')">This field is required.</span>
+
+            <span class="field-error" *ngIf="fieldError('studyLevel')">
+              This field is required.
+            </span>
           </div>
+
           <div class="form-group">
-            <label class="form-label">Study Status</label>
-            <select class="form-select" [(ngModel)]="form.studyStatus">
+            <label class="form-label">
+              Study Status
+              <span class="required-star">*</span>
+            </label>
+
+            <select
+              class="form-select"
+              [(ngModel)]="form.studyStatus"
+              [class.form-select--error]="fieldError('studyStatus')"
+            >
               <option value="">Select status...</option>
-              <option *ngFor="let opt of studyStatusOptions" [value]="opt">{{ opt }}</option>
+              <option *ngFor="let opt of studyStatusOptions" [value]="opt">
+                {{ opt }}
+              </option>
             </select>
+
+            <span class="field-error" *ngIf="fieldError('studyStatus')">
+              This field is required.
+            </span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Field of Study</label>
+
+            <input
+              type="text"
+              class="form-input"
+              [(ngModel)]="form.fieldOfStudy"
+              placeholder="e.g., Computer Science, Business Administration"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Start Year</label>
+
+            <input
+              type="number"
+              class="form-input"
+              [(ngModel)]="form.startYear"
+              placeholder="e.g., 2024"
+              min="2000"
+              max="2040"
+            />
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Expected Completion Year</label>
+
             <input
               type="number"
               class="form-input"
@@ -342,312 +770,189 @@
               max="2040"
             />
           </div>
-        </div>
-      </ng-container>
-    </div>
 
-    <!-- ── Section 3: Unemployment Details ──────────────────────── -->
-    <div class="card section-card" *ngIf="isUnemployed">
-      <div class="section-header">
-        <div class="section-number">3</div>
-        <div class="section-header__text">
-          <h2>Unemployment Details</h2>
-          <p>Your current job search status and preferences.</p>
+          <div class="form-group">
+            <label class="form-label">
+              Is your study related to your graduated course?
+              <span class="required-star">*</span>
+            </label>
+
+            <select
+              class="form-select"
+              [(ngModel)]="form.studyCourseRelevance"
+              [class.form-select--error]="fieldError('studyCourseRel')"
+            >
+              <option value="">Select...</option>
+              <option *ngFor="let opt of courseRelevanceOptions" [value]="opt">
+                {{ opt }}
+              </option>
+            </select>
+
+            <span class="field-error" *ngIf="fieldError('studyCourseRel')">
+              This field is required.
+            </span>
+          </div>
+        </div>
+
+        <div class="form-group form-group--full">
+          <label class="form-label">Additional Study Notes</label>
+
+          <textarea
+            class="form-textarea"
+            [(ngModel)]="form.studyNotes"
+            rows="3"
+            placeholder="Any additional information about your studies or academic plans."
+          ></textarea>
         </div>
       </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Are you currently looking for work? <span class="required-star">*</span></label>
-          <select
-            class="form-select"
-            [(ngModel)]="form.lookingForWork"
-            [class.form-select--error]="fieldError('lookingForWork')"
+      <!-- Not Seeking -->
+      <div class="emp-section" *ngIf="isNotSeeking">
+        <div class="section-header">
+          <div class="section-number">5</div>
+
+          <div class="section-header__text">
+            <h2>Not Currently Seeking Employment</h2>
+            <p>Tell us more about your current situation.</p>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">
+              Current Activity
+              <span class="required-star">*</span>
+            </label>
+
+            <select
+              class="form-select"
+              [(ngModel)]="form.currentActivity"
+              [class.form-select--error]="fieldError('currentActivity')"
+            >
+              <option value="">Select your current activity...</option>
+              <option *ngFor="let opt of currentActivityOptions" [value]="opt">
+                {{ opt }}
+              </option>
+            </select>
+
+            <span class="field-error" *ngIf="fieldError('currentActivity')">
+              This field is required.
+            </span>
+          </div>
+        </div>
+
+        <div class="form-group form-group--full">
+          <label class="form-label">Career Plans</label>
+
+          <textarea
+            class="form-textarea"
+            [(ngModel)]="form.careerPlans"
+            rows="3"
+            placeholder="Describe your short or long-term career plans."
+          ></textarea>
+        </div>
+
+        <div class="form-group form-group--full">
+          <label class="form-label">Additional Notes</label>
+
+          <textarea
+            class="form-textarea"
+            [(ngModel)]="form.notSeekingNotes"
+            rows="3"
+            placeholder="Any additional context about your current situation."
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Skills -->
+      <div class="emp-section">
+        <div class="section-header">
+          <div class="section-number">
+            {{
+              isEmployed || isSelfEmployed || isEmployedAndStudying ? 3
+              : isUnemployed ? 4
+              : isFurtherStudies ? 5
+              : isNotSeeking ? 6
+              : 2
+            }}
+          </div>
+
+          <div class="section-header__text">
+            <h2>Skills and Career Categories</h2>
+            <p>Select all categories that apply to your current skills or work area.</p>
+          </div>
+        </div>
+
+        <div class="chips-label">Career Categories</div>
+
+        <div class="chips-group">
+          <button
+            type="button"
+            class="chip"
+            *ngFor="let cat of careerCategories"
+            [class.chip--selected]="isCategorySelected(cat)"
+            (click)="toggleCategory(cat)"
           >
-            <option value="">Select...</option>
-            <option *ngFor="let opt of lookingForWorkOptions" [value]="opt">{{ opt }}</option>
-          </select>
-          <span class="field-error" *ngIf="fieldError('lookingForWork')">This field is required.</span>
+            <span class="chip__check" *ngIf="isCategorySelected(cat)">✓</span>
+            {{ cat }}
+          </button>
         </div>
-        <div class="form-group">
-          <label class="form-label">Preferred Industry</label>
-          <select class="form-select" [(ngModel)]="form.preferredIndustry">
-            <option value="">Select industry...</option>
-            <option *ngFor="let opt of industryOptions" [value]="opt">{{ opt }}</option>
-          </select>
+
+        <div class="form-group form-group--full skills-textarea">
+          <label class="form-label">Specific Skills Used</label>
+
+          <textarea
+            class="form-textarea"
+            [(ngModel)]="form.specificSkills"
+            rows="3"
+            placeholder="Example: JavaScript, public speaking, bookkeeping, classroom management, project coordination, graphic design"
+          ></textarea>
+
+          <span class="field-helper">
+            List the main skills you use in your current work, business, studies, or career path.
+          </span>
         </div>
       </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Preferred Work Type</label>
-          <select class="form-select" [(ngModel)]="form.preferredWorkType">
-            <option value="">Select work type...</option>
-            <option *ngFor="let opt of preferredWorkTypeOpts" [value]="opt">{{ opt }}</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Preferred Work Location</label>
-          <input type="text" class="form-input" [(ngModel)]="form.preferredWorkLocation" placeholder="e.g., Cagayan de Oro, Remote, Any" />
-        </div>
-      </div>
+      <!-- Additional Notes -->
+      <div class="emp-section">
+        <div class="section-header">
+          <div class="section-number">
+            {{
+              isEmployed || isSelfEmployed || isEmployedAndStudying ? 4
+              : isUnemployed ? 5
+              : isFurtherStudies ? 6
+              : isNotSeeking ? 7
+              : 3
+            }}
+          </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Previous Job Position</label>
-          <input type="text" class="form-input" [(ngModel)]="form.previousJobPosition" placeholder="Your last or most recent job title" />
+          <div class="section-header__text">
+            <h2>Additional Notes</h2>
+            <p>Any other information you would like to add to your employment record.</p>
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Previous Company / Employer</label>
-          <input type="text" class="form-input" [(ngModel)]="form.previousCompany" placeholder="Enter company name" />
-        </div>
-      </div>
 
-      <div class="form-group form-group--full">
-        <label class="form-label">Skills / Strengths</label>
-        <textarea
-          class="form-textarea"
-          [(ngModel)]="form.unemployedSkills"
-          rows="3"
-          placeholder="List your key skills and professional strengths."
-        ></textarea>
-      </div>
+        <div class="form-group form-group--full">
+          <label class="form-label">Additional Career Notes</label>
 
-      <div class="form-group form-group--full">
-        <label class="form-label">Additional Notes</label>
-        <textarea
-          class="form-textarea"
-          [(ngModel)]="form.unemployedNotes"
-          rows="3"
-          placeholder="Any additional information about your current situation or job search."
-        ></textarea>
-      </div>
-    </div>
-
-    <!-- ── Section 4: Further Studies ───────────────────────────── -->
-    <div class="card section-card" *ngIf="isFurtherStudies">
-      <div class="section-header">
-        <div class="section-number">4</div>
-        <div class="section-header__text">
-          <h2>Further Studies Details</h2>
-          <p>Information about your current academic pursuit.</p>
+          <textarea
+            class="form-textarea"
+            [(ngModel)]="form.additionalNotes"
+            rows="4"
+            placeholder="Add any additional information about your employment, career plans, or professional development."
+          ></textarea>
         </div>
       </div>
+    </section>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">School / Institution Name <span class="required-star">*</span></label>
-          <input
-            type="text"
-            class="form-input"
-            [(ngModel)]="form.institutionName"
-            placeholder="Enter school or institution"
-            [class.form-input--error]="fieldError('institutionName')"
-          />
-          <span class="field-error" *ngIf="fieldError('institutionName')">This field is required.</span>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Program / Course Taking <span class="required-star">*</span></label>
-          <input
-            type="text"
-            class="form-input"
-            [(ngModel)]="form.programTaking"
-            placeholder="Enter program or course name"
-            [class.form-input--error]="fieldError('programTaking')"
-          />
-          <span class="field-error" *ngIf="fieldError('programTaking')">This field is required.</span>
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Study Level <span class="required-star">*</span></label>
-          <select
-            class="form-select"
-            [(ngModel)]="form.studyLevel"
-            [class.form-select--error]="fieldError('studyLevel')"
-          >
-            <option value="">Select level...</option>
-            <option *ngFor="let opt of studyLevelOptions" [value]="opt">{{ opt }}</option>
-          </select>
-          <span class="field-error" *ngIf="fieldError('studyLevel')">This field is required.</span>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Study Status <span class="required-star">*</span></label>
-          <select
-            class="form-select"
-            [(ngModel)]="form.studyStatus"
-            [class.form-select--error]="fieldError('studyStatus')"
-          >
-            <option value="">Select status...</option>
-            <option *ngFor="let opt of studyStatusOptions" [value]="opt">{{ opt }}</option>
-          </select>
-          <span class="field-error" *ngIf="fieldError('studyStatus')">This field is required.</span>
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Field of Study</label>
-          <input type="text" class="form-input" [(ngModel)]="form.fieldOfStudy" placeholder="e.g., Computer Science, Business Administration" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Start Year</label>
-          <input type="number" class="form-input" [(ngModel)]="form.startYear" placeholder="e.g., 2024" min="2000" max="2040" />
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Expected Completion Year</label>
-          <input type="number" class="form-input" [(ngModel)]="form.expectedCompletionYear" placeholder="e.g., 2026" min="2024" max="2040" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Is your study related to your graduated course? <span class="required-star">*</span></label>
-          <select
-            class="form-select"
-            [(ngModel)]="form.studyCourseRelevance"
-            [class.form-select--error]="fieldError('studyCourseRel')"
-          >
-            <option value="">Select...</option>
-            <option *ngFor="let opt of courseRelevanceOptions" [value]="opt">{{ opt }}</option>
-          </select>
-          <span class="field-error" *ngIf="fieldError('studyCourseRel')">This field is required.</span>
-        </div>
-      </div>
-
-      <div class="form-group form-group--full">
-        <label class="form-label">Additional Study Notes</label>
-        <textarea
-          class="form-textarea"
-          [(ngModel)]="form.studyNotes"
-          rows="3"
-          placeholder="Any additional information about your studies or academic plans."
-        ></textarea>
-      </div>
-    </div>
-
-    <!-- ── Section 5: Not Currently Seeking ─────────────────────── -->
-    <div class="card section-card" *ngIf="isNotSeeking">
-      <div class="section-header">
-        <div class="section-number">5</div>
-        <div class="section-header__text">
-          <h2>Not Currently Seeking Employment</h2>
-          <p>Tell us more about your current situation.</p>
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Current Activity <span class="required-star">*</span></label>
-          <select
-            class="form-select"
-            [(ngModel)]="form.currentActivity"
-            [class.form-select--error]="fieldError('currentActivity')"
-          >
-            <option value="">Select your current activity...</option>
-            <option *ngFor="let opt of currentActivityOptions" [value]="opt">{{ opt }}</option>
-          </select>
-          <span class="field-error" *ngIf="fieldError('currentActivity')">This field is required.</span>
-        </div>
-      </div>
-
-      <div class="form-group form-group--full">
-        <label class="form-label">Career Plans</label>
-        <textarea
-          class="form-textarea"
-          [(ngModel)]="form.careerPlans"
-          rows="3"
-          placeholder="Describe your short or long-term career plans."
-        ></textarea>
-      </div>
-
-      <div class="form-group form-group--full">
-        <label class="form-label">Additional Notes</label>
-        <textarea
-          class="form-textarea"
-          [(ngModel)]="form.notSeekingNotes"
-          rows="3"
-          placeholder="Any additional context about your current situation."
-        ></textarea>
-      </div>
-    </div>
-
-    <!-- ── Section 6: Skills and Career Categories ───────────────── -->
-    <div class="card section-card">
-      <div class="section-header">
-        <div class="section-number" [class.section-number--dynamic]="true">
-          {{ isEmployed || isSelfEmployed || isEmployedAndStudying ? 3
-            : isUnemployed ? 4
-            : isFurtherStudies ? 5
-            : isNotSeeking ? 6
-            : 2 }}
-        </div>
-        <div class="section-header__text">
-          <h2>Skills and Career Categories</h2>
-          <p>Select all categories that apply to your current skills or work area.</p>
-        </div>
-      </div>
-
-      <div class="chips-label">Career Categories</div>
-      <div class="chips-group">
-        <button
-          type="button"
-          class="chip"
-          *ngFor="let cat of careerCategories"
-          [class.chip--selected]="isCategorySelected(cat)"
-          (click)="toggleCategory(cat)"
-        >
-          <span class="chip__check" *ngIf="isCategorySelected(cat)">✓</span>
-          {{ cat }}
-        </button>
-      </div>
-
-      <div class="form-group form-group--full" style="margin-top: 1.25rem;">
-        <label class="form-label">Specific Skills Used</label>
-        <textarea
-          class="form-textarea"
-          [(ngModel)]="form.specificSkills"
-          rows="3"
-          placeholder="Example: JavaScript, public speaking, bookkeeping, classroom management, project coordination, graphic design"
-        ></textarea>
-        <span class="field-helper">List the main skills you use in your current work, business, studies, or career path.</span>
-      </div>
-    </div>
-
-    <!-- ── Section 7: Additional Notes ──────────────────────────── -->
-    <div class="card section-card">
-      <div class="section-header">
-        <div class="section-number">
-          {{ isEmployed || isSelfEmployed || isEmployedAndStudying ? 4
-            : isUnemployed ? 5
-            : isFurtherStudies ? 6
-            : isNotSeeking ? 7
-            : 3 }}
-        </div>
-        <div class="section-header__text">
-          <h2>Additional Notes</h2>
-          <p>Any other information you would like to add to your employment record.</p>
-        </div>
-      </div>
-
-      <div class="form-group form-group--full">
-        <label class="form-label">Additional Career Notes</label>
-        <textarea
-          class="form-textarea"
-          [(ngModel)]="form.additionalNotes"
-          rows="4"
-          placeholder="Add any additional information about your employment, career plans, or professional development."
-        ></textarea>
-      </div>
-    </div>
-
-    <!-- ── Actions ───────────────────────────────────────────────── -->
-    <div class="card actions-card">
-      <div class="actions-card__left">
+    <!-- Actions -->
+    <div class="actions-bar">
+      <div class="actions-bar__left">
         <span class="last-updated-text">{{ footerLastUpdated }}</span>
       </div>
-      <div class="actions-card__right">
+
+      <div class="actions-bar__right">
         <button
           type="button"
           class="btn btn--reset"
@@ -656,6 +961,7 @@
         >
           Reset Changes
         </button>
+
         <button
           type="button"
           class="btn btn--save"
@@ -663,6 +969,7 @@
           [disabled]="saving"
         >
           <span *ngIf="!saving">Save Employment Information</span>
+
           <span *ngIf="saving" class="saving-indicator">
             <span class="saving-dots"></span>
             Saving...
@@ -670,6 +977,5 @@
         </button>
       </div>
     </div>
-
   </ng-container>
 </div>

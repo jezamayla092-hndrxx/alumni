@@ -12,48 +12,24 @@
 
       <div class="form-grid">
         <div class="form-field">
-          <input
-            id="firstName"
-            type="text"
-            [(ngModel)]="firstName"
-            placeholder=" "
-            [disabled]="loading"
-          />
+          <input id="firstName" type="text" [(ngModel)]="firstName" placeholder=" " [disabled]="loading" />
           <label for="firstName">First Name</label>
         </div>
 
         <div class="form-field">
-          <input
-            id="middleName"
-            type="text"
-            [(ngModel)]="middleName"
-            placeholder=" "
-            [disabled]="loading"
-          />
+          <input id="middleName" type="text" [(ngModel)]="middleName" placeholder=" " [disabled]="loading" />
           <label for="middleName">Middle Initial</label>
         </div>
       </div>
 
       <div class="form-grid">
         <div class="form-field">
-          <input
-            id="lastName"
-            type="text"
-            [(ngModel)]="lastName"
-            placeholder=" "
-            [disabled]="loading"
-          />
+          <input id="lastName" type="text" [(ngModel)]="lastName" placeholder=" " [disabled]="loading" />
           <label for="lastName">Surname</label>
         </div>
 
         <div class="form-field">
-          <input
-            id="suffix"
-            type="text"
-            [(ngModel)]="suffix"
-            placeholder=" "
-            [disabled]="loading"
-          />
+          <input id="suffix" type="text" [(ngModel)]="suffix" placeholder=" " [disabled]="loading" />
           <label for="suffix">Suffix</label>
         </div>
       </div>
@@ -77,9 +53,7 @@
         <div class="select-field">
           <select id="sex" [(ngModel)]="sex" [disabled]="loading">
             <option value="" disabled>Select sex</option>
-            <option *ngFor="let opt of sexOptions" [value]="opt">
-              {{ opt }}
-            </option>
+            <option *ngFor="let opt of sexOptions" [value]="opt">{{ opt }}</option>
           </select>
         </div>
       </div>
@@ -93,22 +67,13 @@
           [disabled]="loading || isAppealMode"
         />
         <label for="email">Email</label>
-
-        <small *ngIf="isAppealMode" class="field-hint">
-          Email cannot be changed during appeal.
-        </small>
+        <small *ngIf="isAppealMode" class="field-hint">Email cannot be changed during appeal.</small>
       </div>
 
       <div class="phone-field">
         <div class="phone-control">
-          <select
-            class="country-select"
-            [(ngModel)]="selectedCountry"
-            [disabled]="loading"
-          >
-            <option *ngFor="let country of countries" [ngValue]="country">
-              {{ country.dialCode }}
-            </option>
+          <select class="country-select" [(ngModel)]="selectedCountry" [disabled]="loading">
+            <option *ngFor="let country of countries" [ngValue]="country">{{ country.dialCode }}</option>
           </select>
 
           <div class="phone-input-wrapper">
@@ -125,26 +90,14 @@
 
       <div class="form-grid">
         <div class="form-field">
-          <input
-            id="studentId"
-            type="text"
-            [(ngModel)]="studentId"
-            placeholder=" "
-            [disabled]="loading"
-          />
+          <input id="studentId" type="text" [(ngModel)]="studentId" placeholder=" " [disabled]="loading" />
           <label for="studentId">University ID</label>
         </div>
 
         <div class="select-field">
-          <select
-            id="yearGraduated"
-            [(ngModel)]="yearGraduated"
-            [disabled]="loading"
-          >
+          <select id="yearGraduated" [(ngModel)]="yearGraduated" [disabled]="loading">
             <option [ngValue]="null" disabled>Year Graduated</option>
-            <option *ngFor="let yr of yearGraduatedOptions" [ngValue]="yr">
-              {{ yr }}
-            </option>
+            <option *ngFor="let yr of yearGraduatedOptions" [ngValue]="yr">{{ yr }}</option>
           </select>
         </div>
       </div>
@@ -152,12 +105,77 @@
       <div class="select-field full-width-select">
         <select id="program" [(ngModel)]="program" [disabled]="loading">
           <option value="" disabled>Select program</option>
-          <option *ngFor="let item of programs" [value]="item">
-            {{ item }}
-          </option>
+          <option *ngFor="let item of programs" [value]="item">{{ item }}</option>
         </select>
       </div>
 
+      <!-- ── ID Photo Upload ─────────────────────────────────────────────── -->
+      <div class="id-photo-section">
+        <div class="id-photo-header">
+          <div>
+            <strong>ID Photo <span class="required-star">*</span></strong>
+            <p>Upload a clear face photo. This will appear on your Digital Alumni ID and will be reviewed by the officer.</p>
+          </div>
+        </div>
+
+        <!-- Empty state -->
+        <label
+          class="id-photo-drop"
+          *ngIf="!idPhotoPreviewUrl"
+          [class.disabled]="loading"
+        >
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            (change)="onIdPhotoSelected($event)"
+            [disabled]="loading"
+          />
+          <div class="id-photo-drop-inner">
+            <div class="id-photo-drop-icon">
+              <span class="material-symbols-outlined">face</span>
+            </div>
+            <span class="id-photo-drop-label">Click to upload face photo</span>
+            <span class="id-photo-drop-hint">JPG, PNG or WEBP · Max 5 MB · Clear face, plain background</span>
+          </div>
+        </label>
+
+        <!-- Preview state -->
+        <div class="id-photo-preview-wrap" *ngIf="idPhotoPreviewUrl">
+          <div class="id-photo-preview">
+            <img [src]="idPhotoPreviewUrl" alt="ID photo preview" />
+          </div>
+
+          <div class="id-photo-preview-actions">
+            <label class="id-photo-change-btn" [class.disabled]="loading">
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                (change)="onIdPhotoSelected($event)"
+                [disabled]="loading"
+              />
+              <span class="material-symbols-outlined">edit</span>
+              Change
+            </label>
+
+            <button
+              type="button"
+              class="id-photo-remove-btn"
+              (click)="removeIdPhoto()"
+              [disabled]="loading"
+            >
+              <span class="material-symbols-outlined">delete</span>
+              Remove
+            </button>
+          </div>
+
+          <p class="id-photo-preview-note">
+            <span class="material-symbols-outlined">info</span>
+            This photo will be reviewed by the officer before your ID is issued.
+          </p>
+        </div>
+      </div>
+
+      <!-- ── Verification Documents ─────────────────────────────────────── -->
       <div class="upload-summary">
         <div>
           <strong>Verification Documents</strong>
@@ -170,7 +188,6 @@
         <label class="upload-open-btn" [class.disabled]="loading">
           <span class="material-symbols-outlined">add</span>
           Upload
-
           <input
             type="file"
             multiple
@@ -187,18 +204,17 @@
           *ngFor="let doc of selectedDocuments; let i = index"
         >
           <img [src]="doc.previewUrl" [alt]="doc.file.name" />
-
           <div>
             <strong [title]="doc.file.name">{{ doc.file.name }}</strong>
             <span>{{ formatFileSize(doc.file.size) }}</span>
           </div>
-
           <button type="button" (click)="removeDocument(i)" [disabled]="loading">
             <span class="material-symbols-outlined">close</span>
           </button>
         </div>
       </div>
 
+      <!-- ── Password fields (new signup only) ─────────────────────────── -->
       <ng-container *ngIf="!isAppealMode">
         <div class="form-field password-field">
           <input
@@ -208,9 +224,7 @@
             placeholder=" "
             [disabled]="loading"
           />
-
           <label for="password">Password</label>
-
           <button
             type="button"
             class="toggle-password"
@@ -218,9 +232,7 @@
             [disabled]="loading"
             *ngIf="password && password.length > 0"
           >
-            <span class="material-symbols-outlined">
-              {{ showPassword ? 'visibility' : 'visibility_off' }}
-            </span>
+            <span class="material-symbols-outlined">{{ showPassword ? 'visibility' : 'visibility_off' }}</span>
           </button>
         </div>
 
@@ -232,9 +244,7 @@
             placeholder=" "
             [disabled]="loading"
           />
-
           <label for="confirmPassword">Confirm Password</label>
-
           <button
             type="button"
             class="toggle-password"
@@ -242,9 +252,7 @@
             [disabled]="loading"
             *ngIf="confirmPassword && confirmPassword.length > 0"
           >
-            <span class="material-symbols-outlined">
-              {{ showConfirmPassword ? 'visibility' : 'visibility_off' }}
-            </span>
+            <span class="material-symbols-outlined">{{ showConfirmPassword ? 'visibility' : 'visibility_off' }}</span>
           </button>
         </div>
       </ng-container>
@@ -256,7 +264,6 @@
           [(ngModel)]="dataPrivacyConsent"
           [disabled]="loading"
         />
-
         <label for="dataPrivacyConsent">
           I confirm that the information I provided is true and I agree that my data will be used
           for alumni verification purposes.

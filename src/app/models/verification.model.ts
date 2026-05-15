@@ -32,10 +32,19 @@ export interface VerificationRequest {
   birthDate?: string;
   sex?: string;
 
+  /**
+   * Face photo submitted during signup for the Digital ID.
+   * Reviewed and approved by the officer. Locked after approval.
+   * Separate from the user's profile avatar (photoUrl).
+   */
+  idPhotoUrl?: string;
+
   verificationDocuments?: VerificationDocument[];
   submittedDocuments?: string[];
   documentUrl?: string;
   documentName?: string;
+
+  isResubmission?: boolean;
 
   status: 'pending' | 'under_review' | 'approved' | 'rejected';
   remarks?: string;

@@ -1,10 +1,9 @@
 <section class="reports-page">
-
   <div class="page-heading">
     <div>
       <span class="eyebrow">ADMIN PORTAL</span>
       <h1>Reports</h1>
-      <p>View summarized records for accounts, alumni tracking, verification, employment, and system content.</p>
+      <p>View organized reports for accounts, alumni tracking, verification, employment, and system content.</p>
     </div>
 
     <div class="heading-actions">
@@ -25,89 +24,17 @@
     <span>{{ loadError }}</span>
   </div>
 
-  <div class="summary-grid">
-    <div class="summary-card">
-      <div class="summary-icon icon-primary">
-        <i class="pi pi-users"></i>
-      </div>
-      <div class="summary-copy">
-        <span>Total Accounts</span>
-        <strong>{{ totalAccounts }}</strong>
-      </div>
-    </div>
-
-    <div class="summary-card">
-      <div class="summary-icon icon-alumni">
-        <i class="pi pi-graduation-cap"></i>
-      </div>
-      <div class="summary-copy">
-        <span>Total Alumni</span>
-        <strong>{{ alumniCount }}</strong>
-      </div>
-    </div>
-
-    <div class="summary-card">
-      <div class="summary-icon icon-green">
-        <i class="pi pi-check-circle"></i>
-      </div>
-      <div class="summary-copy">
-        <span>Verified Alumni</span>
-        <strong>{{ verifiedAlumni }}</strong>
-      </div>
-    </div>
-
-    <div class="summary-card">
-      <div class="summary-icon icon-amber">
-        <i class="pi pi-clock"></i>
-      </div>
-      <div class="summary-copy">
-        <span>Under Review</span>
-        <strong>{{ underReviewAlumni }}</strong>
-      </div>
-    </div>
-
-    <div class="summary-card">
-      <div class="summary-icon icon-blue">
-        <i class="pi pi-briefcase"></i>
-      </div>
-      <div class="summary-copy">
-        <span>Active Jobs</span>
-        <strong>{{ activeJobs }}</strong>
-      </div>
-    </div>
-
-    <div class="summary-card">
-      <div class="summary-icon icon-purple">
-        <i class="pi pi-megaphone"></i>
-      </div>
-      <div class="summary-copy">
-        <span>Published Announcements</span>
-        <strong>{{ publishedAnnouncements }}</strong>
-      </div>
-    </div>
-
-    <div class="summary-card">
-      <div class="summary-icon icon-event">
-        <i class="pi pi-calendar"></i>
-      </div>
-      <div class="summary-copy">
-        <span>Upcoming Events</span>
-        <strong>{{ upcomingEvents }}</strong>
-      </div>
-    </div>
-
-    <div class="summary-card">
-      <div class="summary-icon icon-red">
-        <i class="pi pi-ban"></i>
-      </div>
-      <div class="summary-copy">
-        <span>Disabled Accounts</span>
-        <strong>{{ disabledAccounts }}</strong>
-      </div>
-    </div>
-  </div>
-
   <section class="reports-card">
+    <div class="reports-toolbar">
+      <div class="reports-toolbar-copy">
+        <h2>{{ selectedReport }} Report</h2>
+        <p>{{ getReportDescription(selectedReport) }}</p>
+      </div>
+
+      <div class="reports-toolbar-meta">
+        <span>{{ loading ? 'Updating report data...' : 'Report data loaded' }}</span>
+      </div>
+    </div>
 
     <div class="tabs-row">
       <button
@@ -122,218 +49,189 @@
     </div>
 
     <div class="report-content">
+      <div class="report-loading" *ngIf="loading">
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>Loading reports...</span>
+      </div>
 
-      <ng-container *ngIf="selectedReport === 'Overview'">
-        <div class="section-grid two-col">
-
-          <div class="report-section">
-            <div class="section-header">
-              <h2>Account Distribution</h2>
-              <p>Breakdown of admin, officer, and alumni accounts.</p>
-            </div>
-
-            <div class="report-list">
-              <div class="report-row" *ngFor="let row of roleRows; trackBy: trackByRow">
-                <div class="row-top">
-                  <span>{{ row.label }}</span>
-                  <strong>{{ row.count }} · {{ row.percent }}%</strong>
-                </div>
-
-                <div class="bar-track">
-                  <div
-                    class="bar-fill"
-                    [ngClass]="getRowClass(row.label)"
-                    [style.width.%]="row.percent"
-                  ></div>
-                </div>
+      <ng-container *ngIf="!loading">
+        <ng-container *ngIf="selectedReport === 'Overview'">
+          <div class="section-grid two-col">
+            <div class="report-section">
+              <div class="section-header">
+                <h2>Account Distribution</h2>
+                <p>Breakdown of admin, officer, and alumni accounts.</p>
               </div>
-            </div>
-          </div>
 
-          <div class="report-section">
-            <div class="section-header">
-              <h2>Recent Activity</h2>
-              <p>Latest records added or updated in the system.</p>
-            </div>
+              <div class="report-list">
+                <div class="report-row" *ngFor="let row of roleRows; trackBy: trackByRow">
+                  <div class="row-top">
+                    <span>{{ row.label }}</span>
+                    <strong>{{ row.count }} · {{ row.percent }}%</strong>
+                  </div>
 
-            <div class="activity-list" *ngIf="recentActivity.length > 0; else noActivity">
-              <div
-                class="activity-item"
-                *ngFor="let item of recentActivity; trackBy: trackByActivity"
-              >
-                <div class="activity-icon">
-                  <i class="pi pi-history"></i>
-                </div>
-
-                <div>
-                  <strong>{{ item.title }}</strong>
-                  <span>{{ item.type }} · {{ cleanLabel(item.status) }} · {{ formatDate(item.date) }}</span>
+                  <div class="bar-track">
+                    <div
+                      class="bar-fill"
+                      [ngClass]="getRowClass(row.label)"
+                      [style.width.%]="row.percent"
+                    ></div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <ng-template #noActivity>
-              <div class="empty-state">
-                <i class="pi pi-history"></i>
-                <p>No recent activity found.</p>
-              </div>
-            </ng-template>
-          </div>
-
-        </div>
-      </ng-container>
-
-      <ng-container *ngIf="selectedReport === 'Accounts'">
-        <div class="section-grid two-col">
-
-          <div class="report-section">
-            <div class="section-header">
-              <h2>Accounts by Role</h2>
-              <p>Total users grouped by system role.</p>
-            </div>
-
-            <div class="report-list">
-              <div class="report-row" *ngFor="let row of roleRows; trackBy: trackByRow">
-                <div class="row-top">
-                  <span>{{ row.label }}</span>
-                  <strong>{{ row.count }} · {{ row.percent }}%</strong>
-                </div>
-
-                <div class="bar-track">
-                  <div
-                    class="bar-fill"
-                    [ngClass]="getRowClass(row.label)"
-                    [style.width.%]="row.percent"
-                  ></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="report-section">
-            <div class="section-header">
-              <h2>Account Status</h2>
-              <p>Active and disabled system accounts.</p>
-            </div>
-
-            <div class="report-list">
-              <div class="report-row" *ngFor="let row of accountStatusRows; trackBy: trackByRow">
-                <div class="row-top">
-                  <span>{{ row.label }}</span>
-                  <strong>{{ row.count }} · {{ row.percent }}%</strong>
-                </div>
-
-                <div class="bar-track">
-                  <div
-                    class="bar-fill"
-                    [ngClass]="getRowClass(row.label)"
-                    [style.width.%]="row.percent"
-                  ></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </ng-container>
-
-      <ng-container *ngIf="selectedReport === 'Alumni'">
-        <div class="section-grid two-col">
-
-          <div class="report-section">
-            <div class="section-header">
-              <h2>Alumni by Program</h2>
-              <p>Distribution of alumni based on their academic program.</p>
-            </div>
-
-            <div class="report-list" *ngIf="programRows.length > 0; else noProgramData">
-              <div class="report-row" *ngFor="let row of programRows; trackBy: trackByRow">
-                <div class="row-top">
-                  <span>{{ row.label }}</span>
-                  <strong>{{ row.count }} · {{ row.percent }}%</strong>
-                </div>
-
-                <div class="bar-track">
-                  <div class="bar-fill neutral" [style.width.%]="row.percent"></div>
-                </div>
-              </div>
-            </div>
-
-            <ng-template #noProgramData>
-              <div class="empty-state">
-                <i class="pi pi-graduation-cap"></i>
-                <p>No alumni program data found.</p>
-              </div>
-            </ng-template>
-          </div>
-
-          <div class="report-section">
-            <div class="section-header">
-              <h2>Alumni by College</h2>
-              <p>Grouped according to the college of each program.</p>
-            </div>
-
-            <div class="report-list" *ngIf="collegeRows.length > 0; else noCollegeData">
-              <div class="report-row" *ngFor="let row of collegeRows; trackBy: trackByRow">
-                <div class="row-top">
-                  <span>{{ row.label }}</span>
-                  <strong>{{ row.count }} · {{ row.percent }}%</strong>
-                </div>
-
-                <div class="bar-track">
-                  <div class="bar-fill neutral" [style.width.%]="row.percent"></div>
-                </div>
-              </div>
-            </div>
-
-            <ng-template #noCollegeData>
-              <div class="empty-state">
-                <i class="pi pi-building"></i>
-                <p>No college data found.</p>
-              </div>
-            </ng-template>
-          </div>
-
-        </div>
-      </ng-container>
-
-      <ng-container *ngIf="selectedReport === 'Verification'">
-        <div class="report-section">
-          <div class="section-header">
-            <h2>Alumni Verification Report</h2>
-            <p>Verification status summary for alumni accounts.</p>
-          </div>
-
-          <div class="report-list">
-            <div class="report-row" *ngFor="let row of verificationRows; trackBy: trackByRow">
-              <div class="row-top">
-                <span>{{ row.label }}</span>
-                <strong>{{ row.count }} · {{ row.percent }}%</strong>
+            <div class="report-section">
+              <div class="section-header">
+                <h2>Recent Activity</h2>
+                <p>Latest records added or updated in the system.</p>
               </div>
 
-              <div class="bar-track">
+              <div class="activity-list" *ngIf="recentActivity.length > 0; else noActivity">
                 <div
-                  class="bar-fill"
-                  [ngClass]="getRowClass(row.label)"
-                  [style.width.%]="row.percent"
-                ></div>
+                  class="activity-item"
+                  *ngFor="let item of recentActivity; trackBy: trackByActivity"
+                >
+                  <div class="activity-icon">
+                    <i class="pi pi-history"></i>
+                  </div>
+
+                  <div>
+                    <strong>{{ item.title }}</strong>
+                    <span>{{ item.type }} · {{ cleanLabel(item.status) }} · {{ formatDate(item.date) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <ng-template #noActivity>
+                <div class="empty-state">
+                  <i class="pi pi-history"></i>
+                  <p>No recent activity found.</p>
+                </div>
+              </ng-template>
+            </div>
+          </div>
+        </ng-container>
+
+        <ng-container *ngIf="selectedReport === 'Accounts'">
+          <div class="section-grid two-col">
+            <div class="report-section">
+              <div class="section-header">
+                <h2>Accounts by Role</h2>
+                <p>Total users grouped by system role.</p>
+              </div>
+
+              <div class="report-list">
+                <div class="report-row" *ngFor="let row of roleRows; trackBy: trackByRow">
+                  <div class="row-top">
+                    <span>{{ row.label }}</span>
+                    <strong>{{ row.count }} · {{ row.percent }}%</strong>
+                  </div>
+
+                  <div class="bar-track">
+                    <div
+                      class="bar-fill"
+                      [ngClass]="getRowClass(row.label)"
+                      [style.width.%]="row.percent"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="report-section">
+              <div class="section-header">
+                <h2>Account Status</h2>
+                <p>Active and disabled system accounts.</p>
+              </div>
+
+              <div class="report-list">
+                <div class="report-row" *ngFor="let row of accountStatusRows; trackBy: trackByRow">
+                  <div class="row-top">
+                    <span>{{ row.label }}</span>
+                    <strong>{{ row.count }} · {{ row.percent }}%</strong>
+                  </div>
+
+                  <div class="bar-track">
+                    <div
+                      class="bar-fill"
+                      [ngClass]="getRowClass(row.label)"
+                      [style.width.%]="row.percent"
+                    ></div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </ng-container>
+        </ng-container>
 
-      <ng-container *ngIf="selectedReport === 'Employment'">
-        <div class="section-grid two-col">
+        <ng-container *ngIf="selectedReport === 'Alumni'">
+          <div class="section-grid two-col">
+            <div class="report-section">
+              <div class="section-header">
+                <h2>Alumni by Program</h2>
+                <p>Distribution of alumni based on their academic program.</p>
+              </div>
 
-          <div class="report-section">
-            <div class="section-header">
-              <h2>Employment Status</h2>
-              <p>Tracking summary based on alumni employment updates.</p>
+              <div class="report-list" *ngIf="programRows.length > 0; else noProgramData">
+                <div class="report-row" *ngFor="let row of programRows; trackBy: trackByRow">
+                  <div class="row-top">
+                    <span>{{ row.label }}</span>
+                    <strong>{{ row.count }} · {{ row.percent }}%</strong>
+                  </div>
+
+                  <div class="bar-track">
+                    <div class="bar-fill neutral" [style.width.%]="row.percent"></div>
+                  </div>
+                </div>
+              </div>
+
+              <ng-template #noProgramData>
+                <div class="empty-state">
+                  <i class="pi pi-graduation-cap"></i>
+                  <p>No alumni program data found.</p>
+                </div>
+              </ng-template>
             </div>
 
-            <div class="report-list" *ngIf="employmentRows.length > 0; else noEmploymentData">
-              <div class="report-row" *ngFor="let row of employmentRows; trackBy: trackByRow">
+            <div class="report-section">
+              <div class="section-header">
+                <h2>Alumni by College</h2>
+                <p>Grouped according to the college of each program.</p>
+              </div>
+
+              <div class="report-list" *ngIf="collegeRows.length > 0; else noCollegeData">
+                <div class="report-row" *ngFor="let row of collegeRows; trackBy: trackByRow">
+                  <div class="row-top">
+                    <span>{{ row.label }}</span>
+                    <strong>{{ row.count }} · {{ row.percent }}%</strong>
+                  </div>
+
+                  <div class="bar-track">
+                    <div class="bar-fill neutral" [style.width.%]="row.percent"></div>
+                  </div>
+                </div>
+              </div>
+
+              <ng-template #noCollegeData>
+                <div class="empty-state">
+                  <i class="pi pi-building"></i>
+                  <p>No college data found.</p>
+                </div>
+              </ng-template>
+            </div>
+          </div>
+        </ng-container>
+
+        <ng-container *ngIf="selectedReport === 'Verification'">
+          <div class="report-section">
+            <div class="section-header">
+              <h2>Alumni Verification Report</h2>
+              <p>Verification status summary for alumni accounts.</p>
+            </div>
+
+            <div class="report-list">
+              <div class="report-row" *ngFor="let row of verificationRows; trackBy: trackByRow">
                 <div class="row-top">
                   <span>{{ row.label }}</span>
                   <strong>{{ row.count }} · {{ row.percent }}%</strong>
@@ -348,153 +246,175 @@
                 </div>
               </div>
             </div>
-
-            <ng-template #noEmploymentData>
-              <div class="empty-state">
-                <i class="pi pi-briefcase"></i>
-                <p>No employment status data found.</p>
-              </div>
-            </ng-template>
           </div>
+        </ng-container>
 
-          <div class="report-section">
-            <div class="section-header">
-              <h2>Employment Quick Counts</h2>
-              <p>Main employment categories used in alumni tracking.</p>
+        <ng-container *ngIf="selectedReport === 'Employment'">
+          <div class="section-grid two-col">
+            <div class="report-section">
+              <div class="section-header">
+                <h2>Employment Status</h2>
+                <p>Tracking summary based on alumni employment updates.</p>
+              </div>
+
+              <div class="report-list" *ngIf="employmentRows.length > 0; else noEmploymentData">
+                <div class="report-row" *ngFor="let row of employmentRows; trackBy: trackByRow">
+                  <div class="row-top">
+                    <span>{{ row.label }}</span>
+                    <strong>{{ row.count }} · {{ row.percent }}%</strong>
+                  </div>
+
+                  <div class="bar-track">
+                    <div
+                      class="bar-fill"
+                      [ngClass]="getRowClass(row.label)"
+                      [style.width.%]="row.percent"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              <ng-template #noEmploymentData>
+                <div class="empty-state">
+                  <i class="pi pi-briefcase"></i>
+                  <p>No employment status data found.</p>
+                </div>
+              </ng-template>
             </div>
 
-            <div class="mini-grid">
-              <div class="mini-card">
-                <span>Employed</span>
-                <strong>{{ employedCount }}</strong>
+            <div class="report-section">
+              <div class="section-header">
+                <h2>Employment Quick Counts</h2>
+                <p>Main employment categories used in alumni tracking.</p>
               </div>
 
-              <div class="mini-card">
-                <span>Self-Employed</span>
-                <strong>{{ selfEmployedCount }}</strong>
-              </div>
+              <div class="mini-grid">
+                <div class="mini-card">
+                  <span>Employed</span>
+                  <strong>{{ employedCount }}</strong>
+                </div>
 
-              <div class="mini-card">
-                <span>Unemployed</span>
-                <strong>{{ unemployedCount }}</strong>
-              </div>
+                <div class="mini-card">
+                  <span>Self-Employed</span>
+                  <strong>{{ selfEmployedCount }}</strong>
+                </div>
 
-              <div class="mini-card">
-                <span>Further Studies</span>
-                <strong>{{ furtherStudiesCount }}</strong>
-              </div>
+                <div class="mini-card">
+                  <span>Unemployed</span>
+                  <strong>{{ unemployedCount }}</strong>
+                </div>
 
-              <div class="mini-card full">
-                <span>No Update</span>
-                <strong>{{ noEmploymentUpdateCount }}</strong>
+                <div class="mini-card">
+                  <span>Further Studies</span>
+                  <strong>{{ furtherStudiesCount }}</strong>
+                </div>
+
+                <div class="mini-card full">
+                  <span>No Update</span>
+                  <strong>{{ noEmploymentUpdateCount }}</strong>
+                </div>
               </div>
             </div>
           </div>
+        </ng-container>
 
-        </div>
+        <ng-container *ngIf="selectedReport === 'Content'">
+          <div class="section-grid three-col">
+            <div class="report-section">
+              <div class="section-header">
+                <h2>Job Postings</h2>
+                <p>Job posts grouped by status.</p>
+              </div>
+
+              <div class="report-list compact" *ngIf="jobRows.length > 0; else noJobData">
+                <div class="report-row" *ngFor="let row of jobRows; trackBy: trackByRow">
+                  <div class="row-top">
+                    <span>{{ row.label }}</span>
+                    <strong>{{ row.count }}</strong>
+                  </div>
+
+                  <div class="bar-track">
+                    <div
+                      class="bar-fill"
+                      [ngClass]="getRowClass(row.label)"
+                      [style.width.%]="row.percent"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              <ng-template #noJobData>
+                <div class="empty-state">
+                  <i class="pi pi-briefcase"></i>
+                  <p>No job posting data found.</p>
+                </div>
+              </ng-template>
+            </div>
+
+            <div class="report-section">
+              <div class="section-header">
+                <h2>Events</h2>
+                <p>Event records grouped by status.</p>
+              </div>
+
+              <div class="report-list compact" *ngIf="eventRows.length > 0; else noEventData">
+                <div class="report-row" *ngFor="let row of eventRows; trackBy: trackByRow">
+                  <div class="row-top">
+                    <span>{{ row.label }}</span>
+                    <strong>{{ row.count }}</strong>
+                  </div>
+
+                  <div class="bar-track">
+                    <div
+                      class="bar-fill"
+                      [ngClass]="getRowClass(row.label)"
+                      [style.width.%]="row.percent"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              <ng-template #noEventData>
+                <div class="empty-state">
+                  <i class="pi pi-calendar"></i>
+                  <p>No event data found.</p>
+                </div>
+              </ng-template>
+            </div>
+
+            <div class="report-section">
+              <div class="section-header">
+                <h2>Announcements</h2>
+                <p>Announcements grouped by status.</p>
+              </div>
+
+              <div class="report-list compact" *ngIf="announcementRows.length > 0; else noAnnouncementData">
+                <div class="report-row" *ngFor="let row of announcementRows; trackBy: trackByRow">
+                  <div class="row-top">
+                    <span>{{ row.label }}</span>
+                    <strong>{{ row.count }}</strong>
+                  </div>
+
+                  <div class="bar-track">
+                    <div
+                      class="bar-fill"
+                      [ngClass]="getRowClass(row.label)"
+                      [style.width.%]="row.percent"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              <ng-template #noAnnouncementData>
+                <div class="empty-state">
+                  <i class="pi pi-megaphone"></i>
+                  <p>No announcement data found.</p>
+                </div>
+              </ng-template>
+            </div>
+          </div>
+        </ng-container>
       </ng-container>
-
-      <ng-container *ngIf="selectedReport === 'Content'">
-        <div class="section-grid three-col">
-
-          <div class="report-section">
-            <div class="section-header">
-              <h2>Job Postings</h2>
-              <p>Job posts grouped by status.</p>
-            </div>
-
-            <div class="report-list compact" *ngIf="jobRows.length > 0; else noJobData">
-              <div class="report-row" *ngFor="let row of jobRows; trackBy: trackByRow">
-                <div class="row-top">
-                  <span>{{ row.label }}</span>
-                  <strong>{{ row.count }}</strong>
-                </div>
-
-                <div class="bar-track">
-                  <div
-                    class="bar-fill"
-                    [ngClass]="getRowClass(row.label)"
-                    [style.width.%]="row.percent"
-                  ></div>
-                </div>
-              </div>
-            </div>
-
-            <ng-template #noJobData>
-              <div class="empty-state">
-                <i class="pi pi-briefcase"></i>
-                <p>No job posting data found.</p>
-              </div>
-            </ng-template>
-          </div>
-
-          <div class="report-section">
-            <div class="section-header">
-              <h2>Events</h2>
-              <p>Event records grouped by status.</p>
-            </div>
-
-            <div class="report-list compact" *ngIf="eventRows.length > 0; else noEventData">
-              <div class="report-row" *ngFor="let row of eventRows; trackBy: trackByRow">
-                <div class="row-top">
-                  <span>{{ row.label }}</span>
-                  <strong>{{ row.count }}</strong>
-                </div>
-
-                <div class="bar-track">
-                  <div
-                    class="bar-fill"
-                    [ngClass]="getRowClass(row.label)"
-                    [style.width.%]="row.percent"
-                  ></div>
-                </div>
-              </div>
-            </div>
-
-            <ng-template #noEventData>
-              <div class="empty-state">
-                <i class="pi pi-calendar"></i>
-                <p>No event data found.</p>
-              </div>
-            </ng-template>
-          </div>
-
-          <div class="report-section">
-            <div class="section-header">
-              <h2>Announcements</h2>
-              <p>Announcements grouped by status.</p>
-            </div>
-
-            <div class="report-list compact" *ngIf="announcementRows.length > 0; else noAnnouncementData">
-              <div class="report-row" *ngFor="let row of announcementRows; trackBy: trackByRow">
-                <div class="row-top">
-                  <span>{{ row.label }}</span>
-                  <strong>{{ row.count }}</strong>
-                </div>
-
-                <div class="bar-track">
-                  <div
-                    class="bar-fill"
-                    [ngClass]="getRowClass(row.label)"
-                    [style.width.%]="row.percent"
-                  ></div>
-                </div>
-              </div>
-            </div>
-
-            <ng-template #noAnnouncementData>
-              <div class="empty-state">
-                <i class="pi pi-megaphone"></i>
-                <p>No announcement data found.</p>
-              </div>
-            </ng-template>
-          </div>
-
-        </div>
-      </ng-container>
-
     </div>
-
   </section>
-
 </section>

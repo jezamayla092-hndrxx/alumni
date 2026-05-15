@@ -1,8 +1,11 @@
 <section class="dashboard-page">
   <div class="page-heading">
     <div class="heading-copy">
-      <h1>Dashboard</h1>
-      <p>Welcome back. Here's an overview of the alumni management system.</p>
+      <h1>Officer Dashboard</h1>
+      <p>
+        Monitor alumni verification requests, alumni records, events,
+        announcements and more.
+      </p>
     </div>
   </div>
 
@@ -27,13 +30,14 @@
   <section class="dashboard-main-grid">
     <article class="panel panel-large">
       <div class="panel-header">
-        <h2>Recent Verification Requests</h2>
+        <h2>Latest Alumni Verification Updates</h2>
+
         <button
           type="button"
           class="panel-link-btn"
           (click)="goToVerificationRequests()"
         >
-          View all →
+          View queue
         </button>
       </div>
 
@@ -44,10 +48,10 @@
         <table class="dashboard-table">
           <thead>
             <tr>
-              <th>Name</th>
+              <th>Alumni Name</th>
               <th>Program</th>
-              <th>Year</th>
-              <th>Status</th>
+              <th>Batch</th>
+              <th>Verification Status</th>
             </tr>
           </thead>
 
@@ -60,8 +64,8 @@
                 <span
                   class="status-badge"
                   [ngClass]="{
-                    'status-pending':  item.status === 'pending',
-                    'status-review':   item.status === 'under_review',
+                    'status-pending': item.status === 'pending',
+                    'status-review': item.status === 'under_review',
                     'status-approved': item.status === 'approved',
                     'status-rejected': item.status === 'rejected'
                   }"
@@ -77,56 +81,11 @@
       <ng-template #emptyVerifications>
         <div class="empty-state">
           <div class="empty-icon-wrap">
-            <i class="pi pi-inbox"></i>
-          </div>
-          <h3>No verification requests yet</h3>
-          <p>Incoming requests will appear here.</p>
-        </div>
-      </ng-template>
-    </article>
-
-    <article class="panel panel-side">
-      <div class="panel-header">
-        <h2>Recent Activity</h2>
-      </div>
-
-      <div *ngIf="recentActivities.length > 0; else emptyActivities">
-        <div
-          class="activity-item"
-          *ngFor="let activity of recentActivities; trackBy: trackById"
-        >
-          <div
-            class="activity-icon"
-            [ngClass]="{
-              'activity-job':          activity.type === 'job',
-              'activity-event':        activity.type === 'event',
-              'activity-announcement': activity.type === 'announcement'
-            }"
-          >
-            <i
-              class="pi"
-              [ngClass]="{
-                'pi-briefcase': activity.type === 'job',
-                'pi-calendar':  activity.type === 'event',
-                'pi-megaphone': activity.type === 'announcement'
-              }"
-            ></i>
+            <i class="ti ti-inbox"></i>
           </div>
 
-          <div class="activity-text">
-            <h3>{{ activity.title }}</h3>
-            <p>{{ activity.date }}</p>
-          </div>
-        </div>
-      </div>
-
-      <ng-template #emptyActivities>
-        <div class="empty-state">
-          <div class="empty-icon-wrap">
-            <i class="pi pi-history"></i>
-          </div>
-          <h3>No recent activity</h3>
-          <p>Recent updates will appear here.</p>
+          <h3>No alumni verification records yet</h3>
+          <p>New alumni verification submissions will appear here once available.</p>
         </div>
       </ng-template>
     </article>

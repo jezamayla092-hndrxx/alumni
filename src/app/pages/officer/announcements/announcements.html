@@ -3,7 +3,6 @@
   <!-- HEADER -->
   <div class="page-header">
     <div>
-      <div class="eyebrow">OFFICER PORTAL</div>
       <h1>Announcements</h1>
       <p>Create and manage official alumni updates.</p>
     </div>
@@ -22,6 +21,7 @@
         <span>Total</span>
       </div>
     </div>
+
     <div class="summary-card">
       <div class="summary-icon green"><i class="pi pi-check-circle"></i></div>
       <div class="summary-copy">
@@ -29,6 +29,7 @@
         <span>Published</span>
       </div>
     </div>
+
     <div class="summary-card">
       <div class="summary-icon amber"><i class="pi pi-file-edit"></i></div>
       <div class="summary-copy">
@@ -36,6 +37,7 @@
         <span>Drafts</span>
       </div>
     </div>
+
     <div class="summary-card">
       <div class="summary-icon blue"><i class="pi pi-thumbtack"></i></div>
       <div class="summary-copy">
@@ -58,7 +60,7 @@
     </div>
 
     <div class="select-field">
-      <select [(ngModel)]="filterStatus" (change)="applyFilters()">
+      <select [(ngModel)]="filterStatus" (ngModelChange)="applyFilters()">
         <option value="">All Statuses</option>
         <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
       </select>
@@ -66,7 +68,7 @@
     </div>
 
     <div class="select-field">
-      <select [(ngModel)]="filterCategory" (change)="applyFilters()">
+      <select [(ngModel)]="filterCategory" (ngModelChange)="applyFilters()">
         <option value="">All Categories</option>
         <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
       </select>
@@ -74,7 +76,8 @@
     </div>
 
     <button *ngIf="hasActiveFilters" type="button" class="clear-btn" (click)="clearFilters()">
-      <i class="pi pi-times"></i> Clear
+      <i class="pi pi-times"></i>
+      Clear
     </button>
   </div>
 
@@ -94,7 +97,9 @@
     <div class="empty-state" *ngIf="!loading && !loadError && filteredAnnouncements.length === 0">
       <i class="pi pi-megaphone"></i>
       <span *ngIf="hasActiveFilters">No announcements match your filters.</span>
-      <span *ngIf="!hasActiveFilters">No announcements yet. Click <strong>Create Announcement</strong> to get started.</span>
+      <span *ngIf="!hasActiveFilters">
+        No announcements yet. Click <strong>Create Announcement</strong> to get started.
+      </span>
     </div>
 
     <div
@@ -105,27 +110,44 @@
       <div class="row-main">
         <div class="row-badges">
           <span class="badge badge-pinned" *ngIf="item.isPinned">
-            <i class="pi pi-thumbtack"></i> Pinned
+            <i class="pi pi-thumbtack"></i>
+            Pinned
           </span>
+
           <span class="badge badge-category">{{ item.category }}</span>
-          <span class="badge" [ngClass]="{
-            'badge-published': item.status === 'Published',
-            'badge-draft':     item.status === 'Draft',
-            'badge-archived':  item.status === 'Archived'
-          }">{{ item.status }}</span>
+
+          <span
+            class="badge"
+            [ngClass]="{
+              'badge-published': item.status === 'Published',
+              'badge-draft': item.status === 'Draft',
+              'badge-archived': item.status === 'Archived'
+            }"
+          >
+            {{ item.status }}
+          </span>
         </div>
 
         <div class="row-title">{{ item.title }}</div>
         <div class="row-preview">{{ getPreview(item) }}</div>
 
         <div class="row-meta">
-          <span><i class="pi pi-eye"></i> {{ item.visibility }}</span>
+          <span>
+            <i class="pi pi-eye"></i>
+            {{ item.visibility }}
+          </span>
+
           <ng-container *ngIf="item.program && item.visibility === 'Specific Program'">
             <span class="dot">—</span>
             <span>{{ item.program }}</span>
           </ng-container>
+
           <span class="dot">·</span>
-          <span><i class="pi pi-calendar"></i> {{ formatDate(item.createdAt) }}</span>
+
+          <span>
+            <i class="pi pi-calendar"></i>
+            {{ formatDate(item.createdAt) }}
+          </span>
         </div>
       </div>
 
@@ -133,9 +155,11 @@
         <button type="button" class="action-btn view-btn" title="View Details" (click)="openView(item)">
           <i class="pi pi-eye"></i>
         </button>
+
         <button type="button" class="action-btn edit-btn" title="Edit" (click)="openEdit(item)">
           <i class="pi pi-pencil"></i>
         </button>
+
         <button
           type="button"
           class="action-btn pin-btn"
@@ -147,6 +171,7 @@
           <i class="pi pi-spin pi-spinner" *ngIf="isPinToggling(item)"></i>
           <i class="pi pi-thumbtack" *ngIf="!isPinToggling(item)"></i>
         </button>
+
         <button
           type="button"
           class="action-btn archive-btn"
@@ -156,6 +181,7 @@
         >
           <i class="pi pi-inbox"></i>
         </button>
+
         <button type="button" class="action-btn delete-btn" title="Delete" (click)="openDelete(item)">
           <i class="pi pi-trash"></i>
         </button>
@@ -171,8 +197,7 @@
 
 </section>
 
-
-<!-- ══════════════════════════════ ADD / EDIT MODAL -->
+<!-- ADD / EDIT MODAL -->
 <div class="modal-backdrop" *ngIf="showFormModal" (click)="closeFormModal()">
   <div class="modal form-modal" (click)="$event.stopPropagation()">
 
@@ -181,6 +206,7 @@
         <h2>{{ isEditMode ? 'Edit Announcement' : 'Create Announcement' }}</h2>
         <p>{{ isEditMode ? 'Update the details of this announcement.' : 'Fill in the details for the new announcement.' }}</p>
       </div>
+
       <button type="button" class="close-btn" (click)="closeFormModal()">
         <i class="pi pi-times"></i>
       </button>
@@ -188,18 +214,24 @@
 
     <div class="modal-body">
 
-      <!-- Basic Info -->
+      <!-- BASIC INFO -->
       <div class="form-section">
-        <div class="form-section-label"><i class="pi pi-info-circle"></i> Basic Information</div>
+        <div class="form-section-label">
+          <i class="pi pi-info-circle"></i>
+          Basic Information
+        </div>
+
         <div class="form-grid two-col">
           <div class="field full">
             <label>Announcement Title <span class="req">*</span></label>
             <input type="text" [(ngModel)]="form.title" placeholder="Enter announcement title" />
           </div>
+
           <div class="field full">
             <label>Content / Description <span class="req">*</span></label>
             <textarea [(ngModel)]="form.content" placeholder="Write the announcement content..." rows="5"></textarea>
           </div>
+
           <div class="field">
             <label>Category <span class="req">*</span></label>
             <div class="select-wrap">
@@ -210,6 +242,7 @@
               <i class="pi pi-angle-down"></i>
             </div>
           </div>
+
           <div class="field">
             <label>Status</label>
             <div class="select-wrap">
@@ -222,9 +255,13 @@
         </div>
       </div>
 
-      <!-- Visibility -->
+      <!-- VISIBILITY -->
       <div class="form-section">
-        <div class="form-section-label"><i class="pi pi-users"></i> Visibility</div>
+        <div class="form-section-label">
+          <i class="pi pi-users"></i>
+          Visibility
+        </div>
+
         <div class="form-grid two-col">
           <div class="field" [class.full]="form.visibility !== 'Specific Program'">
             <label>Visibility <span class="req">*</span></label>
@@ -236,6 +273,7 @@
               <i class="pi pi-angle-down"></i>
             </div>
           </div>
+
           <div class="field" *ngIf="form.visibility === 'Specific Program'">
             <label>Program <span class="req">*</span></label>
             <div class="select-wrap">
@@ -248,26 +286,29 @@
           </div>
         </div>
 
-        <div class="pin-row" (click)="form.isPinned = !form.isPinned">
+        <div class="pin-row" role="button" tabindex="0" (click)="form.isPinned = !form.isPinned">
           <div class="custom-checkbox" [class.checked]="form.isPinned">
             <i class="pi pi-check"></i>
           </div>
+
           <div class="checkbox-copy">
             <span class="checkbox-label">Pin Announcement</span>
-            <span class="checkbox-hint">Pinned announcements are highlighted with a purple left border.</span>
+            <span class="checkbox-hint">Pinned announcements are highlighted and moved to the top of the list.</span>
           </div>
         </div>
       </div>
 
-      <!-- Error -->
+      <!-- ERROR -->
       <div class="form-error" *ngIf="formError">
-        <i class="pi pi-exclamation-triangle"></i> {{ formError }}
+        <i class="pi pi-exclamation-triangle"></i>
+        {{ formError }}
       </div>
 
     </div>
 
     <div class="modal-footer">
       <button type="button" class="secondary-btn" (click)="closeFormModal()">Cancel</button>
+
       <button type="button" class="primary-btn" (click)="save()" [disabled]="saving">
         <i class="pi pi-check"></i>
         {{ saving ? 'Saving...' : (isEditMode ? 'Save Changes' : 'Create Announcement') }}
@@ -277,8 +318,7 @@
   </div>
 </div>
 
-
-<!-- ══════════════════════════════ VIEW MODAL -->
+<!-- VIEW MODAL -->
 <div class="modal-backdrop" *ngIf="showViewModal" (click)="closeViewModal()">
   <div class="modal view-modal" (click)="$event.stopPropagation()">
 
@@ -286,17 +326,27 @@
       <div class="modal-header-copy">
         <div class="view-badges">
           <span class="badge badge-pinned" *ngIf="selectedAnnouncement.isPinned">
-            <i class="pi pi-thumbtack"></i> Pinned
+            <i class="pi pi-thumbtack"></i>
+            Pinned
           </span>
+
           <span class="badge badge-category">{{ selectedAnnouncement.category }}</span>
-          <span class="badge" [ngClass]="{
-            'badge-published': selectedAnnouncement.status === 'Published',
-            'badge-draft':     selectedAnnouncement.status === 'Draft',
-            'badge-archived':  selectedAnnouncement.status === 'Archived'
-          }">{{ selectedAnnouncement.status }}</span>
+
+          <span
+            class="badge"
+            [ngClass]="{
+              'badge-published': selectedAnnouncement.status === 'Published',
+              'badge-draft': selectedAnnouncement.status === 'Draft',
+              'badge-archived': selectedAnnouncement.status === 'Archived'
+            }"
+          >
+            {{ selectedAnnouncement.status }}
+          </span>
         </div>
+
         <h2>{{ selectedAnnouncement.title }}</h2>
       </div>
+
       <button type="button" class="close-btn" (click)="closeViewModal()">
         <i class="pi pi-times"></i>
       </button>
@@ -309,14 +359,17 @@
           <span class="meta-label">Visibility</span>
           <span>{{ selectedAnnouncement.visibility }}</span>
         </div>
+
         <div class="view-meta-item" *ngIf="selectedAnnouncement.program">
           <span class="meta-label">Program</span>
           <span>{{ selectedAnnouncement.program }}</span>
         </div>
+
         <div class="view-meta-item">
           <span class="meta-label">Posted</span>
           <span>{{ formatDate(selectedAnnouncement.createdAt) }}</span>
         </div>
+
         <div class="view-meta-item" *ngIf="selectedAnnouncement.updatedAt">
           <span class="meta-label">Updated</span>
           <span>{{ formatDate(selectedAnnouncement.updatedAt) }}</span>
@@ -332,20 +385,25 @@
 
     <div class="modal-footer">
       <button type="button" class="secondary-btn" (click)="closeViewModal()">Close</button>
+
       <button type="button" class="primary-btn" (click)="openEditFromView()">
-        <i class="pi pi-pencil"></i> Edit
+        <i class="pi pi-pencil"></i>
+        Edit
       </button>
     </div>
 
   </div>
 </div>
 
-
-<!-- ══════════════════════════════ DELETE MODAL -->
+<!-- DELETE MODAL -->
 <div class="modal-backdrop" *ngIf="showDeleteModal" (click)="closeDelete()">
   <div class="confirm-modal" (click)="$event.stopPropagation()">
-    <div class="confirm-icon"><i class="pi pi-trash"></i></div>
+    <div class="confirm-icon">
+      <i class="pi pi-trash"></i>
+    </div>
+
     <h3>Delete Announcement</h3>
+
     <div *ngIf="announcementToDelete">
       <p>
         Are you sure you want to delete
@@ -353,8 +411,10 @@
         This action cannot be undone.
       </p>
     </div>
+
     <div class="confirm-actions">
       <button type="button" class="secondary-btn" (click)="closeDelete()">Cancel</button>
+
       <button type="button" class="danger-btn" (click)="confirmDelete()" [disabled]="deleting">
         {{ deleting ? 'Deleting...' : 'Delete' }}
       </button>

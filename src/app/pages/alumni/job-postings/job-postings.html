@@ -1,7 +1,6 @@
 <section class="jobs-page">
   <div class="page-heading">
     <div class="heading-copy">
-      <div class="eyebrow">ALUMNI PORTAL</div>
       <h1>Job Postings</h1>
       <p>Explore active job opportunities posted for alumni.</p>
     </div>
@@ -9,8 +8,14 @@
 
   <div class="summary-grid">
     <div class="summary-card">
-      <div class="summary-icon icon-gold"><i class="pi pi-briefcase"></i></div>
-      <div class="summary-copy"><strong>{{ totalCount }}</strong><span>Active Jobs</span></div>
+      <div class="summary-icon icon-gold">
+        <i class="pi pi-briefcase"></i>
+      </div>
+
+      <div class="summary-copy">
+        <strong>{{ totalCount }}</strong>
+        <span>Active Jobs</span>
+      </div>
     </div>
   </div>
 
@@ -19,31 +24,46 @@
       <div class="filters-row">
         <div class="search-field">
           <i class="pi pi-search"></i>
-          <input type="text" placeholder="Search by title, company, location..." [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" />
+          <input
+            type="text"
+            placeholder="Search by title, company, location..."
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="applyFilters()"
+          />
         </div>
+
         <div class="select-field">
-          <select [(ngModel)]="filterEmploymentType" (change)="applyFilters()">
+          <select [(ngModel)]="filterEmploymentType" (ngModelChange)="applyFilters()">
             <option value="">All Types</option>
-            <option *ngFor="let t of employmentTypes" [value]="t">{{ t }}</option>
+            <option *ngFor="let type of employmentTypes" [value]="type">{{ type }}</option>
           </select>
           <i class="pi pi-angle-down"></i>
         </div>
+
         <div class="select-field">
-          <select [(ngModel)]="filterWorkSetup" (change)="applyFilters()">
+          <select [(ngModel)]="filterWorkSetup" (ngModelChange)="applyFilters()">
             <option value="">All Setups</option>
-            <option *ngFor="let s of workSetups" [value]="s">{{ s }}</option>
+            <option *ngFor="let setup of workSetups" [value]="setup">{{ setup }}</option>
           </select>
           <i class="pi pi-angle-down"></i>
         </div>
+
         <div class="select-field">
-          <select [(ngModel)]="filterCategory" (change)="applyFilters()">
+          <select [(ngModel)]="filterCategory" (ngModelChange)="applyFilters()">
             <option value="">All Categories</option>
-            <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+            <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
           </select>
           <i class="pi pi-angle-down"></i>
         </div>
-        <button *ngIf="hasActiveFilters" type="button" class="clear-btn" (click)="clearFilters()">
-          <i class="pi pi-times"></i> Clear
+
+        <button
+          *ngIf="hasActiveFilters"
+          type="button"
+          class="clear-btn"
+          (click)="clearFilters()"
+        >
+          <i class="pi pi-times"></i>
+          Clear
         </button>
       </div>
     </section>
@@ -53,48 +73,101 @@
         <table>
           <thead>
             <tr>
-              <th>JOB TITLE</th>
-              <th>COMPANY</th>
-              <th>LOCATION</th>
-              <th>CATEGORY</th>
-              <th>TYPE</th>
-              <th>SETUP</th>
-              <th>DEADLINE</th>
-              <th>POSTED</th>
+              <th>Job Title</th>
+              <th>Company</th>
+              <th>Location</th>
+              <th>Category</th>
+              <th>Type</th>
+              <th>Setup</th>
+              <th>Deadline</th>
+              <th>Posted</th>
               <th></th>
             </tr>
           </thead>
+
           <tbody>
             <tr *ngIf="loading">
-              <td colspan="9" class="empty-state"><i class="pi pi-spin pi-spinner"></i> Loading...</td>
+              <td colspan="9" class="empty-state">
+                <i class="pi pi-spin pi-spinner"></i>
+                <span>Loading job postings...</span>
+              </td>
             </tr>
+
             <tr *ngIf="!loading && loadError">
-              <td colspan="9" class="empty-state error-state"><i class="pi pi-exclamation-circle"></i> {{ loadError }}</td>
+              <td colspan="9" class="empty-state error-state">
+                <i class="pi pi-exclamation-circle"></i>
+                <span>{{ loadError }}</span>
+              </td>
             </tr>
-            <tr *ngFor="let job of filteredJobs; trackBy: trackByJob" class="table-row" (click)="openView(job)">
+
+            <tr
+              *ngFor="let job of filteredJobs; trackBy: trackByJob"
+              class="table-row"
+              (click)="openView(job)"
+            >
               <td class="title-cell">
                 <div class="job-title-main">{{ job.jobTitle }}</div>
+
                 <div class="job-tags">
-                  <span class="tag tag-all" *ngIf="job.openToAllAlumni">Open to All</span>
-                  <span class="tag tag-prog" *ngIf="(job.recommendedPrograms?.length || 0) > 0">
-                    {{ job.recommendedPrograms?.length }} Program{{ (job.recommendedPrograms?.length || 0) > 1 ? 's' : '' }}
+                  <span class="tag tag-all" *ngIf="job.openToAllAlumni">
+                    Open to All
+                  </span>
+
+                  <span class="tag tag-prog" *ngIf="job.recommendedPrograms.length > 0">
+                    {{ job.recommendedPrograms.length }}
+                    Program{{ job.recommendedPrograms.length > 1 ? 's' : '' }}
                   </span>
                 </div>
               </td>
-              <td class="company-cell">{{ job.companyName }}</td>
-              <td class="location-cell"><i class="pi pi-map-marker loc-icon"></i> {{ job.location }}</td>
-              <td class="category-cell">{{ job.category }}</td>
-              <td><span class="type-pill">{{ job.employmentType }}</span></td>
-              <td><span class="setup-pill">{{ job.workSetup }}</span></td>
-              <td class="deadline-cell" [class.past-deadline]="isDeadlinePast(job.deadline)">{{ formatDate(job.deadline) }}</td>
-              <td class="posted-cell">{{ formatPostedDate(job.createdAt) }}</td>
-              <td><i class="pi pi-chevron-right caret-icon"></i></td>
+
+              <td class="company-cell">
+                {{ job.companyName }}
+              </td>
+
+              <td class="location-cell">
+                <i class="pi pi-map-marker loc-icon"></i>
+                {{ job.location }}
+              </td>
+
+              <td class="category-cell">
+                {{ job.category }}
+              </td>
+
+              <td>
+                <span class="type-pill">{{ job.employmentType }}</span>
+              </td>
+
+              <td>
+                <span class="setup-pill">{{ job.workSetup }}</span>
+              </td>
+
+              <td
+                class="deadline-cell"
+                [class.past-deadline]="isDeadlinePast(job.deadline)"
+              >
+                {{ formatDate(job.deadline) }}
+              </td>
+
+              <td class="posted-cell">
+                {{ formatPostedDate(job.createdAt) }}
+              </td>
+
+              <td class="caret-cell">
+                <i class="pi pi-chevron-right caret-icon"></i>
+              </td>
             </tr>
+
             <tr *ngIf="!loading && !loadError && filteredJobs.length === 0">
               <td colspan="9" class="empty-state">
                 <i class="pi pi-briefcase"></i>
-                <span *ngIf="hasActiveFilters">No jobs match your filters.</span>
-                <span *ngIf="!hasActiveFilters">No active job postings at the moment.</span>
+
+                <span *ngIf="hasActiveFilters">
+                  No jobs match your filters.
+                </span>
+
+                <span *ngIf="!hasActiveFilters">
+                  No active job postings at the moment.
+                </span>
               </td>
             </tr>
           </tbody>
@@ -108,76 +181,153 @@
   </section>
 </section>
 
-<!-- VIEW MODAL -->
-<div class="modal-backdrop" *ngIf="showViewModal && selectedJob" (click)="closeView()">
-  <div class="modal view-modal" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <div class="modal-header-copy">
-        <div class="view-title-row">
-          <h2>{{ selectedJob.jobTitle }}</h2>
-          <span class="status-pill status-active">Active</span>
-        </div>
-        <p class="view-company"><i class="pi pi-building"></i> {{ selectedJob.companyName }}</p>
-      </div>
-      <button type="button" class="close-btn" (click)="closeView()"><i class="pi pi-times"></i></button>
-    </div>
-    <div class="modal-body view-body">
-      <div class="view-meta-row">
-        <div class="meta-item"><i class="pi pi-map-marker"></i><span>{{ selectedJob.location }}</span></div>
-        <div class="meta-item"><i class="pi pi-tag"></i><span>{{ selectedJob.category }}</span></div>
-        <div class="meta-item"><i class="pi pi-clock"></i><span>{{ selectedJob.employmentType }}</span></div>
-        <div class="meta-item"><i class="pi pi-desktop"></i><span>{{ selectedJob.workSetup }}</span></div>
-        <div class="meta-item" *ngIf="selectedJob.salaryRange"><i class="pi pi-wallet"></i><span>{{ selectedJob.salaryRange }}</span></div>
-        <div class="meta-item" [class.deadline-past]="isDeadlinePast(selectedJob.deadline)">
-          <i class="pi pi-calendar"></i><span>Deadline: {{ formatDate(selectedJob.deadline) }}</span>
-        </div>
-      </div>
-
-      <div class="view-section">
-        <h4 class="view-section-title">Job Description</h4>
-        <p class="view-text">{{ selectedJob.jobDescription }}</p>
-      </div>
-
-      <div class="view-section">
-        <h4 class="view-section-title">Qualifications</h4>
-        <p class="view-text">{{ selectedJob.qualifications }}</p>
-      </div>
-
-      <div class="view-section">
-        <h4 class="view-section-title">How to Apply</h4>
-        <div class="view-apply-block">
-          <div class="apply-method">
-            <span class="apply-label">Method:</span>
-            <span class="type-pill">{{ selectedJob.applicationMethod }}</span>
+<ng-container *ngIf="selectedJob as job">
+  <div
+    class="modal-backdrop"
+    *ngIf="showViewModal"
+    (click)="closeView()"
+  >
+    <div class="modal view-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-header-copy">
+          <div class="view-title-row">
+            <h2>{{ job.jobTitle }}</h2>
+            <span class="status-pill status-active">Active</span>
           </div>
-          <div class="apply-link" *ngIf="selectedJob.applicationLink">
-            <span class="apply-label">Apply at:</span>
-            <a [href]="selectedJob.applicationLink" target="_blank" rel="noopener" class="apply-url">
-              {{ selectedJob.applicationLink }} <i class="pi pi-external-link"></i>
-            </a>
-          </div>
-          <div class="apply-email" *ngIf="selectedJob.contactEmail">
-            <span class="apply-label">Email:</span>
-            <a [href]="'mailto:' + selectedJob.contactEmail" class="apply-url">{{ selectedJob.contactEmail }}</a>
-          </div>
+
+          <p class="view-company">
+            <i class="pi pi-building"></i>
+            {{ job.companyName }}
+          </p>
         </div>
+
+        <button type="button" class="close-btn" (click)="closeView()">
+          <i class="pi pi-times"></i>
+        </button>
       </div>
 
-      <div class="view-section" *ngIf="(selectedJob.recommendedPrograms?.length || 0) > 0">
-        <h4 class="view-section-title">Recommended For</h4>
-        <div class="program-tags">
-          <span class="prog-tag" *ngFor="let prog of selectedJob.recommendedPrograms">{{ prog }}</span>
+      <div class="modal-body view-body">
+        <div class="details-strip">
+          <span class="detail-item">
+            <i class="pi pi-map-marker"></i>
+            {{ job.location }}
+          </span>
+
+          <span class="detail-item">
+            <i class="pi pi-tag"></i>
+            {{ job.category }}
+          </span>
+
+          <span class="detail-item">
+            <i class="pi pi-clock"></i>
+            {{ job.employmentType }}
+          </span>
+
+          <span class="detail-item">
+            <i class="pi pi-desktop"></i>
+            {{ job.workSetup }}
+          </span>
+
+          <span class="detail-item" *ngIf="job.salaryRange">
+            <i class="pi pi-wallet"></i>
+            {{ job.salaryRange }}
+          </span>
+
+          <span
+            class="detail-item"
+            [class.deadline-past]="isDeadlinePast(job.deadline)"
+          >
+            <i class="pi pi-calendar"></i>
+            Deadline: {{ formatDate(job.deadline) }}
+          </span>
         </div>
+
+        <section class="content-section">
+          <h4>Job Description</h4>
+          <p>{{ job.jobDescription }}</p>
+        </section>
+
+        <section class="content-section">
+          <h4>Qualifications</h4>
+          <p>{{ job.qualifications }}</p>
+        </section>
+
+        <section class="content-section">
+          <h4>How to Apply</h4>
+
+          <div class="apply-info">
+            <div class="apply-line">
+              <span class="apply-label">Method</span>
+              <span class="type-pill">{{ job.applicationMethod }}</span>
+            </div>
+
+            <div class="apply-line" *ngIf="job.applicationLink">
+              <span class="apply-label">Apply at</span>
+              <a
+                [href]="job.applicationLink"
+                target="_blank"
+                rel="noopener"
+                class="apply-url"
+              >
+                {{ job.applicationLink }}
+                <i class="pi pi-external-link"></i>
+              </a>
+            </div>
+
+            <div class="apply-line" *ngIf="job.contactEmail">
+              <span class="apply-label">Email</span>
+              <a
+                [href]="'mailto:' + job.contactEmail"
+                class="apply-url"
+              >
+                {{ job.contactEmail }}
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <section
+          class="content-section"
+          *ngIf="getRecommendedPrograms(job).length > 0"
+        >
+          <h4>Recommended For</h4>
+
+          <div class="program-tags">
+            <span
+              class="prog-tag"
+              *ngFor="let program of getRecommendedPrograms(job)"
+            >
+              {{ program }}
+            </span>
+          </div>
+        </section>
       </div>
-    </div>
-    <div class="modal-footer">
-      <button type="button" class="secondary-btn" (click)="closeView()">Close</button>
-      <a *ngIf="selectedJob.applicationLink" [href]="selectedJob.applicationLink" target="_blank" rel="noopener" class="apply-btn">
-        <i class="pi pi-external-link"></i> Apply Now
-      </a>
-      <a *ngIf="selectedJob.contactEmail" [href]="'mailto:' + selectedJob.contactEmail" class="apply-btn">
-        <i class="pi pi-envelope"></i> Send Email
-      </a>
+
+      <div class="modal-footer">
+        <button type="button" class="secondary-btn" (click)="closeView()">
+          Close
+        </button>
+
+        <a
+          *ngIf="job.applicationLink"
+          [href]="job.applicationLink"
+          target="_blank"
+          rel="noopener"
+          class="apply-btn"
+        >
+          <i class="pi pi-external-link"></i>
+          Apply Now
+        </a>
+
+        <a
+          *ngIf="job.contactEmail"
+          [href]="'mailto:' + job.contactEmail"
+          class="apply-btn"
+        >
+          <i class="pi pi-envelope"></i>
+          Send Email
+        </a>
+      </div>
     </div>
   </div>
-</div>
+</ng-container>

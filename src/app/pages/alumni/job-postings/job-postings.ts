@@ -1,9 +1,14 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 
-import { JobPosting, JOB_CATEGORIES, EMPLOYMENT_TYPES, WORK_SETUPS } from '../../../models/job-postings.model';
+import {
+  JobPosting,
+  JOB_CATEGORIES,
+  EMPLOYMENT_TYPES,
+  WORK_SETUPS,
+} from '../../../models/job-postings.model';
 import { JobPostingsService } from '../../../services/job-postings.service';
 
 @Component({
@@ -19,6 +24,7 @@ export class AlumniJobPostings implements OnInit, OnDestroy {
 
   loading = false;
   loadError = '';
+
   searchTerm = '';
   filterEmploymentType = '';
   filterWorkSetup = '';
@@ -38,23 +44,37 @@ export class AlumniJobPostings implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef
   ) {}
 
-  ngOnInit(): void { this.loadJobs(); }
-  ngOnDestroy(): void { this.jobsSub?.unsubscribe(); }
+  ngOnInit(): void {
+    this.loadJobs();
+  }
+
+  ngOnDestroy(): void {
+    this.jobsSub?.unsubscribe();
+  }
 
   loadJobs(): void {
     this.loading = true;
     this.loadError = '';
     this.jobsSub?.unsubscribe();
+
     this.jobsSub = this.jobPostingsService.getJobPostings().subscribe({
       next: (records) => {
-        // Alumni only sees Active jobs
-        this.jobs = (records ?? []).filter((j) => j.status === 'Active');
-        this.applyFilters();
+        this.jobs = (Array.isArray(records) ? records : [])
+          .filter((job) => job.status === 'Active')
+          .map((job) => ({
+            ...job,
+            recommendedPrograms: Array.isArray(job.recommendedPrograms)
+              ? job.recommendedPrograms
+              : [],
+          }))
+          .sort((a, b) => this.toTime(b.createdAt) - this.toTime(a.createdAt));
+
+        this.applyFilters(false);
         this.loading = false;
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error(err);
+        console.error('Failed to load alumni job postings:', err);
         this.loadError = 'Failed to load job postings.';
         this.jobs = [];
         this.filteredJobs = [];
@@ -64,19 +84,43 @@ export class AlumniJobPostings implements OnInit, OnDestroy {
     });
   }
 
-  applyFilters(): void {
+  applyFilters(triggerDetectChanges = true): void {
     const term = this.searchTerm.trim().toLowerCase();
-    this.filteredJobs = this.jobs.filter((j) => {
-      const matchesSearch = !term ||
-        j.jobTitle?.toLowerCase().includes(term) ||
-        j.companyName?.toLowerCase().includes(term) ||
-        j.location?.toLowerCase().includes(term) ||
-        j.category?.toLowerCase().includes(term);
-      const matchesType   = !this.filterEmploymentType || j.employmentType === this.filterEmploymentType;
-      const matchesSetup  = !this.filterWorkSetup      || j.workSetup === this.filterWorkSetup;
-      const matchesCat    = !this.filterCategory       || j.category === this.filterCategory;
-      return matchesSearch && matchesType && matchesSetup && matchesCat;
-    });
+
+    this.filteredJobs = this.jobs
+      .filter((job) => {
+        const jobTitle = (job.jobTitle || '').toLowerCase();
+        const companyName = (job.companyName || '').toLowerCase();
+        const location = (job.location || '').toLowerCase();
+        const category = (job.category || '').toLowerCase();
+        const employmentType = (job.employmentType || '').toLowerCase();
+        const workSetup = (job.workSetup || '').toLowerCase();
+
+        const matchesSearch =
+          !term ||
+          jobTitle.includes(term) ||
+          companyName.includes(term) ||
+          location.includes(term) ||
+          category.includes(term) ||
+          employmentType.includes(term) ||
+          workSetup.includes(term);
+
+        const matchesType =
+          !this.filterEmploymentType || job.employmentType === this.filterEmploymentType;
+
+        const matchesSetup =
+          !this.filterWorkSetup || job.workSetup === this.filterWorkSetup;
+
+        const matchesCategory =
+          !this.filterCategory || job.category === this.filterCategory;
+
+        return matchesSearch && matchesType && matchesSetup && matchesCategory;
+      })
+      .sort((a, b) => this.toTime(b.createdAt) - this.toTime(a.createdAt));
+
+    if (triggerDetectChanges) {
+      this.cdr.detectChanges();
+    }
   }
 
   clearFilters(): void {
@@ -88,33 +132,90 @@ export class AlumniJobPostings implements OnInit, OnDestroy {
   }
 
   get hasActiveFilters(): boolean {
-    return !!(this.searchTerm || this.filterEmploymentType || this.filterWorkSetup || this.filterCategory);
+    return !!(
+      this.searchTerm ||
+      this.filterEmploymentType ||
+      this.filterWorkSetup ||
+      this.filterCategory
+    );
   }
 
-  get totalCount(): number  { return this.jobs.length; }
+  get totalCount(): number {
+    return this.jobs.length;
+  }
 
-  openView(job: JobPosting): void { this.selectedJob = job; this.showViewModal = true; this.cdr.detectChanges(); }
-  closeView(): void { this.showViewModal = false; this.selectedJob = null; this.cdr.detectChanges(); }
+  openView(job: JobPosting): void {
+    this.selectedJob = job;
+    this.showViewModal = true;
+    this.cdr.detectChanges();
+  }
+
+  closeView(): void {
+    this.showViewModal = false;
+    this.selectedJob = null;
+    this.cdr.detectChanges();
+  }
 
   isDeadlinePast(deadline: string): boolean {
     if (!deadline) return false;
-    return new Date(`${deadline}T23:59:59`) < new Date();
+
+    const deadlineDate = new Date(`${deadline}T23:59:59`);
+    const today = new Date();
+
+    return deadlineDate < today;
   }
 
   formatDate(dateStr: string): string {
     if (!dateStr) return '—';
-    const d = new Date(`${dateStr}T00:00:00`);
-    if (isNaN(d.getTime())) return dateStr;
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+    const date = new Date(`${dateStr}T00:00:00`);
+
+    if (isNaN(date.getTime())) return dateStr;
+
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
   }
 
   formatPostedDate(createdAt: any): string {
     if (!createdAt) return '—';
-    const val = typeof createdAt === 'string' ? createdAt : createdAt?.toDate?.() ?? createdAt;
-    const d = new Date(val);
-    if (isNaN(d.getTime())) return '—';
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+    const value =
+      typeof createdAt === 'string'
+        ? createdAt
+        : createdAt?.toDate?.() ?? createdAt;
+
+    const date = new Date(value);
+
+    if (isNaN(date.getTime())) return '—';
+
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
   }
 
-  trackByJob(_: number, job: JobPosting): string { return job.id ?? _.toString(); }
+  getRecommendedPrograms(job: JobPosting | null): string[] {
+    return Array.isArray(job?.recommendedPrograms) ? job!.recommendedPrograms : [];
+  }
+
+  trackByJob(index: number, job: JobPosting): string {
+    return job.id ?? index.toString();
+  }
+
+  private toTime(value: any): number {
+    if (!value) return 0;
+
+    const resolved =
+      typeof value === 'string'
+        ? value
+        : value?.toDate?.() ?? value;
+
+    const time = new Date(resolved).getTime();
+
+    return isNaN(time) ? 0 : time;
+  }
 }

@@ -1,7 +1,6 @@
 <section class="announcements-page">
   <div class="page-header">
     <div>
-      <div class="eyebrow">ALUMNI PORTAL</div>
       <h1>Announcements</h1>
       <p>Stay updated with the latest news and updates.</p>
     </div>
@@ -9,122 +8,250 @@
 
   <div class="summary-grid">
     <div class="summary-card">
-      <div class="summary-icon purple"><i class="pi pi-megaphone"></i></div>
-      <div class="summary-copy"><strong>{{ totalCount }}</strong><span>Total</span></div>
+      <div class="summary-icon purple">
+        <i class="pi pi-megaphone"></i>
+      </div>
+
+      <div class="summary-copy">
+        <strong>{{ totalCount }}</strong>
+        <span>Total</span>
+      </div>
     </div>
+
     <div class="summary-card">
-      <div class="summary-icon blue"><i class="pi pi-thumbtack"></i></div>
-      <div class="summary-copy"><strong>{{ pinnedCount }}</strong><span>Pinned</span></div>
+      <div class="summary-icon blue">
+        <i class="pi pi-thumbtack"></i>
+      </div>
+
+      <div class="summary-copy">
+        <strong>{{ pinnedCount }}</strong>
+        <span>Pinned</span>
+      </div>
     </div>
   </div>
 
   <div class="toolbar">
     <div class="search-field">
       <i class="pi pi-search"></i>
-      <input type="text" placeholder="Search announcements..." [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" />
+      <input
+        type="text"
+        placeholder="Search announcements..."
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="applyFilters()"
+      />
     </div>
+
     <div class="select-field">
-      <select [(ngModel)]="filterCategory" (change)="applyFilters()">
+      <select [(ngModel)]="filterCategory" (ngModelChange)="applyFilters()">
         <option value="">All Categories</option>
-        <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+        <option *ngFor="let category of categories" [value]="category">
+          {{ category }}
+        </option>
       </select>
       <i class="pi pi-angle-down"></i>
     </div>
-    <button *ngIf="hasActiveFilters" type="button" class="clear-btn" (click)="clearFilters()">
-      <i class="pi pi-times"></i> Clear
+
+    <button
+      *ngIf="hasActiveFilters"
+      type="button"
+      class="clear-btn"
+      (click)="clearFilters()"
+    >
+      <i class="pi pi-times"></i>
+      Clear
     </button>
   </div>
 
   <div class="list-shell">
     <div class="empty-state" *ngIf="loading">
-      <i class="pi pi-spin pi-spinner"></i><span>Loading...</span>
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>Loading announcements...</span>
     </div>
 
-    <div class="empty-state" *ngIf="!loading && filteredAnnouncements.length === 0">
+    <div class="empty-state error-state" *ngIf="!loading && loadError">
+      <i class="pi pi-exclamation-circle"></i>
+      <span>{{ loadError }}</span>
+    </div>
+
+    <div
+      class="empty-state"
+      *ngIf="!loading && !loadError && filteredAnnouncements.length === 0"
+    >
       <i class="pi pi-megaphone"></i>
-      <span *ngIf="hasActiveFilters">No announcements match your filters.</span>
-      <span *ngIf="!hasActiveFilters">No announcements yet.</span>
+
+      <span *ngIf="hasActiveFilters">
+        No announcements match your filters.
+      </span>
+
+      <span *ngIf="!hasActiveFilters">
+        No announcements yet.
+      </span>
     </div>
 
-    <ng-container *ngIf="!loading && pinnedAnnouncements.length > 0">
+    <ng-container *ngIf="!loading && !loadError && pinnedAnnouncements.length > 0">
       <div class="section-label">Pinned</div>
+
       <div
         class="announcement-row is-pinned"
-        *ngFor="let item of pinnedAnnouncements"
+        *ngFor="let item of pinnedAnnouncements; trackBy: trackByAnnouncement"
         (click)="openView(item)"
       >
         <div class="row-main">
           <div class="row-badges">
-            <span class="badge badge-pinned"><i class="pi pi-thumbtack"></i> Pinned</span>
-            <span class="badge badge-category">{{ item.category }}</span>
+            <span class="badge badge-pinned">
+              <i class="pi pi-thumbtack"></i>
+              Pinned
+            </span>
+
+            <span class="badge badge-category">
+              {{ item.category }}
+            </span>
           </div>
+
           <div class="row-title">{{ item.title }}</div>
           <div class="row-preview">{{ getPreview(item) }}</div>
+
           <div class="row-meta">
-            <span><i class="pi pi-eye"></i> {{ item.visibility }}</span>
+            <span>
+              <i class="pi pi-eye"></i>
+              {{ item.visibility }}
+            </span>
+
+            <ng-container *ngIf="item.program">
+              <span class="dot">·</span>
+              <span>{{ item.program }}</span>
+            </ng-container>
+
             <span class="dot">·</span>
-            <span><i class="pi pi-calendar"></i> {{ formatDate(item.createdAt) }}</span>
+
+            <span>
+              <i class="pi pi-calendar"></i>
+              {{ formatDate(item.createdAt) }}
+            </span>
           </div>
         </div>
-        <div class="row-caret"><i class="pi pi-chevron-right"></i></div>
+
+        <div class="row-caret">
+          <i class="pi pi-chevron-right"></i>
+        </div>
       </div>
     </ng-container>
 
-    <ng-container *ngIf="!loading && regularAnnouncements.length > 0">
-      <div class="section-label" *ngIf="pinnedAnnouncements.length > 0">All Announcements</div>
+    <ng-container *ngIf="!loading && !loadError && regularAnnouncements.length > 0">
+      <div class="section-label" *ngIf="pinnedAnnouncements.length > 0">
+        All Announcements
+      </div>
+
       <div
         class="announcement-row"
-        *ngFor="let item of regularAnnouncements"
+        *ngFor="let item of regularAnnouncements; trackBy: trackByAnnouncement"
         (click)="openView(item)"
       >
         <div class="row-main">
           <div class="row-badges">
-            <span class="badge badge-category">{{ item.category }}</span>
+            <span class="badge badge-category">
+              {{ item.category }}
+            </span>
           </div>
+
           <div class="row-title">{{ item.title }}</div>
           <div class="row-preview">{{ getPreview(item) }}</div>
+
           <div class="row-meta">
-            <span><i class="pi pi-eye"></i> {{ item.visibility }}</span>
+            <span>
+              <i class="pi pi-eye"></i>
+              {{ item.visibility }}
+            </span>
+
+            <ng-container *ngIf="item.program">
+              <span class="dot">·</span>
+              <span>{{ item.program }}</span>
+            </ng-container>
+
             <span class="dot">·</span>
-            <span><i class="pi pi-calendar"></i> {{ formatDate(item.createdAt) }}</span>
+
+            <span>
+              <i class="pi pi-calendar"></i>
+              {{ formatDate(item.createdAt) }}
+            </span>
           </div>
         </div>
-        <div class="row-caret"><i class="pi pi-chevron-right"></i></div>
+
+        <div class="row-caret">
+          <i class="pi pi-chevron-right"></i>
+        </div>
       </div>
     </ng-container>
   </div>
 
-  <p class="list-footnote" *ngIf="!loading">
-    Showing {{ filteredAnnouncements.length }} of {{ announcements.length }} announcement{{ announcements.length === 1 ? '' : 's' }}
+  <p class="list-footnote" *ngIf="!loading && !loadError">
+    Showing {{ filteredAnnouncements.length }} of {{ announcements.length }}
+    announcement{{ announcements.length === 1 ? '' : 's' }}
   </p>
 </section>
 
-<div class="modal-backdrop" *ngIf="showViewModal && selectedAnnouncement" (click)="closeView()">
-  <div class="modal" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <div class="modal-header-copy">
-        <div class="view-badges">
-          <span class="badge badge-pinned" *ngIf="selectedAnnouncement.isPinned"><i class="pi pi-thumbtack"></i> Pinned</span>
-          <span class="badge badge-category">{{ selectedAnnouncement.category }}</span>
+<ng-container *ngIf="selectedAnnouncement as item">
+  <div
+    class="modal-backdrop"
+    *ngIf="showViewModal"
+    (click)="closeView()"
+  >
+    <div class="modal view-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-header-copy">
+          <div class="view-badges">
+            <span class="badge badge-pinned" *ngIf="item.isPinned">
+              <i class="pi pi-thumbtack"></i>
+              Pinned
+            </span>
+
+            <span class="badge badge-category">
+              {{ item.category }}
+            </span>
+          </div>
+
+          <h2>{{ item.title }}</h2>
         </div>
-        <h2>{{ selectedAnnouncement.title }}</h2>
+
+        <button type="button" class="close-btn" (click)="closeView()">
+          <i class="pi pi-times"></i>
+        </button>
       </div>
-      <button type="button" class="close-btn" (click)="closeView()"><i class="pi pi-times"></i></button>
-    </div>
-    <div class="modal-body">
-      <div class="view-meta">
-        <div class="view-meta-item"><span class="meta-label">Visibility</span><span>{{ selectedAnnouncement.visibility }}</span></div>
-        <div class="view-meta-item" *ngIf="selectedAnnouncement.program"><span class="meta-label">Program</span><span>{{ selectedAnnouncement.program }}</span></div>
-        <div class="view-meta-item"><span class="meta-label">Posted</span><span>{{ formatDate(selectedAnnouncement.createdAt) }}</span></div>
-        <div class="view-meta-item" *ngIf="selectedAnnouncement.updatedAt"><span class="meta-label">Updated</span><span>{{ formatDate(selectedAnnouncement.updatedAt) }}</span></div>
+
+      <div class="modal-body">
+        <div class="details-strip">
+          <span class="detail-item">
+            <i class="pi pi-eye"></i>
+            {{ item.visibility }}
+          </span>
+
+          <span class="detail-item" *ngIf="item.program">
+            <i class="pi pi-graduation-cap"></i>
+            {{ item.program }}
+          </span>
+
+          <span class="detail-item">
+            <i class="pi pi-calendar"></i>
+            Posted: {{ formatDate(item.createdAt) }}
+          </span>
+
+          <span class="detail-item" *ngIf="hasUpdatedDate(item)">
+            <i class="pi pi-refresh"></i>
+            Updated: {{ formatDate(item.updatedAt) }}
+          </span>
+        </div>
+
+        <section class="content-section">
+          <h4>Content</h4>
+          <p>{{ item.content }}</p>
+        </section>
       </div>
-      <div class="view-content">
-        <h4>Content</h4>
-        <p>{{ selectedAnnouncement.content }}</p>
+
+      <div class="modal-footer">
+        <button type="button" class="secondary-btn" (click)="closeView()">
+          Close
+        </button>
       </div>
-    </div>
-    <div class="modal-footer">
-      <button type="button" class="secondary-btn" (click)="closeView()">Close</button>
     </div>
   </div>
-</div>
+</ng-container>
