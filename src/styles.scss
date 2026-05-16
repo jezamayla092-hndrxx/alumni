@@ -348,81 +348,52 @@ i[class*=' ti-'] {
 
 @media print {
   @page {
-    size: A4 portrait;
+    size: 85.6mm 53.98mm landscape;
     margin: 0;
   }
 
-  app-main-layout .sidebar,
-  app-main-layout .sidebar-backdrop,
-  app-main-layout .topbar {
-    display: none !important;
+  /* Hide everything on the page */
+  * {
+    visibility: hidden !important;
   }
 
-  app-main-layout .layout-shell,
-  app-main-layout .main-panel,
-  app-main-layout .content-area {
-    display: block !important;
-    width: 100% !important;
-    height: auto !important;
-    min-height: unset !important;
-    overflow: visible !important;
-    background: #ffffff !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
+  /* Show only the ID card and everything inside it */
+  #alumni-digital-id,
+  #alumni-digital-id * {
+    visibility: visible !important;
   }
 
-  app-verification-status .page-heading,
-  app-verification-status .status-card,
-  app-verification-status .no-print {
-    display: none !important;
-  }
-
-  app-verification-status .digital-id-section {
-    border: none !important;
-    box-shadow: none !important;
-    background: transparent !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  app-verification-status .digital-id-section-header {
-    display: none !important;
-  }
-
-  app-verification-status .digital-id-card-wrap {
-    padding: 0 !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: flex-start !important;
-  }
-
-  app-verification-status .alumni-digital-id {
+  /* Pin the card to fill the page */
+  #alumni-digital-id {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
     width: 85.6mm !important;
-    max-width: 85.6mm !important;
+    height: 53.98mm !important;
+    margin: 0 !important;
     border-radius: 4mm !important;
     box-shadow: none !important;
     border: 0.5pt solid #cbd5e1 !important;
-    margin: 12mm auto 0 !important;
+    overflow: hidden !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  app-verification-status .did-header {
+  /* Force background colors through */
+  #alumni-digital-id .did-header {
     background: #1e3a8a !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  app-verification-status .did-id-number {
+  #alumni-digital-id .did-id-number {
     background: #eff6ff !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  app-verification-status .did-footer {
-    background: #f8fafc !important;
+  #alumni-digital-id .did-badge {
+    background: #ffffff !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }

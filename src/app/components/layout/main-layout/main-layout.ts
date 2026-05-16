@@ -17,6 +17,7 @@ import {
 } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 import { doc, onSnapshot, Unsubscribe } from 'firebase/firestore';
+import Swal from 'sweetalert2';
 
 import { AuthService } from '../../../services/auth.service';
 import { User } from '../../../models/user.model';
@@ -60,6 +61,7 @@ export class MainLayout implements OnInit, OnDestroy {
   activeAccountSettingsSection: AccountSettingsSection = 'account_info';
 
   private destroyed = false;
+  private handlingDisabledAccount = false;
   private routerEventsSub?: Subscription;
   private userDocUnsubscribe?: Unsubscribe;
   private profileModalCloseTimer?: ReturnType<typeof setTimeout>;
@@ -74,6 +76,12 @@ export class MainLayout implements OnInit, OnDestroy {
       label: 'Manage Accounts',
       icon: 'ti ti-users-group',
       route: '/admin/manage-accounts',
+      small: true,
+    },
+    {
+      label: 'Concerns and Support',
+      icon: 'ti ti-lifebuoy',
+      route: '/admin/concerns-support',
       small: true,
     },
     {
@@ -392,6 +400,8 @@ export class MainLayout implements OnInit, OnDestroy {
   private setPageTitle(url: string): void {
     if (url.includes('manage-accounts')) {
       this.pageTitle = 'Manage Accounts';
+    } else if (url.includes('concerns-support')) {
+      this.pageTitle = 'Concerns and Support';
     } else if (url.includes('reports')) {
       this.pageTitle = 'Reports';
     } else if (url.includes('dashboard')) {
@@ -475,6 +485,13 @@ export class MainLayout implements OnInit, OnDestroy {
           : fallbackUser;
 
         this.currentUser = latestUser;
+
+        if (this.isAccountDisabled(latestUser)) {
+          this.cdr.detectChanges();
+          void this.handleRealtimeDisabledAccount(latestUser);
+          return;
+        }
+
         this.cdr.detectChanges();
       },
       (error) => {
@@ -485,6 +502,132 @@ export class MainLayout implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       }
     );
+  }
+
+  private isAccountDisabled(user: User | any): boolean {
+    const accountStatus = String(user?.accountStatus || '').toLowerCase().trim();
+
+    return user?.isActive === false || accountStatus === 'disabled';
+  }
+
+  private async handleRealtimeDisabledAccount(user: User | any): Promise<void> {
+    if (this.handlingDisabledAccount) return;
+
+    this.handlingDisabledAccount = true;
+    this.userMenuOpen = false;
+    this.closeProfileModal();
+
+    const disabledReason = String(user?.disabledReason || '').trim();
+    const disabledByName = String(user?.disabledByName || '').trim();
+    const disabledAt = user?.disabledAt || null;
+
+    await Swal.fire({
+      icon: 'error',
+      title: 'Account Disabled',
+      html: `
+        <p style="margin:0 0 0.75rem;color:#374151;font-size:0.95rem;line-height:1.5;">
+          Your account has been disabled by the administrator.
+        </p>
+
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:0.85rem 1rem;text-align:left;margin-bottom:0.75rem;">
+          <p style="margin:0 0 0.35rem;font-size:0.75rem;font-weight:800;color:#dc2626;text-transform:uppercase;letter-spacing:0.05em;">
+            Reason / Remarks
+          </p>
+
+          <p style="margin:0;font-size:0.9rem;color:#7f1d1d;font-weight:600;line-height:1.5;">
+            ${
+              disabledReason
+                ? this.escapeHtml(disabledReason)
+                : 'No reason was provided. Please contact support for assistance.'
+            }
+          </p>
+        </div>
+
+        ${
+          disabledByName || disabledAt
+            ? `
+              <p style="margin:0 0 0.65rem;color:#6b7280;font-size:0.82rem;line-height:1.4;">
+                ${
+                  disabledByName
+                    ? `Disabled by: <strong>${this.escapeHtml(disabledByName)}</strong><br>`
+                    : ''
+                }
+                ${
+                  disabledAt
+                    ? `Date disabled: <strong>${this.escapeHtml(this.formatDate(disabledAt))}</strong>`
+                    : ''
+                }
+              </p>
+            `
+            : ''
+        }
+
+        <p style="margin:0;color:#6b7280;font-size:0.85rem;line-height:1.45;">
+          You will be redirected to Contact Support.
+        </p>
+      `,
+      confirmButtonText: 'Contact Support',
+      confirmButtonColor: '#7c5cff',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+    });
+
+    this.userDocUnsubscribe?.();
+    this.userDocUnsubscribe = undefined;
+
+    await this.router.navigate(['/contact-support'], {
+      queryParams: {
+        uid: user?.id || '',
+        name: this.getSupportAccountName(user),
+        email: user?.email || '',
+        reason: disabledReason,
+        issue: 'Disabled Account',
+        concern: 'Disabled Account',
+      },
+    });
+
+    await this.authService.logout();
+  }
+
+  private getSupportAccountName(user: User | any): string {
+    return (
+      user?.fullName ||
+      [
+        user?.firstName,
+        user?.middleName ? `${user.middleName.charAt(0).toUpperCase()}.` : '',
+        user?.lastName,
+        user?.suffix,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .trim() ||
+      user?.email ||
+      'User'
+    );
+  }
+
+  private formatDate(value: any): string {
+    if (!value) return '—';
+
+    const rawValue = typeof value === 'string' ? value : value?.toDate?.() ?? value;
+    const date = new Date(rawValue);
+
+    if (Number.isNaN(date.getTime())) return '—';
+
+    return date.toLocaleDateString('en-PH', {
+      month: 'short',
+      day: '2-digit',
+      year: 'numeric',
+    });
+  }
+
+  private escapeHtml(value: string): string {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
 
   private inferRoleFromUrl(): 'admin' | 'officer' | 'alumni' {

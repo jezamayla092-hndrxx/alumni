@@ -1,46 +1,43 @@
 <section class="support-page">
+  <div class="support-page-logo">
+    <span class="logo-name">ATMS</span>
+  </div>
+
+  <div class="support-bubbles">
+    <div class="support-bubble"></div>
+    <div class="support-bubble"></div>
+    <div class="support-bubble"></div>
+    <div class="support-bubble"></div>
+    <div class="support-bubble"></div>
+    <div class="support-bubble"></div>
+  </div>
+
   <div class="support-shell">
-
-    <div class="support-brand">
-      <div class="brand-mark">
-        <i class="pi pi-comments"></i>
-      </div>
-
-      <div>
-        <span>ALUMNI TRACKING AND MANAGEMENT SYSTEM</span>
-        <h1>Contact Support</h1>
-        <p>
-          Submit a concern if you cannot access your account, your account was disabled,
-          or you need assistance with your alumni record.
-        </p>
-      </div>
-    </div>
-
     <div class="support-card">
-
       <div class="card-header">
         <div>
-          <h2>Support Request Form</h2>
-          <p>Fill out the form below so the administrator or alumni office can review your concern.</p>
+          <span class="eyebrow">Alumni Tracking and Management System</span>
+          <h1>Contact Support</h1>
+          <p>
+            Submit a concern if you cannot access your account, your account was disabled,
+            or you need help with your alumni record.
+          </p>
         </div>
 
         <a routerLink="/login" class="login-link">
           <i class="pi pi-arrow-left"></i>
-          Back to Login
+          <span>Back to Login</span>
         </a>
       </div>
 
       <div class="loading-state" *ngIf="loading">
         <i class="pi pi-spin pi-spinner"></i>
-        Loading support form...
+        <p>Loading support form...</p>
       </div>
 
       <form *ngIf="!loading" (ngSubmit)="submitTicket()" #supportForm="ngForm">
-
         <div class="disabled-reason-card" *ngIf="disabledReason">
-          <div class="reason-icon">
-            <i class="pi pi-ban"></i>
-          </div>
+          <i class="pi pi-ban"></i>
 
           <div>
             <span>Recorded Disable Reason</span>
@@ -73,7 +70,7 @@
             />
           </div>
 
-          <div class="form-field full">
+          <div class="form-field">
             <label for="alumniId">Alumni ID</label>
             <input
               id="alumniId"
@@ -84,7 +81,7 @@
             />
           </div>
 
-          <div class="form-field full">
+          <div class="form-field">
             <label for="concernType">Concern Type <span>*</span></label>
             <div class="select-wrap">
               <select
@@ -115,57 +112,46 @@
           </div>
         </div>
 
-        <div class="form-note">
+        <div class="support-note">
           <i class="pi pi-info-circle"></i>
           <span>
-            Your request will be saved as a support ticket for admin/officer review.
+            Your concern will be submitted to the administrator for review.
           </span>
         </div>
 
-        <div class="support-contact-card">
-          <div class="support-contact-icon">
-            <i class="pi pi-building"></i>
+        <div class="office-info">
+          <div>
+            <i class="pi pi-envelope"></i>
+            <span>alumni.support@ustp.edu.ph</span>
           </div>
 
-          <div class="support-contact-content">
-            <span>Need urgent assistance?</span>
-            <p>
-              For urgent account concerns, please contact the alumni office or system administrator
-              during working hours.
-            </p>
+          <div>
+            <i class="pi pi-clock"></i>
+            <span>Monday to Friday, 8:00 AM - 5:00 PM</span>
+          </div>
 
-            <div class="support-contact-grid">
-              <div>
-                <i class="pi pi-envelope"></i>
-                <strong>alumni.support@ustp.edu.ph</strong>
-              </div>
-
-              <div>
-                <i class="pi pi-clock"></i>
-                <strong>Monday to Friday, 8:00 AM - 5:00 PM</strong>
-              </div>
-
-              <div>
-                <i class="pi pi-map-marker"></i>
-                <strong>USTP Villanueva Campus</strong>
-              </div>
-            </div>
+          <div>
+            <i class="pi pi-map-marker"></i>
+            <span>USTP Villanueva Campus</span>
           </div>
         </div>
 
         <div class="form-actions">
-          <button type="button" class="secondary-btn" (click)="clearForm()" [disabled]="submitting">
+          <button
+            type="button"
+            class="secondary-btn"
+            (click)="clearForm()"
+            [disabled]="submitting"
+          >
             Clear
           </button>
 
           <button type="submit" class="primary-btn" [disabled]="submitting">
             <i class="pi" [ngClass]="submitting ? 'pi-spin pi-spinner' : 'pi-send'"></i>
-            {{ submitting ? 'Submitting...' : 'Submit Ticket' }}
+            <span>{{ submitting ? 'Submitting...' : 'Submit Concern' }}</span>
           </button>
         </div>
-
       </form>
     </div>
-
   </div>
 </section>

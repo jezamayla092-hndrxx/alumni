@@ -4,14 +4,10 @@
   font-family: 'Inter', 'Segoe UI', Roboto, Arial, sans-serif;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 input[type='password']::-ms-reveal,
-input[type='password']::-ms-clear {
-  display: none;
-}
+input[type='password']::-ms-clear { display: none; }
 
 .signup-page {
   min-height: 100vh;
@@ -77,8 +73,8 @@ input[type='password']::-ms-clear {
     &::placeholder { color: transparent; }
 
     &:focus {
-      border-color: #7c3aed;
-      box-shadow: 0 0 0 4px rgba(109, 40, 217, 0.12);
+      border-color: #3730a3;
+      box-shadow: 0 0 0 4px rgba(55,48,163,0.1);
     }
 
     &:focus + label,
@@ -87,7 +83,7 @@ input[type='password']::-ms-clear {
       transform: translateY(0);
       font-size: 0.66rem;
       font-weight: 700;
-      color: #6d28d9;
+      color: #3730a3;
     }
 
     &:disabled { cursor: not-allowed; opacity: 0.65; }
@@ -119,7 +115,6 @@ input[type='password']::-ms-clear {
   font-size: 0.85rem;
 }
 
-/* ─── Select Fields ──────────────────────────────────────────────── */
 .select-field {
   position: relative;
   margin-bottom: 1.05rem;
@@ -131,7 +126,7 @@ input[type='password']::-ms-clear {
     right: 14px;
     top: 50%;
     transform: translateY(-50%);
-    color: #6d28d9;
+    color: #3730a3;
     font-size: 22px;
     pointer-events: none;
   }
@@ -151,14 +146,13 @@ input[type='password']::-ms-clear {
     appearance: none;
     transition: border-color 0.22s ease, box-shadow 0.22s ease;
 
-    &:focus { border-color: #7c3aed; box-shadow: 0 0 0 4px rgba(109, 40, 217, 0.12); }
+    &:focus { border-color: #3730a3; box-shadow: 0 0 0 4px rgba(55,48,163,0.1); }
     &:disabled { cursor: not-allowed; opacity: 0.65; }
   }
 }
 
 .full-width-select { width: 100%; }
 
-/* ─── Phone Field ────────────────────────────────────────────────── */
 .phone-field {
   position: relative;
   margin-bottom: 1.05rem;
@@ -174,7 +168,7 @@ input[type='password']::-ms-clear {
   overflow: hidden;
   transition: border-color 0.22s ease, box-shadow 0.22s ease;
 
-  &:focus-within { border-color: #7c3aed; box-shadow: 0 0 0 4px rgba(109, 40, 217, 0.12); }
+  &:focus-within { border-color: #3730a3; box-shadow: 0 0 0 4px rgba(55,48,163,0.1); }
 }
 
 .country-select {
@@ -215,18 +209,17 @@ input[type='password']::-ms-clear {
   }
 }
 
-/* ─── ID Photo Section ───────────────────────────────────────────── */
 .id-photo-section {
   margin-bottom: 1.2rem;
-  border: 1px solid #ddd6fe;
+  border: 1px solid #c7c2ee;
   border-radius: 14px;
-  background: #faf7ff;
+  background: #f7f7fd;
   overflow: hidden;
 }
 
 .id-photo-header {
   padding: 0.85rem 1rem 0.7rem;
-  border-bottom: 1px solid #ede9fe;
+  border-bottom: 1px solid #e0dff8;
 
   strong {
     display: block;
@@ -236,12 +229,7 @@ input[type='password']::-ms-clear {
     margin-bottom: 0.18rem;
   }
 
-  p {
-    margin: 0;
-    color: #64748b;
-    font-size: 0.78rem;
-    line-height: 1.45;
-  }
+  p { margin: 0; color: #64748b; font-size: 0.78rem; line-height: 1.45; }
 }
 
 .id-photo-drop {
@@ -250,7 +238,7 @@ input[type='password']::-ms-clear {
   padding: 1.2rem 1rem;
   transition: background 0.18s ease;
 
-  &:hover:not(.disabled) { background: #f3f0ff; }
+  &:hover:not(.disabled) { background: #eeeeff; }
   &.disabled { cursor: not-allowed; opacity: 0.65; }
 
   input[type='file'] {
@@ -274,8 +262,8 @@ input[type='password']::-ms-clear {
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  background: #ede9fe;
-  color: #6d28d9;
+  background: #e0dff8;
+  color: #3730a3;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -286,7 +274,7 @@ input[type='password']::-ms-clear {
 .id-photo-drop-label {
   font-size: 0.88rem;
   font-weight: 700;
-  color: #6d28d9;
+  color: #3730a3;
 }
 
 .id-photo-drop-hint {
@@ -308,15 +296,10 @@ input[type='password']::-ms-clear {
   height: 130px;
   border-radius: 12px;
   overflow: hidden;
-  border: 2px solid #ddd6fe;
-  background: #f3f0ff;
+  border: 2px solid #c7c2ee;
+  background: #eeeeff;
 
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
+  img { width: 100%; height: 100%; object-fit: cover; display: block; }
 }
 
 .id-photo-preview-actions {
@@ -333,23 +316,17 @@ input[type='password']::-ms-clear {
   gap: 0.3rem;
   padding: 0.4rem 0.8rem;
   border-radius: 9px;
-  background: #ede9fe;
-  color: #6d28d9;
+  background: #e0dff8;
+  color: #3730a3;
   font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
   transition: background 0.18s ease;
 
-  input[type='file'] {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    cursor: pointer;
-  }
-
+  input[type='file'] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
   .material-symbols-outlined { font-size: 1rem; }
 
-  &:hover:not(.disabled) { background: #ddd6fe; }
+  &:hover:not(.disabled) { background: #c7c2ee; }
   &.disabled { cursor: not-allowed; opacity: 0.65; pointer-events: none; }
 }
 
@@ -368,7 +345,6 @@ input[type='password']::-ms-clear {
   transition: background 0.18s ease;
 
   .material-symbols-outlined { font-size: 1rem; }
-
   &:hover:not(:disabled) { background: #fef2f2; }
   &:disabled { cursor: not-allowed; opacity: 0.65; }
 }
@@ -387,12 +363,11 @@ input[type='password']::-ms-clear {
   .material-symbols-outlined { font-size: 0.9rem; flex-shrink: 0; margin-top: 1px; }
 }
 
-/* ─── Verification Documents ─────────────────────────────────────── */
 .upload-summary {
   margin-bottom: 1.2rem;
-  border: 1px dashed #c4b5fd;
+  border: 1px dashed #b0abdf;
   border-radius: 12px;
-  background: #faf7ff;
+  background: #f7f7fd;
   padding: 0.95rem;
   display: flex;
   align-items: center;
@@ -408,8 +383,8 @@ input[type='password']::-ms-clear {
   overflow: hidden;
   border: none;
   border-radius: 10px;
-  background: #ede9fe;
-  color: #6d28d9;
+  background: #e0dff8;
+  color: #3730a3;
   font-size: 0.84rem;
   font-weight: 800;
   padding: 0.72rem 0.95rem;
@@ -422,7 +397,7 @@ input[type='password']::-ms-clear {
   input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
   .material-symbols-outlined { font-size: 1.15rem; }
 
-  &:hover { background: #ddd6fe; }
+  &:hover { background: #c7c2ee; }
   &.disabled { cursor: not-allowed; opacity: 0.65; pointer-events: none; }
 }
 
@@ -443,7 +418,7 @@ input[type='password']::-ms-clear {
   align-items: center;
   gap: 0.7rem;
   padding: 0.45rem 0.55rem;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 2px 8px rgba(15,23,42,0.04);
 
   img { width: 44px; height: 44px; border-radius: 9px; object-fit: cover; background: #f8fafc; }
   div { min-width: 0; }
@@ -473,12 +448,11 @@ input[type='password']::-ms-clear {
     transition: background 0.18s ease, color 0.18s ease;
 
     .material-symbols-outlined { font-size: 1rem; }
-    &:hover:not(:disabled) { background: #ede9fe; color: #6d28d9; }
+    &:hover:not(:disabled) { background: #e0dff8; color: #3730a3; }
     &:disabled { cursor: not-allowed; opacity: 0.55; }
   }
 }
 
-/* ─── Password ───────────────────────────────────────────────────── */
 .password-field input { padding-right: 48px; }
 
 .toggle-password {
@@ -490,7 +464,7 @@ input[type='password']::-ms-clear {
   height: 24px;
   border: none;
   background: transparent;
-  color: #6d28d9;
+  color: #3730a3;
   cursor: pointer;
   z-index: 3;
   padding: 0;
@@ -503,7 +477,6 @@ input[type='password']::-ms-clear {
   &:disabled { cursor: not-allowed; opacity: 0.65; }
 }
 
-/* ─── Consent ────────────────────────────────────────────────────── */
 .consent-field {
   display: flex;
   align-items: flex-start;
@@ -515,7 +488,7 @@ input[type='password']::-ms-clear {
     height: 17px;
     flex-shrink: 0;
     margin-top: 3px;
-    accent-color: #6d28d9;
+    accent-color: #3730a3;
     cursor: pointer;
     &:disabled { cursor: not-allowed; opacity: 0.65; }
   }
@@ -523,19 +496,17 @@ input[type='password']::-ms-clear {
   label { font-size: 0.875rem; color: #374151; line-height: 1.55; cursor: pointer; user-select: none; }
 }
 
-/* ─── Signup Button ──────────────────────────────────────────────── */
 .signup-btn {
   width: 100%;
   margin-top: 0.55rem;
   height: 46px;
   border: none;
   border-radius: 8px;
-  background: linear-gradient(180deg, #7c3aed 0%, #6d28d9 100%);
+  background: #3730a3;
   color: #ffffff;
   font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 14px 28px rgba(109, 40, 217, 0.24);
 
   &:disabled { cursor: not-allowed; opacity: 0.65; }
 }
@@ -546,13 +517,13 @@ input[type='password']::-ms-clear {
   color: #64748b;
   font-size: 0.94rem;
 
-  a { color: #6d28d9; text-decoration: none; font-weight: 800; &:hover { text-decoration: underline; } }
+  a { color: #3730a3; text-decoration: none; font-weight: 800; &:hover { text-decoration: underline; } }
 }
 
 .back-login-btn {
   border: none;
   background: transparent;
-  color: #6d28d9;
+  color: #3730a3;
   font-weight: 800;
   cursor: pointer;
   font-family: inherit;
@@ -563,7 +534,6 @@ input[type='password']::-ms-clear {
   &:disabled { cursor: not-allowed; opacity: 0.65; }
 }
 
-/* ─── Mobile ─────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
   .signup-page { padding: 1rem; }
   .signup-card { padding: 1.4rem; }

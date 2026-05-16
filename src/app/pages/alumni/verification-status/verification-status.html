@@ -74,27 +74,24 @@
       <button
         type="button"
         class="print-btn"
-        (click)="printDigitalId()"
-        [disabled]="uploading"
+        (click)="exportDigitalId()"
+        [disabled]="exporting"
       >
-        <i class="ti ti-printer"></i>
-        <span>Print ID</span>
+        <i class="ti ti-download"></i>
+        <span>{{ exporting ? 'Exporting...' : 'Download ID' }}</span>
       </button>
     </div>
 
     <div class="digital-id-card-wrap">
 
-      <!-- The printable card — no UI controls inside -->
+      <!-- The printable card -->
       <div class="alumni-digital-id" id="alumni-digital-id">
 
         <!-- Card header -->
         <div class="did-header">
-          <div class="did-header-icon">
-            <i class="ti ti-school"></i>
-          </div>
           <div class="did-header-text">
-            <span class="did-school">USTP</span>
-            <span class="did-system">Alumni Tracking & Management System</span>
+            <span class="did-school">University of Science and Technology of Southern Philippines</span>
+            <span class="did-system">Villanueva Campus</span>
           </div>
           <div class="did-badge">ALUMNI</div>
         </div>
@@ -102,7 +99,7 @@
         <!-- Card body -->
         <div class="did-body">
 
-          <!-- Photo — display only, no controls -->
+          <!-- Photo -->
           <div class="did-photo-col">
             <div class="did-photo">
               <img *ngIf="photoUrl" [src]="photoUrl" alt="ID photo" />
@@ -134,39 +131,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Card footer -->
-        <div class="did-footer">
-          <i class="ti ti-map-pin"></i>
-          <span>{{ campus }}</span>
-        </div>
-      </div>
-
-      <!-- Photo controls live OUTSIDE the card -->
-      <div class="did-photo-actions no-print">
-
-        <!-- Upload progress bar -->
-        <div class="did-progress" *ngIf="uploading">
-          <div class="did-progress-track">
-            <div class="did-progress-bar" [style.width.%]="uploadProgress"></div>
-          </div>
-          <span class="did-progress-label">Uploading... {{ uploadProgress }}%</span>
-        </div>
-
-        <button
-          type="button"
-          class="did-upload-btn"
-          (click)="triggerPhotoUpload()"
-          [disabled]="uploading"
-        >
-          <i class="ti ti-camera"></i>
-          <span>{{ uploading ? 'Uploading...' : photoUrl ? 'Change ID Photo' : 'Upload ID Photo' }}</span>
-        </button>
-
-        <p class="photo-hint" *ngIf="!photoUrl">
-          <i class="ti ti-info-circle"></i>
-          Upload a clear, professional photo. Inappropriate images will be automatically rejected.
-        </p>
       </div>
 
     </div>

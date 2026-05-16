@@ -15,6 +15,7 @@ import { adminGuard } from './guards/admin.guard';
 import { AdminDashboard } from './pages/admin/dashboard/dashboard';
 import { ManageAccounts } from './pages/admin/manage-accounts/manage-accounts';
 import { Reports } from './pages/admin/reports/reports';
+import { ConcernsSupport } from './pages/admin/concerns-support/concerns-support';
 
 // Officer pages
 import { Dashboard as OfficerDashboard } from './pages/officer/dashboard/dashboard';
@@ -39,7 +40,6 @@ export const routes: Routes = [
   { path: 'login', component: Login },
   { path: 'signup', component: Signup },
 
-  // Public page for disabled users or users who need help before logging in
   { path: 'contact-support', component: ContactSupport },
 
   {
@@ -50,6 +50,7 @@ export const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: AdminDashboard },
       { path: 'manage-accounts', component: ManageAccounts },
+      { path: 'concerns-support', component: ConcernsSupport },
       { path: 'reports', component: Reports },
       { path: 'my-profile', component: MyProfile },
     ],

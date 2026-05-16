@@ -1,0 +1,240 @@
+<section class="concerns-page">
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">Admin Module</span>
+      <h1>Concerns and Support</h1>
+      <p>Manage submitted account concerns and support requests.</p>
+    </div>
+
+    <button
+      type="button"
+      class="refresh-btn"
+      (click)="loadTickets()"
+      [disabled]="loading"
+    >
+      <i class="ti ti-refresh"></i>
+      <span>{{ loading ? 'Loading...' : 'Refresh' }}</span>
+    </button>
+  </div>
+
+  <section class="concerns-card">
+    <div class="card-header">
+      <div>
+        <h2>Submitted Concerns</h2>
+        <p>{{ filteredTickets.length }} of {{ totalTickets }} concern(s)</p>
+      </div>
+    </div>
+
+    <div class="filters-row">
+      <div class="search-field">
+        <i class="ti ti-search"></i>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          placeholder="Search by name, email, ID, concern, or message"
+        />
+      </div>
+
+      <select [(ngModel)]="statusFilter">
+        <option value="all">All Status</option>
+        <option *ngFor="let status of statusOptions" [value]="status.value">
+          {{ status.label }}
+        </option>
+      </select>
+
+      <select [(ngModel)]="concernTypeFilter">
+        <option value="all">All Concern Types</option>
+        <option *ngFor="let type of concernTypes" [value]="type">
+          {{ type }}
+        </option>
+      </select>
+
+      <button type="button" class="clear-btn" (click)="clearFilters()">
+        Clear
+      </button>
+    </div>
+
+    <div class="table-wrap">
+      <table class="concerns-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Concern</th>
+            <th>Message</th>
+            <th>Date Submitted</th>
+            <th>Status</th>
+            <th class="action-col">Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngIf="loading">
+            <td colspan="6" class="empty-row">
+              Loading concerns...
+            </td>
+          </tr>
+
+          <tr *ngIf="!loading && filteredTickets.length === 0">
+            <td colspan="6" class="empty-row">
+              No concerns found.
+            </td>
+          </tr>
+
+          <tr
+            *ngFor="let ticket of filteredTickets; trackBy: trackByTicketId"
+            [class.selected-row]="selectedTicket?.id === ticket.id"
+          >
+            <td>
+              <div class="user-cell">
+                <div class="avatar" [class.has-photo]="getTicketPhotoUrl(ticket)">
+                  <img
+                    *ngIf="getTicketPhotoUrl(ticket); else ticketInitial"
+                    [src]="getTicketPhotoUrl(ticket)"
+                    [alt]="ticket.fullName || 'User profile photo'"
+                    (error)="onPhotoError(ticket)"
+                  />
+
+                  <ng-template #ticketInitial>
+                    {{ getInitial(ticket.fullName) }}
+                  </ng-template>
+                </div>
+
+                <div class="user-info">
+                  <strong>{{ ticket.fullName || 'Unnamed User' }}</strong>
+                  <span>{{ ticket.email || 'No email provided' }}</span>
+                  <small *ngIf="ticket.alumniId || ticket.studentId">
+                    {{ ticket.alumniId || ticket.studentId }}
+                  </small>
+                </div>
+              </div>
+            </td>
+
+            <td>
+              <span class="concern-type">
+                {{ ticket.concernType || 'General Concern' }}
+              </span>
+            </td>
+
+            <td>
+              <p class="message-preview">
+                {{ ticket.message || 'No message provided.' }}
+              </p>
+            </td>
+
+            <td>
+              <span class="date-text">
+                {{ formatDate(ticket.createdAt) }}
+              </span>
+            </td>
+
+            <td>
+              <select
+                class="status-select"
+                [ngModel]="ticket.status"
+                (ngModelChange)="updateStatus(ticket, $event)"
+                [disabled]="updating"
+              >
+                <option *ngFor="let status of statusOptions" [ngValue]="status.value">
+                  {{ status.label }}
+                </option>
+              </select>
+            </td>
+
+            <td class="action-col">
+              <button
+                type="button"
+                class="view-btn"
+                (click)="selectTicket(ticket)"
+              >
+                View
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <section *ngIf="selectedTicket" class="details-panel">
+      <div class="details-header">
+        <div class="selected-user">
+          <div class="selected-avatar" [class.has-photo]="getTicketPhotoUrl(selectedTicket)">
+            <img
+              *ngIf="getTicketPhotoUrl(selectedTicket); else selectedInitial"
+              [src]="getTicketPhotoUrl(selectedTicket)"
+              [alt]="selectedTicket.fullName || 'User profile photo'"
+              (error)="onPhotoError(selectedTicket)"
+            />
+
+            <ng-template #selectedInitial>
+              {{ getInitial(selectedTicket.fullName) }}
+            </ng-template>
+          </div>
+
+          <div>
+            <span class="eyebrow">Concern Details</span>
+            <h2>{{ selectedTicket.fullName || 'Unnamed User' }}</h2>
+            <p>{{ selectedTicket.email || 'No email provided' }}</p>
+          </div>
+        </div>
+
+        <button type="button" class="close-btn" (click)="clearSelectedTicket()">
+          Close
+        </button>
+      </div>
+
+      <div class="details-body">
+        <div class="message-box">
+          <span>Message</span>
+          <p>{{ selectedTicket.message || 'No message provided.' }}</p>
+        </div>
+
+        <div class="message-box" *ngIf="selectedTicket.disabledReason">
+          <span>Disabled Account Reason</span>
+          <p>{{ selectedTicket.disabledReason }}</p>
+        </div>
+
+        <div class="details-grid">
+          <div>
+            <span>Concern Type</span>
+            <strong>{{ selectedTicket.concernType || 'Not available' }}</strong>
+          </div>
+
+          <div>
+            <span>Account Issue</span>
+            <strong>{{ selectedTicket.accountIssue || 'Not available' }}</strong>
+          </div>
+
+          <div>
+            <span>Student ID</span>
+            <strong>{{ selectedTicket.studentId || 'Not available' }}</strong>
+          </div>
+
+          <div>
+            <span>Alumni ID</span>
+            <strong>{{ selectedTicket.alumniId || 'Not available' }}</strong>
+          </div>
+
+          <div>
+            <span>Status</span>
+            <strong>{{ getStatusLabel(selectedTicket.status) }}</strong>
+          </div>
+
+          <div>
+            <span>Submitted</span>
+            <strong>{{ formatDate(selectedTicket.createdAt) }}</strong>
+          </div>
+
+          <div>
+            <span>Last Updated</span>
+            <strong>{{ formatDate(selectedTicket.updatedAt) }}</strong>
+          </div>
+
+          <div>
+            <span>User UID</span>
+            <strong>{{ selectedTicket.userUid || 'Not available' }}</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+  </section>
+</section>

@@ -9,6 +9,7 @@ import {
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
+import html2canvas from 'html2canvas';
 
 import { AuthService } from '../../../services/auth.service';
 import { UsersService } from '../../../services/users.service';
@@ -35,6 +36,8 @@ export class VerificationStatus implements OnInit, OnDestroy {
 
   uploading = false;
   uploadProgress = 0;
+
+  exporting = false;
 
   private currentUid = '';
   private requestSub?: Subscription;
@@ -161,7 +164,6 @@ export class VerificationStatus implements OnInit, OnDestroy {
     } catch (err: any) {
       console.error('Photo upload failed:', err);
 
-      // Detect Cloudinary moderation rejection
       const isModerationRejected =
         err?.moderated === true ||
         String(err?.message || '')
@@ -205,7 +207,6 @@ export class VerificationStatus implements OnInit, OnDestroy {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-      // Using uid as public_id so re-uploads overwrite the same asset
       formData.append('public_id', `alumni-id-photos/${this.currentUid}`);
 
       const xhr = new XMLHttpRequest();
@@ -222,7 +223,6 @@ export class VerificationStatus implements OnInit, OnDestroy {
           try {
             const response = JSON.parse(xhr.responseText);
 
-            // Cloudinary moderation: image was flagged and held/rejected
             if (
               response.moderation &&
               response.moderation.length > 0 &&
@@ -237,7 +237,6 @@ export class VerificationStatus implements OnInit, OnDestroy {
             reject(new Error('Invalid response from Cloudinary.'));
           }
         } else {
-          // Parse Cloudinary error body for moderation-specific messages
           try {
             const errorResponse = JSON.parse(xhr.responseText);
             const errorMsg: string =
@@ -248,10 +247,7 @@ export class VerificationStatus implements OnInit, OnDestroy {
               errorMsg.toLowerCase().includes('inappropriate') ||
               errorMsg.toLowerCase().includes('explicit');
 
-            reject({
-              moderated: isModerated,
-              message: errorMsg,
-            });
+            reject({ moderated: isModerated, message: errorMsg });
           } catch {
             reject(new Error(`Upload failed with status ${xhr.status}.`));
           }
@@ -270,10 +266,39 @@ export class VerificationStatus implements OnInit, OnDestroy {
     });
   }
 
-  // ── Print ─────────────────────────────────────────────────────────────────
+  // ── Export ID as PNG ──────────────────────────────────────────────────────
 
-  printDigitalId(): void {
-    window.print();
+  async exportDigitalId(): Promise<void> {
+    const card = document.getElementById('alumni-digital-id');
+    if (!card) return;
+
+    this.exporting = true;
+    this.cdr.detectChanges();
+
+    try {
+      const canvas = await html2canvas(card, {
+        scale: 3,           // 3x for crisp resolution
+        useCORS: true,      // allow cross-origin images (Cloudinary photos)
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+
+      const link = document.createElement('a');
+      link.download = `ATMS-Alumni-ID-${this.verificationRequest?.alumniId || 'card'}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (err) {
+      console.error('Export failed:', err);
+      await Swal.fire({
+        icon: 'error',
+        title: 'Export Failed',
+        text: 'Unable to export the ID card. Please try again.',
+        confirmButtonColor: '#1e3a8a',
+      });
+    } finally {
+      this.exporting = false;
+      this.cdr.detectChanges();
+    }
   }
 
   // ── Verification loading ──────────────────────────────────────────────────
